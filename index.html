@@ -7,55 +7,99 @@
   <style>
     body {
       font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
-      max-width: 680px;
+      max-width: 720px;
       margin: 48px auto;
       padding: 0 24px;
       color: #222;
     }
+    header { border-bottom: 2px solid #2c6e2c; padding-bottom: 14px; margin-bottom: 8px; }
     h1 { font-size: 26px; margin: 0 0 4px; }
-    .date { color: #667; font-size: 14px; margin-bottom: 24px; }
+    .meta { color: #667; font-size: 14px; }
+    .meta span + span { margin-left: 12px; }
+    h2 {
+      font-size: 18px;
+      margin: 28px 0 12px;
+      padding-left: 10px;
+      border-left: 4px solid #2c6e2c;
+    }
     .item {
-      padding: 14px 16px;
+      padding: 12px 16px;
       border: 1px solid #e3e3e3;
       border-radius: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
-    .item h2 { font-size: 16px; margin: 0 0 6px; }
-    .item p { margin: 0; color: #556; font-size: 14px; line-height: 1.6; }
+    .item h3 { font-size: 15px; margin: 0 0 4px; }
+    .item p { margin: 0; color: #556; font-size: 13px; line-height: 1.6; }
     .tag {
       display: inline-block;
       background: #eef6ee;
       color: #2c6e2c;
       border-radius: 6px;
-      padding: 2px 10px;
+      padding: 1px 9px;
       font-size: 12px;
+      margin-bottom: 10px;
     }
-    footer { margin-top: 32px; color: #99a; font-size: 13px; }
+    .tag.gray { background: #f0f0f2; color: #556; }
+    footer { margin-top: 36px; color: #99a; font-size: 13px; border-top: 1px solid #eee; padding-top: 14px; }
   </style>
 </head>
 <body>
-  <span class="tag">28days 项目 · v1</span>
-  <h1>每日资讯速览</h1>
-  <p class="date" id="today"></p>
+  <header>
+    <span class="tag">28days 项目 · v1.1</span>
+    <h1>每日资讯速览</h1>
+    <p class="meta">
+      <span id="today"></span>
+      <span>更新时间 <b id="clock"></b></span>
+    </p>
+  </header>
 
+  <h2>今日要闻</h2>
   <div class="item">
-    <h2>（占位）今日要闻一</h2>
-    <p>这里以后展示摘要。数据源接入后自动更新。</p>
+    <h3>（示例）要闻标题一</h3>
+    <p>摘要占位：正式数据源接入后，这里显示真实新闻标题与一句话摘要。</p>
   </div>
   <div class="item">
-    <h2>（占位）今日要闻二</h2>
-    <p>这里以后展示摘要。数据源接入后自动更新。</p>
+    <h3>（示例）要闻标题二</h3>
+    <p>摘要占位：同上，每条新闻含标题、摘要与来源。</p>
   </div>
   <div class="item">
-    <h2>（占位）今日要闻三</h2>
-    <p>这里以后展示摘要。数据源接入后自动更新。</p>
+    <h3>（示例）要闻标题三</h3>
+    <p>摘要占位：栏目结构已定型，替换数据即可使用。</p>
   </div>
 
-  <footer>第一版：静态占位页面，新闻数据源将在后续版本接入。</footer>
+  <h2>科技快讯</h2>
+  <div class="item">
+    <h3>（示例）科技条目一</h3>
+    <p>摘要占位：科技栏目，每天精选 2 条。</p>
+  </div>
+  <div class="item">
+    <h3>（示例）科技条目二</h3>
+    <p>摘要占位：来源与分类后续由数据接入模块填写。</p>
+  </div>
+
+  <h2>财经一览</h2>
+  <div class="item">
+    <h3>（示例）财经条目一</h3>
+    <p>摘要占位：财经栏目，含市场概览与要闻点评。</p>
+  </div>
+
+  <h2>历史上的今天</h2>
+  <div class="item">
+    <h3>（示例）历史事件</h3>
+    <p>摘要占位：每天一条趣味历史，由数据源按日期匹配。</p>
+  </div>
+
+  <footer>
+    每日资讯速览 · 28days 练习项目 · 页面为静态示例，新闻数据源将在后续版本接入。<br>
+    密钥与配置保存在本地 .env 文件中，已由 .gitignore 隔离，不会上传 GitHub。
+  </footer>
 
   <script>
+    const now = new Date();
     document.getElementById('today').textContent =
-      new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+      now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   </script>
 </body>
 </html>
