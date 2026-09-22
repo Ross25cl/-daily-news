@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 680 476" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>每日体坛速览数据流图</title>
+<desc>数据从人工筛选的体育要闻与手动收集的订阅名单流入 GitHub 仓库的 JSON 文件与 Secrets，页面数据经 GitHub Pages 到用户浏览器，每日速览经 GitHub Actions 与 SMTP 到用户邮箱，发送结果写回仓库留痕</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="340" y="48" text-anchor="middle" font-family="system-ui,-apple-system,'Microsoft YaHei',sans-serif" font-size="15" font-weight="500" fill="#2C2C2A">每日体坛速览 · 数据流图（方案 A）</text>
+<text x="124" y="76" text-anchor="middle" font-family="system-ui,-apple-system,'Microsoft YaHei',sans-serif" font-size="13" font-weight="500" fill="#0C447C">① 数据从哪来</text>
+<text x="362" y="76" text-anchor="middle" font-family="system-ui,-apple-system,'Microsoft YaHei',sans-serif" font-size="13" font-weight="500" fill="#085041">② 存储 + 自动化（GitHub）</text>
+<text x="562" y="76" text-anchor="middle" font-family="system-ui,-apple-system,'Microsoft YaHei',sans-serif" font-size="13" font-weight="500" fill="#27500A">③ 数据到哪去</text>
+<g font-family="system-ui,-apple-system,'Microsoft YaHei',sans-serif">
+<rect x="52" y="92" width="144" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="124" y="110" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#0C447C">体育要闻与赛果</text>
+<text x="124" y="132" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#185FA5">人工筛选整理</text>
+<rect x="52" y="180" width="144" height="56" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5" stroke-dasharray="4 3"/>
+<text x="124" y="198" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#444441">比分数据源</text>
+<text x="124" y="220" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#5F5E5A">第 2 周自动接入</text>
+<rect x="52" y="356" width="144" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="124" y="374" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#0C447C">订阅者名单</text>
+<text x="124" y="396" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#185FA5">MVP 手动收集</text>
+<rect x="276" y="92" width="172" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="362" y="110" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#085041">data/*.json</text>
+<text x="362" y="132" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">news · matches · push_log</text>
+<rect x="276" y="176" width="172" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="362" y="198" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#085041">GitHub Pages</text>
+<rect x="276" y="252" width="172" height="72" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="362" y="274" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#085041">GitHub Actions</text>
+<text x="362" y="292" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">每天 08:00 读数据+名单</text>
+<text x="362" y="308" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#0F6E56">发邮件 · 写回日志</text>
+<rect x="276" y="356" width="172" height="56" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text x="362" y="374" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#633806">GitHub Secrets</text>
+<text x="362" y="396" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#854F0B">订阅名单不进公开仓库</text>
+<rect x="500" y="176" width="128" height="56" rx="8" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.5"/>
+<text x="564" y="194" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#27500A">用户浏览器</text>
+<text x="564" y="216" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#3B6D11">速览页 · 赛程页</text>
+<rect x="500" y="244" width="128" height="56" rx="8" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.5"/>
+<text x="564" y="262" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" fill="#27500A">用户邮箱</text>
+<text x="564" y="284" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#3B6D11">08:00 · ≤1 封/天</text>
+</g>
+<g fill="none" stroke="#5F5E5A" stroke-width="1.5">
+<path d="M196,120 L270,120" marker-end="url(#arrow)"/>
+<path d="M196,208 C240,208 250,150 270,138" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<path d="M196,384 L270,384" marker-end="url(#arrow)"/>
+<path d="M362,148 L362,170" marker-end="url(#arrow)"/>
+<path d="M448,198 L494,202" marker-end="url(#arrow)"/>
+<path d="M448,288 L494,272" marker-end="url(#arrow)"/>
+<path d="M362,356 L362,330" marker-end="url(#arrow)"/>
+</g>
+<g font-family="system-ui,-apple-system,'Microsoft YaHei',sans-serif" font-size="12" fill="#5F5E5A">
+<text x="202" y="110">git push</text>
+<text x="202" y="186">第 2 周</text>
+<text x="202" y="374">手动录入</text>
+<text x="370" y="163">部署</text>
+<text x="452" y="190">打开页面</text>
+<text x="452" y="302">SMTP 发送</text>
+<text x="370" y="346">读名单</text>
+</g>
+<g font-family="system-ui,-apple-system,'Microsoft YaHei',sans-serif" font-size="12" fill="#5F5E5A">
+<line x1="52" y1="436" x2="88" y2="436" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="98" y="440">现在的数据流</text>
+<line x1="210" y1="436" x2="246" y2="436" stroke="#5F5E5A" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="256" y="440">第 2 周接入</text>
+<text x="52" y="464">08:00 均为北京时间（= UTC 00:00，Actions cron：0 0 * * *）；订阅邮箱只存 GitHub Secrets，绝不写入公开仓库</text>
+</g>
+</svg>
