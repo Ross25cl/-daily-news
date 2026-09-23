@@ -12,3 +12,6 @@ Thumbs.db
 # ===== 编辑器 =====
 .vscode/
 .idea/
+
+# ===== 本地调试预览（WorkBuddy 生成，不入库）=====
+.workbuddy-preview/
