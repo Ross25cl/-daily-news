@@ -139,7 +139,7 @@
 | status          | string | 必填：成功 / 部分失败 / 失败 |
 | failure_note    | string | 状态非「成功」时必填       |
 
-**数据规则**（沿 PRD，落到本方案的动作）：已发布条目不静默删除（更正 = 改 JSON 重新 push，git 历史即留痕）；(email, digest_date) 唯一（发送脚本先查 push_log/last_sent_at 防重）；比分修改必须更新 updated_at。发布前脚本校验必填字段与字数上限（≤30/≤60），不合格则 Actions 报错、当天不发邮件。
+**数据规则**（沿 PRD，落到本方案的动作）：已发布条目不静默删除（更正 = 改 JSON 重新 push，git 历史即留痕）；(email, digest_date) 唯一（发送脚本先查 push_log/last_sent_at 防重）；比分修改必须更新 updated_at。发布前脚本校验必填字段与字数上限（≤30/≤60），不合格则 Actions 报错、当天不发邮件；league→大类映射（篮球=NBA/CBA，足球=英超/中超/欧冠，综合=电竞及其他）硬编码在前端，保证导航筛选可用。
 
 ## 5. API 列表（MVP 无自建后端：静态数据契约 + 预留 REST）
 
@@ -170,7 +170,7 @@
 分步说明（与图对应）：
 
 1. **内容线（每天）**：人工从官方/权威来源筛选 6–12 条要闻与比分（PRD 9.3：终审 15–30 分钟）→ 编辑 `data/news.json`、`data/matches.json` → `git push`；
-2. **页面线（用户访问）**：push 触发 Pages 自动部署 → 用户浏览器打开 P1/P2 → JS `fetch` JSON → 按日期与状态过滤 → 渲染四板块速览与三天赛程；
+2. **页面线（用户访问）**：push 触发 Pages 自动部署 → 用户浏览器打开 P1/P2 → JS `fetch` JSON → 按日期、状态与导航大类筛选 → 渲染四板块速览与三天赛程；
 3. **订阅线（MVP 手动）**：朋友发来邮箱 → 录入 Secrets 中的 SUBSCRIBERS_JSON（含退订令牌）；
 4. **推送线（每天 08:00±）**：Actions 定时触发 → 读三个数据源（news/matches/Secrets）→ 校验当天有已发布内容 → 渲染邮件 HTML → 经 QQ 邮箱 SMTP 发送（每用户 ≤1 封）→ 把结果追加进 `data/push_log.json` 并 commit 回仓库（留痕）。
 
