@@ -1,0 +1,192 @@
+/* 每日体坛速览 · 共用样式（移动端优先） */
+* { box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  color: #222;
+  background: #fafafa;
+}
+
+/* ---------- 顶部 ---------- */
+.site-header {
+  border-bottom: 2px solid #2c6e2c;
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+.brand .tag {
+  display: inline-block;
+  background: #eef6ee;
+  color: #2c6e2c;
+  border-radius: 6px;
+  padding: 1px 9px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+h1 { font-size: 26px; margin: 0 0 4px; }
+.meta { color: #667; font-size: 14px; margin: 0; }
+.meta span + span { margin-left: 12px; }
+
+/* ---------- 导航：页面切换 + 大类筛选 ---------- */
+.site-nav { margin-top: 14px; }
+.nav-pages { display: flex; gap: 4px; }
+.nav-link {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 8px 8px 0 0;
+  color: #556;
+  text-decoration: none;
+  font-size: 15px;
+}
+.nav-link.active {
+  background: #2c6e2c;
+  color: #fff;
+  font-weight: 600;
+}
+.nav-filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.filter-btn {
+  border: 1px solid #2c6e2c;
+  background: #fff;
+  color: #2c6e2c;
+  border-radius: 999px;
+  padding: 4px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.filter-btn.active {
+  background: #2c6e2c;
+  color: #fff;
+}
+
+/* ---------- 速览板块 ---------- */
+.digest-section h2,
+.subscribe-box h2 {
+  font-size: 18px;
+  margin: 28px 0 12px;
+  padding-left: 10px;
+  border-left: 4px solid #2c6e2c;
+}
+.item {
+  padding: 12px 16px;
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+.item h3 { font-size: 15px; margin: 0 0 4px; }
+.item h3 a { color: #222; text-decoration: none; }
+.item h3 a:hover { color: #2c6e2c; text-decoration: underline; }
+.item p { margin: 0; color: #556; font-size: 13px; line-height: 1.6; }
+.item .item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tag {
+  display: inline-block;
+  background: #eef6ee;
+  color: #2c6e2c;
+  border-radius: 6px;
+  padding: 1px 9px;
+  font-size: 12px;
+}
+.tag.gray { background: #f0f0f2; color: #556; }
+
+.empty-hint {
+  color: #99a;
+  font-size: 13px;
+  padding: 12px 16px;
+  border: 1px dashed #ddd;
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* ---------- 赛程页 ---------- */
+.date-switch {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.date-btn {
+  border: 1px solid #ccd;
+  background: #fff;
+  color: #556;
+  border-radius: 8px;
+  padding: 6px 18px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.date-btn.active {
+  border-color: #2c6e2c;
+  background: #2c6e2c;
+  color: #fff;
+  font-weight: 600;
+}
+.matches-meta { color: #667; font-size: 13px; margin: 0 0 12px; }
+
+.match-card {
+  padding: 12px 16px;
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+.match-card .match-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+.match-card .teams { font-size: 15px; font-weight: 600; }
+.match-card .score { font-size: 18px; font-weight: 700; color: #2c6e2c; }
+.match-card .match-sub { color: #667; font-size: 13px; margin-top: 4px; }
+.match-card .detail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e3e3e3;
+  color: #556;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* 赛程页：状态徽标与详情展开（Step 4） */
+.tag.live { background: #b3541e; color: #fff; }   /* 进行中：醒目橙 */
+.match-card { cursor: pointer; }                   /* 提示可点击 */
+.match-card .detail { display: none; }             /* 详情默认收起 */
+.match-card.open .detail { display: block; }       /* 点击卡片展开 */
+
+/* ---------- 订阅区 ---------- */
+.subscribe-box {
+  margin-top: 32px;
+  padding: 16px;
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  background: #fff;
+}
+.subscribe-box p { color: #556; font-size: 13px; line-height: 1.7; margin: 8px 0 0; }
+
+/* ---------- 页脚 ---------- */
+.site-footer {
+  margin-top: 36px;
+  color: #99a;
+  font-size: 13px;
+  border-top: 1px solid #eee;
+  padding-top: 14px;
+  line-height: 1.7;
+}
+.site-footer p { margin: 0 0 6px; }
+
+/* ---------- 宽屏微调（375px 下无需横向滚动） ---------- */
+@media (min-width: 640px) {
+  body { padding: 48px 24px 64px; }
+  h1 { font-size: 30px; }
+  .site-nav { display: flex; align-items: flex-end; justify-content: space-between; }
+  .nav-filters { margin-top: 0; }
+}

@@ -3,103 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>每日资讯速览</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
-      max-width: 720px;
-      margin: 48px auto;
-      padding: 0 24px;
-      color: #222;
-    }
-    header { border-bottom: 2px solid #2c6e2c; padding-bottom: 14px; margin-bottom: 8px; }
-    h1 { font-size: 26px; margin: 0 0 4px; }
-    .meta { color: #667; font-size: 14px; }
-    .meta span + span { margin-left: 12px; }
-    h2 {
-      font-size: 18px;
-      margin: 28px 0 12px;
-      padding-left: 10px;
-      border-left: 4px solid #2c6e2c;
-    }
-    .item {
-      padding: 12px 16px;
-      border: 1px solid #e3e3e3;
-      border-radius: 10px;
-      margin-bottom: 10px;
-    }
-    .item h3 { font-size: 15px; margin: 0 0 4px; }
-    .item p { margin: 0; color: #556; font-size: 13px; line-height: 1.6; }
-    .tag {
-      display: inline-block;
-      background: #eef6ee;
-      color: #2c6e2c;
-      border-radius: 6px;
-      padding: 1px 9px;
-      font-size: 12px;
-      margin-bottom: 10px;
-    }
-    .tag.gray { background: #f0f0f2; color: #556; }
-    footer { margin-top: 36px; color: #99a; font-size: 13px; border-top: 1px solid #eee; padding-top: 14px; }
-  </style>
+  <title>每日体坛速览</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header>
-    <span class="tag">28days 项目 · v1.1</span>
-    <h1>每日资讯速览</h1>
-    <p class="meta">
-      <span id="today"></span>
-      <span>更新时间 <b id="clock"></b></span>
-    </p>
+  <header class="site-header">
+    <div class="brand">
+      <span class="tag">28days 项目 · MVP</span>
+      <h1>每日体坛速览</h1>
+      <p class="meta">
+        <span id="today"></span>
+        <span>最近更新时间 <b id="updated-at">--</b></span>
+      </p>
+    </div>
+    <nav class="site-nav" aria-label="主导航">
+      <div class="nav-pages">
+        <a href="index.html" class="nav-link active">速览</a>
+        <a href="matches.html" class="nav-link">赛程比分</a>
+      </div>
+      <div class="nav-filters" id="nav-filters" aria-label="大类筛选">
+        <button type="button" class="filter-btn" data-category="篮球">篮球</button>
+        <button type="button" class="filter-btn" data-category="足球">足球</button>
+        <button type="button" class="filter-btn" data-category="综合">综合</button>
+      </div>
+    </nav>
   </header>
 
-  <h2>今日要闻</h2>
-  <div class="item">
-    <h3>（示例）要闻标题一</h3>
-    <p>摘要占位：正式数据源接入后，这里显示真实新闻标题与一句话摘要。</p>
-  </div>
-  <div class="item">
-    <h3>（示例）要闻标题二</h3>
-    <p>摘要占位：同上，每条新闻含标题、摘要与来源。</p>
-  </div>
-  <div class="item">
-    <h3>（示例）要闻标题三</h3>
-    <p>摘要占位：栏目结构已定型，替换数据即可使用。</p>
-  </div>
+  <main id="digest">
+    <section class="digest-section" data-section="头条">
+      <h2>今日头条</h2>
+      <div class="section-body">
+        <p class="empty-hint">加载中…</p>
+      </div>
+    </section>
 
-  <h2>科技快讯</h2>
-  <div class="item">
-    <h3>（示例）科技条目一</h3>
-    <p>摘要占位：科技栏目，每天精选 2 条。</p>
-  </div>
-  <div class="item">
-    <h3>（示例）科技条目二</h3>
-    <p>摘要占位：来源与分类后续由数据接入模块填写。</p>
-  </div>
+    <section class="digest-section" data-section="转会伤病">
+      <h2>转会·伤病</h2>
+      <div class="section-body">
+        <p class="empty-hint">加载中…</p>
+      </div>
+    </section>
 
-  <h2>财经一览</h2>
-  <div class="item">
-    <h3>（示例）财经条目一</h3>
-    <p>摘要占位：财经栏目，含市场概览与要闻点评。</p>
-  </div>
+    <section class="digest-section" data-section="热议">
+      <h2>热议话题</h2>
+      <div class="section-body">
+        <p class="empty-hint">加载中…</p>
+      </div>
+    </section>
 
-  <h2>历史上的今天</h2>
-  <div class="item">
-    <h3>（示例）历史事件</h3>
-    <p>摘要占位：每天一条趣味历史，由数据源按日期匹配。</p>
-  </div>
+    <section class="digest-section" data-section="明日看点">
+      <h2>明日看点</h2>
+      <div class="section-body">
+        <p class="empty-hint">加载中…</p>
+      </div>
+    </section>
+  </main>
 
-  <footer>
-    每日资讯速览 · 28days 练习项目 · 页面为静态示例，新闻数据源将在后续版本接入。<br>
-    密钥与配置保存在本地 .env 文件中，已由 .gitignore 隔离，不会上传 GitHub。
+  <section class="subscribe-box" id="subscribe">
+    <h2>邮件订阅</h2>
+    <p>订阅功能开发中：上线后每天早上 08:00 收到一封「今日体坛速览」邮件，每天至多 1 封，无营销内容。</p>
+  </section>
+
+  <footer class="site-footer">
+    <p><b>内容来源说明</b>：本页所有条目仅保留「标题 + 一句话摘要 + 原文链接」，标注来源名称，不整段转载正文；比分数据以官方结果为准，发现错误当日更正。</p>
+    <p>每日体坛速览 · 28days 练习项目 · 当前为 MVP 示例数据阶段，真实体育数据源将在第 2 周接入。</p>
   </footer>
 
-  <script>
-    const now = new Date();
-    document.getElementById('today').textContent =
-      now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-    document.getElementById('clock').textContent =
-      now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-  </script>
+  <script src="js/app.js"></script>
 </body>
 </html>

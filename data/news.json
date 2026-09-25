@@ -1,0 +1,98 @@
+[
+  {
+    "id": "20260925-n01",
+    "title": "【示例】湖人客场112比108击败凯尔特人",
+    "summary": "【示例】湖人带走客场胜利稳住西部前六席位，后续将回到主场迎战勇士。",
+    "section": "头条",
+    "league": "NBA",
+    "source_name": "示例来源·NBA官网",
+    "source_url": "https://example.com/nba-lakers-celtics",
+    "digest_date": "2026-09-25",
+    "status": "published",
+    "created_at": "2026-09-25T09:30:00+08:00"
+  },
+  {
+    "id": "20260925-n02",
+    "title": "【示例】阿森纳逆转利物浦暂时领跑英超",
+    "summary": "【示例】阿森纳两球落后连扳三城，此役影响争冠格局，下轮将客战曼城。",
+    "section": "头条",
+    "league": "英超",
+    "source_name": "示例来源·英超官网",
+    "source_url": "https://example.com/epl-arsenal-liverpool",
+    "digest_date": "2026-09-25",
+    "status": "published",
+    "created_at": "2026-09-25T09:35:00+08:00"
+  },
+  {
+    "id": "20260925-n03",
+    "title": "【示例】湖人确认新援因伤缺阵两周",
+    "summary": "【示例】主力前锋腿筋拉伤缺阵两周，影响轮换深度，两周后复查评估。",
+    "section": "转会伤病",
+    "league": "NBA",
+    "source_name": "示例来源·NBA官网",
+    "source_url": "https://example.com/nba-lakers-injury",
+    "digest_date": "2026-09-25",
+    "status": "published",
+    "created_at": "2026-09-25T09:40:00+08:00"
+  },
+  {
+    "id": "20260925-n04",
+    "title": "【示例】利物浦接近签下葡超中场",
+    "summary": "【示例】转会费约四千万欧，背景是中场伤情告急，体检通过后官宣。",
+    "section": "转会伤病",
+    "league": "英超",
+    "source_name": "示例来源·英超官网",
+    "source_url": "https://example.com/epl-liverpool-transfer",
+    "digest_date": "2026-09-25",
+    "status": "published",
+    "created_at": "2026-09-25T09:45:00+08:00"
+  },
+  {
+    "id": "20260925-n05",
+    "title": "【示例】中超争冠组周末开打",
+    "summary": "【示例】积分榜前二仅差两分，周末直接对话影响冠军归属， CCTV5 直播。",
+    "section": "明日看点",
+    "league": "中超",
+    "source_name": "示例来源·中超官网",
+    "source_url": "https://example.com/csl-title-race",
+    "digest_date": "2026-09-25",
+    "status": "published",
+    "created_at": "2026-09-25T09:50:00+08:00"
+  },
+  {
+    "id": "20260925-n06",
+    "title": "【示例】欧冠小组赛下周重燃战火",
+    "summary": "【示例】多场强强对话定出线形势，看点是状态火热的射手对决，值得熬夜。",
+    "section": "明日看点",
+    "league": "欧冠",
+    "source_name": "示例来源·欧冠官网",
+    "source_url": "https://example.com/ucl-group-stage",
+    "digest_date": "2026-09-25",
+    "status": "published",
+    "created_at": "2026-09-25T09:55:00+08:00"
+  },
+  {
+    "id": "20260925-n07",
+    "title": "【示例】电竞全球总决赛周末半决赛",
+    "summary": "【示例】LPL 两队会师半决赛，胜者进决赛，赛制五局三胜，周末开打。",
+    "section": "明日看点",
+    "league": "电竞",
+    "source_name": "示例来源·赛事官方",
+    "source_url": "https://example.com/esports-worlds-semi",
+    "digest_date": "2026-09-25",
+    "status": "published",
+    "created_at": "2026-09-25T10:00:00+08:00"
+  },
+  {
+    "id": "20260925-n08",
+    "title": "【示例】草稿条目：这条不应出现在页面上",
+    "summary": "【示例】本条为 draft 状态，用于验证页面只显示已发布条目。",
+    "section": "热议",
+    "league": "综合",
+    "source_name": "示例来源·内部",
+    "source_url": "https://example.com/draft-only",
+    "digest_date": "2026-09-25",
+    "status": "draft",
+    "created_at": "2026-09-25T10:05:00+08:00"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "20260924-nba-01",
+    "league": "NBA",
+    "home_team": "凯尔特人",
+    "away_team": "湖人",
+    "match_time": "2026-09-24 07:30",
+    "status": "已结束",
+    "home_score": 108,
+    "away_score": 112,
+    "round": "季前赛",
+    "venue": "TD Garden",
+    "data_source": "NBA官网（示例）",
+    "updated_at": "2026-09-24T11:00:00+08:00"
+  },
+  {
+    "id": "20260925-epl-01",
+    "league": "英超",
+    "home_team": "阿森纳",
+    "away_team": "利物浦",
+    "match_time": "2026-09-25 10:00",
+    "status": "已结束",
+    "home_score": 3,
+    "away_score": 2,
+    "round": "英超第 6 轮",
+    "venue": "酋长球场",
+    "data_source": "英超官网（示例）",
+    "updated_at": "2026-09-25T12:00:00+08:00"
+  },
+  {
+    "id": "20260925-nba-02",
+    "league": "NBA",
+    "home_team": "勇士",
+    "away_team": "太阳",
+    "match_time": "2026-09-25 14:30",
+    "status": "进行中",
+    "home_score": 58,
+    "away_score": 52,
+    "round": "季前赛",
+    "venue": "Chase Center",
+    "data_source": "NBA官网（示例）",
+    "updated_at": "2026-09-25T15:10:00+08:00"
+  },
+  {
+    "id": "20260925-epl-02",
+    "league": "英超",
+    "home_team": "切尔西",
+    "away_team": "曼城",
+    "match_time": "2026-09-25 20:00",
+    "status": "未开始",
+    "round": "英超第 6 轮",
+    "venue": "斯坦福桥",
+    "data_source": "英超官网（示例）",
+    "updated_at": "2026-09-25T09:00:00+08:00"
+  }
+]
