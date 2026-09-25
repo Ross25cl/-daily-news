@@ -1,0 +1,50 @@
+{
+  "updated_at": "2026-09-25T22:30:00+08:00",
+  "platforms": [
+    {
+      "id": "hupu",
+      "name": "虎扑",
+      "desc": "步行街热帖榜",
+      "items": [
+        { "rank": 1, "title": "湖人加时险胜凯尔特人，赛后更衣室视频曝光", "heat": 1523000, "url": "https://example.com/hupu-1", "tag": "NBA" },
+        { "rank": 2, "title": "武磊替补登场制造绝杀，西班牙人球迷区炸了", "heat": 986000, "url": "https://example.com/hupu-2", "tag": "英超" },
+        { "rank": 3, "title": "CBA 新赛季揭幕战定档，卫冕冠军领戒指仪式曝光", "heat": 752000, "url": "https://example.com/hupu-3", "tag": "CBA" },
+        { "rank": 4, "title": "辣评：这届国家队防线问题到底出在哪", "heat": 634000, "url": "https://example.com/hupu-4", "tag": "中超" },
+        { "rank": 5, "title": "转会流言汇总：三名国脚冬窗动向一览", "heat": 521000, "url": "https://example.com/hupu-5", "tag": "英超" },
+        { "rank": 6, "title": "球迷热议：主教练赛后发布会回应换人争议", "heat": 438000, "url": "https://example.com/hupu-6", "tag": "中超" },
+        { "rank": 7, "title": "电竞分部全球总决赛半决赛观赛团招募中", "heat": 356000, "url": "https://example.com/hupu-7", "tag": "电竞" },
+        { "rank": 8, "title": "今日步行街票选：本周最佳进球你来定", "heat": 287000, "url": "https://example.com/hupu-8", "tag": "综合" }
+      ]
+    },
+    {
+      "id": "tencent",
+      "name": "腾讯体育",
+      "desc": "视频热榜",
+      "items": [
+        { "rank": 1, "title": "五佳球：欧洲赛场本周神仙球合集", "heat": 2104000, "url": "https://example.com/tx-1", "tag": "欧冠", "video": true },
+        { "rank": 2, "title": "前瞻：NBA 揭幕周重点场次全解读", "heat": 1682000, "url": "https://example.com/tx-2", "tag": "NBA", "video": true },
+        { "rank": 3, "title": "集锦：英超第 6 轮十粒精彩进球", "heat": 1395000, "url": "https://example.com/tx-3", "tag": "英超", "video": true },
+        { "rank": 4, "title": "专访：国乒主力谈新周期备战计划", "heat": 986000, "url": "https://example.com/tx-4", "tag": "综合" },
+        { "rank": 5, "title": "战术板：三中卫体系为何再度流行", "heat": 812000, "url": "https://example.com/tx-5", "tag": "英超", "video": true },
+        { "rank": 6, "title": "纪录片预告：中超三十年幕后故事", "heat": 674000, "url": "https://example.com/tx-6", "tag": "中超", "video": true },
+        { "rank": 7, "title": "回放：欧冠小组赛抽签全程实录", "heat": 548000, "url": "https://example.com/tx-7", "tag": "欧冠", "video": true },
+        { "rank": 8, "title": "盘点：新赛季五支值得关注的青年军", "heat": 421000, "url": "https://example.com/tx-8", "tag": "CBA" }
+      ]
+    },
+    {
+      "id": "cctv5",
+      "name": "央视体育",
+      "desc": "官方权威发布",
+      "items": [
+        { "rank": 1, "title": "国家队公布新一期集训名单", "heat": 1892000, "url": "https://example.com/cctv-1", "tag": "综合" },
+        { "rank": 2, "title": "中超第 27 轮赛程正式确定", "heat": 1243000, "url": "https://example.com/cctv-2", "tag": "中超" },
+        { "rank": 3, "title": "世锦赛：中国队夺得两金一银", "heat": 1108000, "url": "https://example.com/cctv-3", "tag": "综合" },
+        { "rank": 4, "title": "亚冠联赛抽签结果揭晓", "heat": 892000, "url": "https://example.com/cctv-4", "tag": "欧冠" },
+        { "rank": 5, "title": "全国青少年足球联赛启动报名", "heat": 715000, "url": "https://example.com/cctv-5", "tag": "中超" },
+        { "rank": 6, "title": "CBA 全明星周末落户厦门", "heat": 586000, "url": "https://example.com/cctv-6", "tag": "CBA" },
+        { "rank": 7, "title": "马拉松赛季开跑：本周赛事日历", "heat": 463000, "url": "https://example.com/cctv-7", "tag": "综合" },
+        { "rank": 8, "title": "反兴奋剂教育讲座走进各训练基地", "heat": 352000, "url": "https://example.com/cctv-8", "tag": "综合" }
+      ]
+    }
+  ]
+}

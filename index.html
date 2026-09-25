@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>每日体坛速览</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/home.css">
 </head>
 <body>
   <header class="site-header">
@@ -13,50 +13,46 @@
       <h1>每日体坛速览</h1>
       <p class="meta">
         <span id="today"></span>
-        <span>最近更新时间 <b id="updated-at">--</b></span>
+        <span>最近更新 <b id="updated-at">--</b></span>
       </p>
     </div>
     <nav class="site-nav" aria-label="主导航">
       <div class="nav-pages">
-        <a href="index.html" class="nav-link active">速览</a>
+        <a href="index.html" class="nav-link active">热搜速览</a>
         <a href="matches.html" class="nav-link">赛程比分</a>
       </div>
-      <div class="nav-filters" id="nav-filters" aria-label="大类筛选">
-        <button type="button" class="filter-btn" data-category="篮球">篮球</button>
-        <button type="button" class="filter-btn" data-category="足球">足球</button>
-        <button type="button" class="filter-btn" data-category="综合">综合</button>
-      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换深浅模式">☀️</button>
     </nav>
   </header>
 
-  <main id="digest">
-    <section class="digest-section" data-section="头条">
-      <h2>今日头条</h2>
-      <div class="section-body">
-        <p class="empty-hint">加载中…</p>
-      </div>
-    </section>
+  <main id="hot-view">
+    <!-- 状态一：加载中（骨架屏） -->
+    <div id="state-loading" aria-live="polite">
+      <section class="platform-card sk">
+        <div class="sk-head"></div>
+        <div class="sk-row"><div class="sk-line w60"></div><div class="sk-box"></div></div>
+        <div class="sk-row"><div class="sk-line w80"></div><div class="sk-box"></div></div>
+        <div class="sk-row"><div class="sk-line w70"></div><div class="sk-box"></div></div>
+        <div class="sk-row"><div class="sk-line w50"></div><div class="sk-box"></div></div>
+      </section>
+      <section class="platform-card sk">
+        <div class="sk-head"></div>
+        <div class="sk-row"><div class="sk-line w70"></div><div class="sk-box"></div></div>
+        <div class="sk-row"><div class="sk-line w60"></div><div class="sk-box"></div></div>
+        <div class="sk-row"><div class="sk-line w80"></div><div class="sk-box"></div></div>
+        <div class="sk-row"><div class="sk-line w50"></div><div class="sk-box"></div></div>
+      </section>
+    </div>
 
-    <section class="digest-section" data-section="转会伤病">
-      <h2>转会·伤病</h2>
-      <div class="section-body">
-        <p class="empty-hint">加载中…</p>
-      </div>
-    </section>
+    <!-- 状态四：错误 -->
+    <div id="state-error" class="state-box" hidden>
+      <p class="state-emoji">📡</p>
+      <p class="state-text">热搜数据加载失败，请检查网络后重试。</p>
+      <button id="retry-btn" type="button" class="retry-btn">重新加载</button>
+    </div>
 
-    <section class="digest-section" data-section="热议">
-      <h2>热议话题</h2>
-      <div class="section-body">
-        <p class="empty-hint">加载中…</p>
-      </div>
-    </section>
-
-    <section class="digest-section" data-section="明日看点">
-      <h2>明日看点</h2>
-      <div class="section-body">
-        <p class="empty-hint">加载中…</p>
-      </div>
-    </section>
+    <!-- 状态二（成功）与状态三（某平台空）：由 home.js 渲染 -->
+    <div id="platforms"></div>
   </main>
 
   <section class="subscribe-box" id="subscribe">
@@ -65,10 +61,10 @@
   </section>
 
   <footer class="site-footer">
-    <p><b>内容来源说明</b>：本页所有条目仅保留「标题 + 一句话摘要 + 原文链接」，标注来源名称，不整段转载正文；比分数据以官方结果为准，发现错误当日更正。</p>
-    <p>每日体坛速览 · 28days 练习项目 · 当前为 MVP 示例数据阶段，真实体育数据源将在第 2 周接入。</p>
+    <p><b>内容来源说明</b>：本页热搜数据为本地示例（mock）数据，仅保留「标题 + 热度 + 原文链接」，标注来源平台，不整段转载正文；真实平台数据源将在第 2 周核实接入。</p>
+    <p>每日体坛速览 · 28days 练习项目 · Day 8 主视图（mock 数据版）</p>
   </footer>
 
-  <script src="js/app.js"></script>
+  <script src="js/home.js"></script>
 </body>
 </html>
