@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>本地录入表单 · 每日体坛速览</title>
+  <!--
+    tools/entry.html — 本地录入表单（TECH_DESIGN.md 第 3/4 节，Day 6 规划、Day 9 补建）
+    用途：填字段 → 生成/追加 JSON → 字段校验（≤30/≤60 字），不手写字段（TECH_DESIGN v1.3）
+    用法：浏览器打开本页 → （可选）粘贴现有 data/news.json 或 data/matches.json 全部内容
+          → 填表单 → 点「生成 JSON」→ 复制/下载 → 人工终审（PRD 9.3）→
+          整体替换对应 data/*.json → git push
+    本页为本地工具，不进入站点导航、不面向访客；零依赖单文件，双击即用。
+  -->
+  <style>
+    :root {
+      --bg: #111827;
+      --card: #1f2937;
+      --border: #374151;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --brand: #2f7d4f;
+      --brand-hover: #38915c;
+      --brand-bright: #4ade80;
+      --danger: #f87171;
+      --warn: #fb923c;
+      --info: #60a5fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px 16px 60px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .tab.active { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+    label b { color: var(--text); font-weight: 600; }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+    textarea { resize: vertical; }
+    input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+    input:disabled, select:disabled { opacity: .45; cursor: not-allowed; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    .count { font-size: 12px; color: var(--muted); text-align: right; margin-top: 2px; }
+    .count.over { color: var(--danger); font-weight: 600; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .id-preview {
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      color: var(--brand-bright);
+      background: var(--bg);
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-top: 12px;
+    }
+    button.primary {
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background: var(--brand);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary:hover { background: var(--brand-hover); }
+    button.primary:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 2px; }
+    .errors { border: 1px solid var(--danger); border-radius: 8px; padding: 10px 14px; margin-top: 12px; }
+    .errors h3 { margin: 0 0 6px; font-size: 14px; color: var(--danger); }
+    .errors li { color: var(--danger); font-size: 13px; margin: 2px 0; }
+    .output textarea { min-height: 260px; font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.5; }
+    .out-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .out-actions button {
+      flex: 1;
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .out-actions button:hover { border-color: var(--brand-bright); color: var(--brand-bright); }
+    .ok-msg { color: var(--brand-bright); font-size: 13px; margin-top: 8px; }
+    .step { color: var(--info); font-weight: 600; }
+    .hidden { display: none; }
+    @media (max-width: 560px) { .row { flex-direction: column; gap: 0; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>本地录入表单</h1>
+  <p class="sub">每日体坛速览 · 生成/追加 JSON，不手写字段（TECH_DESIGN v1.3）· 生成后需人工终审（PRD 9.3）再替换 data/*.json 并 push</p>
+
+  <div class="card">
+    <div class="tabs">
+      <button type="button" class="tab active" id="tab-news" onclick="switchMode('news')">速览条目 → news.json</button>
+      <button type="button" class="tab" id="tab-match" onclick="switchMode('match')">比赛 → matches.json</button>
+    </div>
+
+    <label><b>第一步（可选）</b>：粘贴现有 JSON 全部内容，新条目会追加到后面；留空则从空数组开始</label>
+    <textarea id="existing-json" rows="4" placeholder='粘贴 data/news.json（或 matches.json）文件的完整内容，形如 [ {...}, {...} ]'></textarea>
+    <div class="hint" id="existing-info">未粘贴：将输出只含新条目的数组</div>
+
+    <!-- ============ news 模式 ============ -->
+    <div id="form-news">
+      <div class="row">
+        <div>
+          <label><b>速览日期</b> digest_date</label>
+          <input type="date" id="n-date">
+        </div>
+        <div>
+          <label>条目序号（一般不用改，自动取下一个）</label>
+          <input type="number" id="n-seq" min="1" value="1">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label><b>所属板块</b> section</label>
+          <select id="n-section">
+            <option value="头条">头条</option>
+            <option value="转会伤病">转会伤病</option>
+            <option value="热议">热议</option>
+            <option value="明日看点">明日看点</option>
+          </select>
+        </div>
+        <div>
+          <label><b>联赛</b> league</label>
+          <select id="n-league">
+            <option>NBA</option>
+            <option>英超</option>
+            <option>中超</option>
+            <option>欧冠</option>
+            <option>电竞</option>
+            <option>综合</option>
+          </select>
+        </div>
+      </div>
+      <label><b>标题</b> title（≤30 字）</label>
+      <input type="text" id="n-title" maxlength="60" placeholder="一句话说清事件">
+      <div class="count" id="n-title-count">0 / 30</div>
+      <label><b>摘要</b> summary（≤60 字，需含背景 / 影响 / 后续之一）</label>
+      <textarea id="n-summary" rows="3" maxlength="120" placeholder="补充背景、影响或后续安排"></textarea>
+      <div class="count" id="n-summary-count">0 / 60</div>
+      <div class="row">
+        <div>
+          <label><b>来源名称</b> source_name</label>
+          <input type="text" id="n-source-name" placeholder="如：NBA官网">
+        </div>
+        <div>
+          <label><b>状态</b> status</label>
+          <select id="n-status">
+            <option value="draft">draft（草稿，默认）</option>
+            <option value="published">published（已发布）</option>
+          </select>
+          <div class="hint">人工终审通过后改为 published 才对用户可见</div>
+        </div>
+      </div>
+      <label><b>来源链接</b> source_url</label>
+      <input type="url" id="n-source-url" placeholder="https://...">
+      <div class="id-preview">id 自动生成：<span id="n-id-preview">—</span>　created_at 自动：<span id="n-created-preview">—</span></div>
+      <button type="button" class="primary" onclick="generateNews()">生成 JSON（速览条目）</button>
+    </div>
+
+    <!-- ============ match 模式 ============ -->
+    <div id="form-match" class="hidden">
+      <div class="row">
+        <div>
+          <label><b>比赛日期</b>（match_time 的日期部分）</label>
+          <input type="date" id="m-date">
+        </div>
+        <div>
+          <label>条目序号（一般不用改，自动取下一个）</label>
+          <input type="number" id="m-seq" min="1" value="1">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label><b>联赛</b> league（MVP 仅 NBA / 英超）</label>
+          <select id="m-league" onchange="refreshMatchPreview()">
+            <option value="NBA">NBA</option>
+            <option value="英超">英超</option>
+          </select>
+        </div>
+        <div>
+          <label><b>开球时间</b>（北京时间）</label>
+          <input type="time" id="m-time">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label><b>主队</b> home_team</label>
+          <input type="text" id="m-home" placeholder="如：凯尔特人">
+        </div>
+        <div>
+          <label><b>客队</b> away_team</label>
+          <input type="text" id="m-away" placeholder="如：湖人">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label><b>状态</b> status</label>
+          <select id="m-status" onchange="onMatchStatusChange()">
+            <option>未开始</option>
+            <option>进行中</option>
+            <option>已结束</option>
+            <option>延期</option>
+            <option>取消</option>
+          </select>
+        </div>
+        <div>
+          <label><b>比分来源</b> data_source（核对溯源用）</label>
+          <input type="text" id="m-source" placeholder="如：NBA官网">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>主队得分 home_score</label>
+          <input type="number" id="m-hscore" min="0" disabled>
+        </div>
+        <div>
+          <label>客队得分 away_score</label>
+          <input type="number" id="m-ascore" min="0" disabled>
+        </div>
+      </div>
+      <div class="hint" id="m-score-hint">状态为「已结束」时比分必填且须与官方一致；「未开始 / 延期 / 取消」不能填比分。</div>
+      <div class="row">
+        <div>
+          <label>轮次 round（选填）</label>
+          <input type="text" id="m-round" placeholder="如：英超第 6 轮">
+        </div>
+        <div>
+          <label>场馆 venue（选填）</label>
+          <input type="text" id="m-venue" placeholder="如：酋长球场">
+        </div>
+      </div>
+      <div class="id-preview">id 自动生成：<span id="m-id-preview">—</span>　updated_at 自动：<span id="m-updated-preview">—</span></div>
+      <button type="button" class="primary" onclick="generateMatch()">生成 JSON（比赛）</button>
+    </div>
+
+    <div id="error-box" class="errors hidden"></div>
+  </div>
+
+  <div class="card output hidden" id="output-card">
+    <span class="step">第二步</span>：人工终审下面这段 JSON（PRD 9.3），确认后<b>整体替换</b>对应的 data/*.json 文件，然后 git push。
+    <textarea id="output-json" readonly></textarea>
+    <div class="out-actions">
+      <button type="button" id="btn-copy" onclick="copyOutput()">复制全部</button>
+      <button type="button" id="btn-download" onclick="downloadOutput()">下载 json 文件</button>
+    </div>
+    <div class="ok-msg hidden" id="copy-ok">已复制到剪贴板 ✓</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var MODE = { news: 'news.json', match: 'matches.json' };
+  var LEAGUE_CODE = { 'NBA': 'nba', '英超': 'epl', '中超': 'csl', '欧冠': 'ucl', '电竞': 'esports', '综合': 'misc' };
+  var currentMode = 'news';
+  var lastResult = { filename: 'news.json', text: '' };
+
+  function $(id) { return document.getElementById(id); }
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  /* ISO 8601 含本地时区偏移，如 2026-09-27T14:00:00+08:00 */
+  function nowIso() {
+    var d = new Date();
+    var off = -d.getTimezoneOffset();
+    var sign = off >= 0 ? '+' : '-';
+    var abs = Math.abs(off);
+    var hh = pad2(Math.floor(abs / 60));
+    var mm = pad2(abs % 60);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+      'T' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()) +
+      sign + hh + mm;
+  }
+
+  function parseExisting() {
+    var raw = $('existing-json').value.trim();
+    if (!raw) return { arr: [], parsed: false };
+    var data;
+    try { data = JSON.parse(raw); } catch (e) { return { error: '粘贴内容不是合法 JSON：' + e.message }; }
+    if (!Array.isArray(data)) return { error: '粘贴内容应是 JSON 数组（[ ... ]），当前不是数组' };
+    return { arr: data, parsed: true };
+  }
+
+  function nextSeq(arr, prefix) {
+    var max = 0;
+    for (var i = 0; i < arr.length; i++) {
+      var id = arr[i] && arr[i].id;
+      if (typeof id === 'string' && id.indexOf(prefix) === 0) {
+        var n = parseInt(id.slice(prefix.length), 10);
+        if (!isNaN(n) && n > max) max = n;
+      }
+    }
+    return max + 1;
+  }
+
+  function compactDate(dateStr) { return dateStr.replace(/-/g, ''); }
+
+  /* ---------- 模式切换 ---------- */
+  window.switchMode = function (mode) {
+    currentMode = mode;
+    $('tab-news').classList.toggle('active', mode === 'news');
+    $('tab-match').classList.toggle('active', mode === 'match');
+    $('form-news').classList.toggle('hidden', mode !== 'news');
+    $('form-match').classList.toggle('hidden', mode !== 'match');
+    $('error-box').classList.add('hidden');
+    refreshExistingInfo();
+    refreshMatchPreview();
+  };
+
+  /* ---------- 粘贴区提示 ---------- */
+  function refreshExistingInfo() {
+    var r = parseExisting();
+    var el = $('existing-info');
+    if (r.error) { el.textContent = '⚠ ' + r.error; el.style.color = 'var(--danger)'; return; }
+    if (!r.parsed) { el.textContent = '未粘贴：将输出只含新条目的数组'; el.style.color = ''; return; }
+    var prefix = currentMode === 'news'
+      ? compactDate($('n-date').value || todayStr()) + '-n'
+      : compactDate($('m-date').value || todayStr()) + '-' + LEAGUE_CODE[$('m-league').value];
+    var auto = nextSeq(r.arr, prefix);
+    el.textContent = '已载入 ' + r.arr.length + ' 条现有数据，本次追加后共 ' + (r.arr.length + 1) +
+      ' 条；该前缀下一条序号自动为 ' + pad2(auto);
+    el.style.color = 'var(--brand-bright)';
+    if (currentMode === 'news') $('n-seq').value = auto; else $('m-seq').value = auto;
+  }
+
+  /* ---------- news ---------- */
+  function newsId() {
+    return compactDate($('n-date').value || todayStr()) + '-n' + pad2(parseInt($('n-seq').value, 10) || 1);
+  }
+
+  function refreshNewsPreview() {
+    $('n-id-preview').textContent = newsId();
+    $('n-created-preview').textContent = nowIso();
+    var r = parseExisting();
+    if (!r.error) {
+      var prefix = compactDate($('n-date').value || todayStr()) + '-n';
+      var auto = nextSeq(r.arr, prefix);
+      if ($('existing-json').value.trim()) $('n-seq').value = auto;
+      refreshExistingInfo();
+    }
+  }
+
+  function bindCounter(inputId, countId, limit) {
+    $(inputId).addEventListener('input', function () {
+      var n = this.value.length;
+      var el = $(countId);
+      el.textContent = n + ' / ' + limit;
+      el.classList.toggle('over', n > limit);
+    });
+  }
+
+  window.generateNews = function () {
+    clearErrors();
+    var errs = [];
+    var r = parseExisting();
+    if (r.error) errs.push(r.error);
+    var arr = r.arr || [];
+
+    var date = $('n-date').value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) errs.push('速览日期未填或格式不对（应为 YYYY-MM-DD）');
+
+    var seq = parseInt($('n-seq').value, 10);
+    if (!(seq >= 1)) errs.push('条目序号应为 ≥1 的数字');
+
+    var title = $('n-title').value.trim();
+    if (!title) errs.push('标题必填');
+    else if (title.length > 30) errs.push('标题超字数：当前 ' + title.length + ' 字，上限 30 字');
+
+    var summary = $('n-summary').value.trim();
+    if (!summary) errs.push('摘要必填');
+    else if (summary.length > 60) errs.push('摘要超字数：当前 ' + summary.length + ' 字，上限 60 字');
+
+    var name = $('n-source-name').value.trim();
+    if (!name) errs.push('来源名称必填');
+
+    var url = $('n-source-url').value.trim();
+    if (!url) errs.push('来源链接必填');
+    else if (!/^https?:\/\/\S+/.test(url)) errs.push('来源链接应以 http:// 或 https:// 开头');
+
+    var id = newsId();
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] && arr[i].id === id) { errs.push('id 重复：' + id + ' 已存在于粘贴的数据里，请改序号'); break; }
+    }
+
+    if (errs.length) return showErrors(errs);
+
+    var item = {
+      id: id,
+      title: title,
+      summary: summary,
+      section: $('n-section').value,
+      league: $('n-league').value,
+      source_name: name,
+      source_url: url,
+      digest_date: date,
+      status: $('n-status').value,
+      created_at: nowIso()
+    };
+    arr.push(item);
+    output(MODE.news, arr);
+  };
+
+  /* ---------- match ---------- */
+  function matchId() {
+    var league = $('m-league').value;
+    return compactDate($('m-date').value || todayStr()) + '-' + LEAGUE_CODE[league] + '-' +
+      pad2(parseInt($('m-seq').value, 10) || 1);
+  }
+
+  function refreshMatchPreview() {
+    $('m-id-preview').textContent = matchId();
+    $('m-updated-preview').textContent = nowIso();
+    var r = parseExisting();
+    if (!r.error && currentMode === 'match') {
+      var prefix = compactDate($('m-date').value || todayStr()) + '-' + LEAGUE_CODE[$('m-league').value];
+      var auto = nextSeq(r.arr, prefix);
+      if ($('existing-json').value.trim()) $('m-seq').value = auto;
+      refreshExistingInfo();
+    }
+  }
+
+  window.onMatchStatusChange = function () {
+    var st = $('m-status').value;
+    var needScore = (st === '已结束' || st === '进行中');
+    $('m-hscore').disabled = !needScore;
+    $('m-ascore').disabled = !needScore;
+    $('m-score-hint').textContent = needScore
+      ? '状态为「' + st + '」：比分必填' + (st === '已结束' ? '且须与官方结果一致。' : '（进行中填当前比分）。')
+      : '状态为「未开始 / 延期 / 取消」时不能填比分，输入框已禁用。';
+  };
+
+  window.generateMatch = function () {
+    clearErrors();
+    var errs = [];
+    var r = parseExisting();
+    if (r.error) errs.push(r.error);
+    var arr = r.arr || [];
+
+    var date = $('m-date').value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) errs.push('比赛日期未填或格式不对（应为 YYYY-MM-DD）');
+    var time = $('m-time').value;
+    if (!/^\d{2}:\d{2}$/.test(time || '')) errs.push('开球时间未填');
+
+    var seq = parseInt($('m-seq').value, 10);
+    if (!(seq >= 1)) errs.push('条目序号应为 ≥1 的数字');
+
+    var home = $('m-home').value.trim();
+    var away = $('m-away').value.trim();
+    if (!home) errs.push('主队必填');
+    if (!away) errs.push('客队必填');
+    if (home && home === away) errs.push('主队与客队不能相同');
+
+    var status = $('m-status').value;
+    var hs = $('m-hscore').value.trim();
+    var as = $('m-ascore').value.trim();
+    if (status === '已结束') {
+      if (hs === '' || as === '') errs.push('状态为「已结束」时主客队比分必填');
+    } else if (status === '未开始' || status === '延期' || status === '取消') {
+      if (hs !== '' || as !== '') errs.push('状态为「' + status + '」时不应填比分');
+    }
+    if (hs !== '' && as !== '' && !(parseInt(hs, 10) >= 0 && parseInt(as, 10) >= 0)) {
+      errs.push('比分应为 ≥0 的整数');
+    }
+
+    var source = $('m-source').value.trim();
+    if (!source) errs.push('比分来源必填（核对溯源用，PRD 9.2）');
+
+    var id = matchId();
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] && arr[i].id === id) { errs.push('id 重复：' + id + ' 已存在于粘贴的数据里，请改序号'); break; }
+    }
+
+    if (errs.length) return showErrors(errs);
+
+    var item = {
+      id: id,
+      league: $('m-league').value,
+      home_team: home,
+      away_team: away,
+      match_time: date + ' ' + time,
+      status: status
+    };
+    if (hs !== '' && as !== '') { item.home_score = parseInt(hs, 10); item.away_score = parseInt(as, 10); }
+    var round = $('m-round').value.trim();
+    var venue = $('m-venue').value.trim();
+    if (round) item.round = round;
+    if (venue) item.venue = venue;
+    item.data_source = source;
+    item.updated_at = nowIso();
+    arr.push(item);
+    output(MODE.match, arr);
+  };
+
+  /* ---------- 输出 ---------- */
+  function clearErrors() { $('error-box').classList.add('hidden'); }
+
+  function showErrors(errs) {
+    var box = $('error-box');
+    box.innerHTML = '<h3>还没法生成，先解决这几项：</h3><ul>' +
+      errs.map(function (e) { return '<li>' + e + '</li>'; }).join('') + '</ul>';
+    box.classList.remove('hidden');
+    $('output-card').classList.add('hidden');
+  }
+
+  function output(filename, arr) {
+    lastResult = { filename: filename, text: JSON.stringify(arr, null, 2) };
+    $('output-json').value = lastResult.text;
+    $('btn-download').textContent = '下载 ' + filename;
+    $('output-card').classList.remove('hidden');
+    $('output-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  window.copyOutput = function () {
+    var text = $('output-json').value;
+    function fallback() {
+      var ta = $('output-json');
+      ta.removeAttribute('readonly');
+      ta.select();
+      try { document.execCommand('copy'); showCopied(); } catch (e) { /* 忽略 */ }
+      ta.setAttribute('readonly', '');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showCopied, fallback);
+    } else { fallback(); }
+  };
+
+  function showCopied() {
+    var el = $('copy-ok');
+    el.classList.remove('hidden');
+    setTimeout(function () { el.classList.add('hidden'); }, 2000);
+  }
+
+  window.downloadOutput = function () {
+    var blob = new Blob([lastResult.text], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = lastResult.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  };
+
+  /* ---------- 初始化 ---------- */
+  $('n-date').value = todayStr();
+  $('m-date').value = todayStr();
+  bindCounter('n-title', 'n-title-count', 30);
+  bindCounter('n-summary', 'n-summary-count', 60);
+  $('n-date').addEventListener('change', refreshNewsPreview);
+  $('n-seq').addEventListener('input', refreshNewsPreview);
+  $('n-title').addEventListener('input', refreshNewsPreview);
+  $('n-summary').addEventListener('input', refreshNewsPreview);
+  $('n-source-url').addEventListener('input', refreshNewsPreview);
+  $('n-source-name').addEventListener('input', refreshNewsPreview);
+  $('m-date').addEventListener('change', refreshMatchPreview);
+  $('m-seq').addEventListener('input', refreshMatchPreview);
+  $('m-home').addEventListener('input', refreshMatchPreview);
+  $('m-away').addEventListener('input', refreshMatchPreview);
+  $('m-time').addEventListener('input', refreshMatchPreview);
+  $('m-source').addEventListener('input', refreshMatchPreview);
+  $('m-round').addEventListener('input', refreshMatchPreview);
+  $('m-venue').addEventListener('input', refreshMatchPreview);
+  $('existing-json').addEventListener('input', function () {
+    if (currentMode === 'news') refreshNewsPreview(); else refreshMatchPreview();
+  });
+  onMatchStatusChange();
+  refreshNewsPreview();
+})();
+</script>
+</body>
+</html>
