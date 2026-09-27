@@ -1,9 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>赛程比分 · 每日体坛速览</title>
+  <script>
+    // 防闪烁：在样式表加载前就定好深浅（与首页共用同一键，跨页同步）
+    document.documentElement.dataset.theme = localStorage.getItem('hot-theme') === 'light' ? 'light' : 'dark';
+  </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -27,6 +31,7 @@
         <button type="button" class="filter-btn" data-category="足球">足球</button>
         <button type="button" class="filter-btn" data-category="综合">综合</button>
       </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换深浅模式">☀️</button>
     </nav>
   </header>
 
@@ -47,6 +52,7 @@
     <p>每日体坛速览 · 28days 练习项目 · MVP 阶段覆盖 NBA、英超两个联赛，真实数据源将在第 2 周接入。</p>
   </footer>
 
+  <script src="js/theme.js"></script>
   <script src="js/matches.js"></script>
 </body>
 </html>

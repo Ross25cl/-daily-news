@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>每日体坛速览</title>
+  <script>
+    // 防闪烁：在样式表加载前就定好深浅（与四板块/赛程页共用同一键）
+    document.documentElement.dataset.theme = localStorage.getItem('hot-theme') === 'light' ? 'light' : 'dark';
+  </script>
   <link rel="stylesheet" href="css/home.css">
 </head>
 <body>
@@ -66,6 +70,7 @@
     <p>每日体坛速览 · 28days 练习项目 · Day 8 主视图（mock 数据版）</p>
   </footer>
 
+  <script src="js/theme.js"></script>
   <script src="js/home.js"></script>
 </body>
 </html>

@@ -154,30 +154,15 @@ async function loadHot() {
   }
 }
 
-// ---------- 深浅模式切换（默认深色，记忆到 localStorage） ----------
-
-function initTheme() {
-  const root = document.documentElement;
-  const saved = localStorage.getItem('hot-theme');
-  if (saved === 'light' || saved === 'dark') root.dataset.theme = saved;
-  updateToggleIcon();
-  document.getElementById('theme-toggle').addEventListener('click', () => {
-    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('hot-theme', root.dataset.theme);
-    updateToggleIcon();
-  });
-}
-function updateToggleIcon() {
-  const dark = document.documentElement.dataset.theme !== 'light';
-  document.getElementById('theme-toggle').textContent = dark ? '☀️' : '🌙';
-}
+// ---------- 深浅模式 ----------
+// Day 9 起主题逻辑抽到公共的 js/theme.js（三页共用、跨页同步），
+// 这里不再重复实现；页面初始主题由 index.html <head> 内联脚本设置。
 
 // ---------- 启动 ----------
 
 function initHome() {
   document.getElementById('today').textContent =
     new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-  initTheme();
   document.getElementById('retry-btn').addEventListener('click', loadHot);
   loadHot();
 }
