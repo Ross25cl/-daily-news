@@ -1,21 +1,36 @@
 /* ============================================================
-   home.css — 首页「三平台热搜」主视图样式（Day 8）
+   home.css — 首页「三平台热搜」主视图样式（Day 8 建，Day 9 修）
    深色模式为默认，浅色通过 html[data-theme="light"] 切换
    仅作用于首页；赛程页继续使用 style.css，互不影响
+
+   ---------- 可复用组件约束（Day 9 余力加练） ----------
+   1) 文字对比度：正文与小字 ≥ 4.5:1（WCAG AA）；
+      大字（≥18.66px 粗体或 ≥24px）≥ 3:1；
+   2) 辅助文字最小 12px，不出现 11px 以下字号；
+   3) 色阶三级：页面底 --bg < 卡片 --card < 悬浮块 --chip-bg，
+      卡片必须比页面底色亮一级，列表条目层次才分明；
+   4) 品牌绿只用于按钮底色/强调线，绿底上的文字必须用白色；
+   5) 新增颜色先算对比度：深色底用提亮变体、浅色底用加深变体，
+      深浅两种模式都必须达标，写进 :root / [data-theme="light"]。
    ============================================================ */
 * { box-sizing: border-box; }
 
 :root {
-  --bg: #0f1115;
-  --card: #191c23;
-  --border: #2a2e37;
-  --text: #e8eaf0;
-  --muted: #9aa1ad;
-  --link: #e8eaf0;
-  --chip-bg: #242833;
-  --chip-text: #b9c0cc;
-  --skeleton: #242833;
-  --skeleton-hi: #303644;
+  --bg: #111827;        /* 页面底色：深灰、藏淡蓝调，长时间浏览压力小 */
+  --card: #1f2937;      /* 卡片：比底色亮一级，条目层次分明 */
+  --border: #374151;    /* 分隔线：蓝灰 */
+  --text: #e5e7eb;      /* 主文字 */
+  --muted: #9ca3af;     /* 次要文字 */
+  --link: #e5e7eb;
+  --chip-bg: #374151;
+  --chip-text: #d1d5db;
+  --skeleton: #374151;
+  --skeleton-hi: #4b5563;
+  --heat: #fb923c;      /* 热度值：on 卡片 6.3:1（原 #e0703a 仅 4.5:1 临界） */
+  --video: #60a5fa;     /* 视频角标：on 卡片 5.7:1（原 #3b82f6 仅 3.9:1 不达标） */
+  --brand: #2f7d4f;       /* 品牌绿（全站统一，替代 style.css 的 #2c6e2c） */
+  --brand-hover: #38915c; /* 品牌绿 hover 提亮一档 */
+  --brand-bright: #4ade80; /* 深色底上的强调绿：标题 hover（对比 8.2:1） */
 }
 
 html[data-theme="light"] {
@@ -29,6 +44,10 @@ html[data-theme="light"] {
   --chip-text: #4b5563;
   --skeleton: #e8eaf0;
   --skeleton-hi: #f3f4f7;
+  --heat: #c2410c;      /* on 白底 5.2:1 */
+  --video: #1d4ed8;     /* on 白底 6.7:1 */
+  --brand-hover: #2a7048;
+  --brand-bright: #2f7d4f; /* 浅色底上强调绿回落到品牌绿（on 白 5.1:1） */
 }
 
 body {
@@ -66,6 +85,8 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;   /* 窄屏塞不下时换行而不是横向溢出 */
+  gap: 8px;
 }
 .nav-pages { display: flex; gap: 4px; }
 .nav-link {
@@ -75,9 +96,14 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   color: var(--muted);
   text-decoration: none;
   font-size: 15px;
+  transition: background .15s, color .15s;
+}
+.nav-link:not(.active):hover {
+  background: var(--chip-bg);
+  color: var(--text);
 }
 .nav-link.active {
-  background: #2f7d4f;
+  background: var(--brand);
   color: #fff;
   font-weight: 600;
 }
@@ -89,6 +115,16 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   height: 38px;
   font-size: 17px;
   cursor: pointer;
+  transition: border-color .15s;
+}
+.theme-toggle:hover { border-color: var(--muted); }
+
+/* 键盘操作可见焦点环（无障碍） */
+.nav-link:focus-visible,
+.theme-toggle:focus-visible,
+.retry-btn:focus-visible {
+  outline: 2px solid var(--video);
+  outline-offset: 2px;
 }
 
 /* ---------- 平台卡片（可复用组件） ---------- */
@@ -175,7 +211,7 @@ html[data-theme="light"] .rank-2 { color: #8a93a3; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.hot-title:hover { color: #2f7d4f; text-decoration: underline; }
+.hot-title:hover { color: var(--brand-bright); text-decoration: underline; }
 .hot-meta {
   display: flex;
   align-items: center;
@@ -192,14 +228,14 @@ html[data-theme="light"] .rank-2 { color: #8a93a3; }
   padding: 0 7px;
   line-height: 20px;
 }
-.hot-heat { color: #e0703a; font-weight: 600; }
+.hot-heat { color: var(--heat); font-weight: 600; }
 .video-chip {
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
+  color: var(--video);
+  border: 1px solid var(--video);
   border-radius: 5px;
   padding: 0 6px;
   line-height: 18px;
-  font-size: 11px;
+  font-size: 12px; /* 11px→12px：辅助文字下限（组件约束 2） */
 }
 
 /* 缩略图 80x80（1:1，前 3 名） */
@@ -241,13 +277,15 @@ html[data-theme="light"] .rank-2 { color: #8a93a3; }
 .state-text { margin: 0 0 16px; font-size: 14px; }
 .retry-btn {
   border: none;
-  background: #2f7d4f;
+  background: var(--brand);
   color: #fff;
   border-radius: 8px;
   padding: 8px 22px;
   font-size: 14px;
   cursor: pointer;
+  transition: background .15s;
 }
+.retry-btn:hover { background: var(--brand-hover); }
 .empty-hint {
   color: var(--muted);
   font-size: 13px;
@@ -284,7 +322,7 @@ html[data-theme="light"] .rank-2 { color: #8a93a3; }
   font-size: 17px;
   margin: 0;
   padding-left: 10px;
-  border-left: 4px solid #2f7d4f;
+  border-left: 4px solid var(--brand);
 }
 .subscribe-box p { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 10px 0 0; }
 
@@ -302,6 +340,11 @@ html[data-theme="light"] .rank-2 { color: #8a93a3; }
 @media (min-width: 640px) {
   body { padding: 40px 24px 64px; }
   h1 { font-size: 30px; }
+}
+/* 窄屏：收紧导航，360px 及以下不再折行/溢出（Day 9 修复） */
+@media (max-width: 480px) {
+  .nav-link { padding: 6px 9px; font-size: 14px; }
+  .theme-toggle { width: 34px; height: 34px; font-size: 15px; }
 }
 @media (max-width: 380px) {
   .hot-thumb, .hot-thumb img { width: 64px; height: 64px; }

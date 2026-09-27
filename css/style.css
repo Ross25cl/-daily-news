@@ -1,33 +1,49 @@
-/* 每日体坛速览 · 共用样式（移动端优先） */
+/* 每日体坛速览 · 共用样式（Day 7 建，Day 9 统一深色主题）
+   Day 9：与 home.css 对齐同一套颜色变量——三个页面一种面孔，
+   导航切换不再深浅跳变；布局规则原样保留，只改颜色与按钮状态。 */
 * { box-sizing: border-box; }
+
+:root {
+  --bg: #111827;          /* 页面底色（与 home.css 一致） */
+  --card: #1f2937;        /* 卡片：比底色亮一级 */
+  --border: #374151;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --chip-bg: #374151;
+  --chip-text: #d1d5db;
+  --brand: #2f7d4f;       /* 品牌绿：全站统一（原 #2c6e2c 与首页不一致） */
+  --brand-hover: #38915c;
+  --brand-bright: #4ade80; /* 深色底上的强调绿：比分/hover（对比 8.2:1） */
+}
 
 body {
   font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 16px 48px;
-  color: #222;
-  background: #fafafa;
+  color: var(--text);
+  background: var(--bg);
 }
 
 /* ---------- 顶部 ---------- */
 .site-header {
-  border-bottom: 2px solid #2c6e2c;
+  border-bottom: 2px solid var(--border);
   padding-bottom: 14px;
   margin-bottom: 20px;
 }
 .brand .tag {
   display: inline-block;
-  background: #eef6ee;
-  color: #2c6e2c;
+  background: var(--chip-bg);
+  color: var(--chip-text);
   border-radius: 6px;
   padding: 1px 9px;
   font-size: 12px;
   margin-bottom: 10px;
 }
 h1 { font-size: 26px; margin: 0 0 4px; }
-.meta { color: #667; font-size: 14px; margin: 0; }
+.meta { color: var(--muted); font-size: 14px; margin: 0; }
 .meta span + span { margin-left: 12px; }
+.meta b { color: var(--text); }
 
 /* ---------- 导航：页面切换 + 大类筛选 ---------- */
 .site-nav { margin-top: 14px; }
@@ -35,13 +51,18 @@ h1 { font-size: 26px; margin: 0 0 4px; }
 .nav-link {
   display: inline-block;
   padding: 6px 14px;
-  border-radius: 8px 8px 0 0;
-  color: #556;
+  border-radius: 8px;
+  color: var(--muted);
   text-decoration: none;
   font-size: 15px;
+  transition: background .15s, color .15s;
+}
+.nav-link:not(.active):hover {
+  background: var(--chip-bg);
+  color: var(--text);
 }
 .nav-link.active {
-  background: #2c6e2c;
+  background: var(--brand);
   color: #fff;
   font-weight: 600;
 }
@@ -51,17 +72,29 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   margin-top: 10px;
 }
 .filter-btn {
-  border: 1px solid #2c6e2c;
-  background: #fff;
-  color: #2c6e2c;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
   border-radius: 999px;
   padding: 4px 16px;
   font-size: 14px;
   cursor: pointer;
+  transition: border-color .15s, background .15s;
 }
+.filter-btn:hover { border-color: var(--brand-bright); }
 .filter-btn.active {
-  background: #2c6e2c;
+  background: var(--brand);
+  border-color: var(--brand);
   color: #fff;
+  font-weight: 600;
+}
+
+/* 键盘操作可见焦点环（与 home.css 一致） */
+.nav-link:focus-visible,
+.filter-btn:focus-visible,
+.date-btn:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
 }
 
 /* ---------- 速览板块 ---------- */
@@ -70,19 +103,19 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   font-size: 18px;
   margin: 28px 0 12px;
   padding-left: 10px;
-  border-left: 4px solid #2c6e2c;
+  border-left: 4px solid var(--brand);
 }
 .item {
   padding: 12px 16px;
-  border: 1px solid #e3e3e3;
+  border: 1px solid var(--border);
   border-radius: 10px;
   margin-bottom: 10px;
-  background: #fff;
+  background: var(--card);
 }
 .item h3 { font-size: 15px; margin: 0 0 4px; }
-.item h3 a { color: #222; text-decoration: none; }
-.item h3 a:hover { color: #2c6e2c; text-decoration: underline; }
-.item p { margin: 0; color: #556; font-size: 13px; line-height: 1.6; }
+.item h3 a { color: var(--text); text-decoration: none; }
+.item h3 a:hover { color: var(--brand-bright); text-decoration: underline; }
+.item p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .item .item-meta {
   display: flex;
   flex-wrap: wrap;
@@ -91,21 +124,21 @@ h1 { font-size: 26px; margin: 0 0 4px; }
 }
 .tag {
   display: inline-block;
-  background: #eef6ee;
-  color: #2c6e2c;
+  background: var(--chip-bg);
+  color: var(--brand-bright);
   border-radius: 6px;
   padding: 1px 9px;
   font-size: 12px;
 }
-.tag.gray { background: #f0f0f2; color: #556; }
+.tag.gray { background: var(--chip-bg); color: var(--chip-text); }
 
 .empty-hint {
-  color: #99a;
+  color: var(--muted);
   font-size: 13px;
   padding: 12px 16px;
-  border: 1px dashed #ddd;
+  border: 1px dashed var(--border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--card);
 }
 
 /* ---------- 赛程页 ---------- */
@@ -115,29 +148,33 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   margin: 4px 0 10px;
 }
 .date-btn {
-  border: 1px solid #ccd;
-  background: #fff;
-  color: #556;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
   border-radius: 8px;
   padding: 6px 18px;
   font-size: 14px;
   cursor: pointer;
+  transition: border-color .15s, color .15s;
 }
+.date-btn:hover { border-color: var(--brand-bright); color: var(--text); }
 .date-btn.active {
-  border-color: #2c6e2c;
-  background: #2c6e2c;
+  border-color: var(--brand);
+  background: var(--brand);
   color: #fff;
   font-weight: 600;
 }
-.matches-meta { color: #667; font-size: 13px; margin: 0 0 12px; }
+.matches-meta { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
 
 .match-card {
   padding: 12px 16px;
-  border: 1px solid #e3e3e3;
+  border: 1px solid var(--border);
   border-radius: 10px;
   margin-bottom: 10px;
-  background: #fff;
+  background: var(--card);
+  transition: border-color .15s;
 }
+.match-card:hover { border-color: var(--brand-bright); } /* 可点击卡片的悬停反馈 */
 .match-card .match-top {
   display: flex;
   flex-wrap: wrap;
@@ -145,19 +182,19 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   gap: 8px;
 }
 .match-card .teams { font-size: 15px; font-weight: 600; }
-.match-card .score { font-size: 18px; font-weight: 700; color: #2c6e2c; }
-.match-card .match-sub { color: #667; font-size: 13px; margin-top: 4px; }
+.match-card .score { font-size: 18px; font-weight: 700; color: var(--brand-bright); }
+.match-card .match-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
 .match-card .detail {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px dashed #e3e3e3;
-  color: #556;
+  border-top: 1px dashed var(--border);
+  color: var(--muted);
   font-size: 13px;
   line-height: 1.7;
 }
 
 /* 赛程页：状态徽标与详情展开（Step 4） */
-.tag.live { background: #b3541e; color: #fff; }   /* 进行中：醒目橙 */
+.tag.live { background: #b3541e; color: #fff; }   /* 进行中：醒目橙（白字对比 4.9:1） */
 .match-card { cursor: pointer; }                   /* 提示可点击 */
 .match-card .detail { display: none; }             /* 详情默认收起 */
 .match-card.open .detail { display: block; }       /* 点击卡片展开 */
@@ -166,22 +203,23 @@ h1 { font-size: 26px; margin: 0 0 4px; }
 .subscribe-box {
   margin-top: 32px;
   padding: 16px;
-  border: 1px solid #e3e3e3;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--card);
 }
-.subscribe-box p { color: #556; font-size: 13px; line-height: 1.7; margin: 8px 0 0; }
+.subscribe-box p { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 8px 0 0; }
 
 /* ---------- 页脚 ---------- */
 .site-footer {
   margin-top: 36px;
-  color: #99a;
+  color: var(--muted);
   font-size: 13px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
   padding-top: 14px;
   line-height: 1.7;
 }
 .site-footer p { margin: 0 0 6px; }
+.site-footer b { color: var(--text); }
 
 /* ---------- 宽屏微调（375px 下无需横向滚动） ---------- */
 @media (min-width: 640px) {
@@ -189,4 +227,8 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   h1 { font-size: 30px; }
   .site-nav { display: flex; align-items: flex-end; justify-content: space-between; }
   .nav-filters { margin-top: 0; }
+}
+/* 窄屏：收紧导航（与 home.css 一致，320px 也不溢出） */
+@media (max-width: 480px) {
+  .nav-link { padding: 6px 9px; font-size: 14px; }
 }
