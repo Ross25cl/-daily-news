@@ -1,0 +1,35 @@
+{
+  "leagueId": "ucl",
+  "leagueName": "欧冠",
+  "sport": "football",
+  "emoji": "⚽",
+  "desc": "欧洲冠军联赛 · 假数据示例（MVP 结构预览，接真实数据时字段名不变）",
+  "updated_at": "2026-09-28T21:30:00+08:00",
+  "tabs": ["schedule", "standings", "knockout", "players"],
+  "schedule": [
+    { "id": "ucl-20260928-01", "date": "2026-09-28", "time": "03:00", "status": "已结束", "homeTeam": "皇家马德里", "awayTeam": "曼城", "homeScore": 3, "awayScore": 1, "round": "联赛阶段第 3 轮", "venue": "伯纳乌" },
+    { "id": "ucl-20260928-02", "date": "2026-09-28", "time": "03:00", "status": "已结束", "homeTeam": "拜仁慕尼黑", "awayTeam": "阿森纳", "homeScore": 2, "awayScore": 2, "round": "联赛阶段第 3 轮", "venue": "安联球场" },
+    { "id": "ucl-20260929-01", "date": "2026-09-29", "time": "03:00", "status": "未开始", "homeTeam": "巴塞罗那", "awayTeam": "国际米兰", "round": "联赛阶段第 3 轮", "venue": "奥林匹克球场" },
+    { "id": "ucl-20260929-02", "date": "2026-09-29", "time": "03:00", "status": "未开始", "homeTeam": "利物浦", "awayTeam": "巴黎圣日耳曼", "round": "联赛阶段第 3 轮", "venue": "安菲尔德" },
+    { "id": "ucl-20260930-01", "date": "2026-09-30", "time": "03:00", "status": "未开始", "homeTeam": "多特蒙德", "awayTeam": "尤文图斯", "round": "联赛阶段第 3 轮", "venue": "西格纳伊度纳公园" }
+  ],
+  "standings": [
+    { "rank": 1, "teamName": "皇家马德里", "played": 3, "wins": 2, "draws": 1, "losses": 0, "goalsFor": 8, "goalsAgainst": 3, "points": 7 },
+    { "rank": 2, "teamName": "拜仁慕尼黑", "played": 3, "wins": 2, "draws": 1, "losses": 0, "goalsFor": 9, "goalsAgainst": 5, "points": 7 },
+    { "rank": 3, "teamName": "曼城", "played": 3, "wins": 1, "draws": 2, "losses": 0, "goalsFor": 5, "goalsAgainst": 4, "points": 5 },
+    { "rank": 4, "teamName": "阿森纳", "played": 3, "wins": 1, "draws": 1, "losses": 1, "goalsFor": 6, "goalsAgainst": 5, "points": 4 },
+    { "rank": 5, "teamName": "国际米兰", "played": 3, "wins": 0, "draws": 1, "losses": 2, "goalsFor": 2, "goalsAgainst": 6, "points": 1 }
+  ],
+  "knockout": [
+    { "round": "半决赛 首回合", "homeTeam": "皇家马德里", "awayTeam": "曼城", "homeScore": 2, "awayScore": 1, "status": "已结束", "date": "2026-09-22 03:00", "note": "两回合制，皇马先下一城" },
+    { "round": "半决赛 首回合", "homeTeam": "巴塞罗那", "awayTeam": "拜仁慕尼黑", "homeScore": 1, "awayScore": 1, "status": "已结束", "date": "2026-09-23 03:00", "note": "两回合制，悬念留到次回合" },
+    { "round": "半决赛 次回合", "homeTeam": "曼城", "awayTeam": "皇家马德里", "status": "未开始", "date": "2026-09-30 03:00", "note": "曼城总比分 1-2 落后，主场求翻盘" }
+  ],
+  "players": [
+    { "rank": 1, "playerName": "裘德·贝林厄姆", "teamName": "皇家马德里", "apps": 6, "goals": 5, "assists": 4, "rating": 8.3 },
+    { "rank": 2, "playerName": "基利安·姆巴佩", "teamName": "皇家马德里", "apps": 6, "goals": 6, "assists": 1, "rating": 8.1 },
+    { "rank": 3, "playerName": "拉明·亚马尔", "teamName": "巴塞罗那", "apps": 6, "goals": 3, "assists": 5, "rating": 8.2 },
+    { "rank": 4, "playerName": "哈里·凯恩", "teamName": "拜仁慕尼黑", "apps": 6, "goals": 4, "assists": 3, "rating": 8.0 },
+    { "rank": 5, "playerName": "埃尔林·哈兰德", "teamName": "曼城", "apps": 6, "goals": 5, "assists": 0, "rating": 7.9 }
+  ]
+}

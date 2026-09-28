@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>联赛 · 每日体坛速览</title>
+  <script>
+    // 防闪烁：在样式表加载前就定好深浅（与首页共用同一键，跨页同步）
+    document.documentElement.dataset.theme = localStorage.getItem('hot-theme') === 'light' ? 'light' : 'dark';
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/league.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="tag">28days 项目 · MVP</span>
+      <h1 id="league-title">联赛</h1>
+      <p class="meta">
+        <span id="league-sub">加载中…</span>
+        <span>最近更新 <b id="updated-at">--</b></span>
+      </p>
+    </div>
+    <nav class="site-nav" aria-label="主导航">
+      <div class="nav-pages">
+        <a href="index.html" class="nav-link">热搜速览</a>
+        <a href="matches.html" class="nav-link">赛程比分</a>
+        <a href="league.html?lg=nba" class="nav-link lg-nba">NBA</a>
+        <a href="league.html?lg=cba" class="nav-link lg-cba">CBA</a>
+        <a href="league.html?lg=ucl" class="nav-link lg-ucl">欧冠</a>
+        <a href="league.html?lg=epl" class="nav-link lg-epl">英超</a>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换深浅模式">☀️</button>
+    </nav>
+  </header>
+
+  <main id="league-main">
+    <p class="empty-hint">加载中…</p>
+  </main>
+
+  <footer class="site-footer">
+    <p><b>内容来源说明</b>：本页全部为本地假数据（mock），仅用于第 2 周开头的页面结构（UI/UX）预览；字段名已按规范统一（teamName / wins / points 等），接真实数据时只换数据不改代码。</p>
+    <p>每日体坛速览 · 28days 练习项目 · Day 10 联赛板块（mock 数据版）</p>
+  </footer>
+
+  <script src="js/theme.js"></script>
+  <script src="js/league.js"></script>
+</body>
+</html>

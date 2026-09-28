@@ -1,0 +1,159 @@
+/* ============================================================
+   league.css — 联赛板块页样式（Day 10 建）
+   作用于 league.html（NBA/CBA/欧冠/英超 共用一页，?lg= 参数区分）
+   颜色全部走 style.css 的同一套变量，不新增硬编码色（Day 9 约束）；
+   仅补充一个状态橙（与 style.css 的 .tag.live 同源 #b3541e）。
+   ============================================================ */
+
+/* ---------- 联赛头 ---------- */
+.lg-head { display: flex; align-items: baseline; gap: 10px; margin: 2px 0 14px; }
+.lg-head .lg-emoji { font-size: 24px; }
+.lg-head h2 { font-size: 20px; margin: 0; }
+.lg-head .lg-desc { color: var(--muted); font-size: 13px; margin: 0; }
+
+/* ---------- 子标签（Tab） ---------- */
+.lg-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  overflow-x: auto;          /* 窄屏放不下时横向滑动，不折行 */
+  scrollbar-width: none;
+}
+.lg-tabs::-webkit-scrollbar { display: none; }
+.lg-tab {
+  flex: none;
+  padding: 9px 14px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.lg-tab:hover { color: var(--text); }
+.lg-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--brand);
+  font-weight: 600;
+}
+.lg-tab:focus-visible { outline: 2px solid #60a5fa; outline-offset: -2px; }
+
+/* ---------- 赛程：按日期分组 ---------- */
+.lg-date-head {
+  font-size: 14px;
+  margin: 18px 0 8px;
+  padding-left: 10px;
+  border-left: 4px solid var(--brand);
+  color: var(--text);
+}
+.lg-date-head span { color: var(--muted); font-size: 12px; margin-left: 8px; font-weight: 400; }
+.lg-date-group:first-of-type .lg-date-head { margin-top: 0; }
+
+/* ---------- 比赛卡 / 对阵卡（季后赛、淘汰赛共用） ---------- */
+.lg-match {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: var(--card);
+}
+.lg-match-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.lg-round {
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  border-radius: 5px;
+  padding: 1px 8px;
+  font-size: 12px;
+}
+.lg-status {
+  margin-left: auto;
+  font-size: 12px;
+  border-radius: 5px;
+  padding: 1px 8px;
+}
+.lg-status.st-done { background: var(--chip-bg); color: var(--chip-text); }
+.lg-status.st-live { background: #b3541e; color: #fff; }   /* 进行中：醒目橙（白字 4.9:1） */
+.lg-status.st-todo { border: 1px dashed var(--border); color: var(--muted); }
+.lg-match-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lg-team { flex: 1; font-size: 15px; font-weight: 600; min-width: 0; }
+.lg-team.away { text-align: right; }
+.lg-score {
+  flex: none;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand-bright);
+  letter-spacing: 1px;
+}
+.lg-score.vs { color: var(--muted); font-size: 14px; letter-spacing: 0; }
+.lg-match-sub { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.lg-note { color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.6; }
+
+/* ---------- 表格（排行 / 积分榜 / 球员数据 / 射手榜） ---------- */
+.lg-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow-x: auto;          /* 窄屏横向滑动，表格列不挤压 */
+  background: var(--card);
+}
+.lg-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 420px; }
+.lg-table th {
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  padding: 9px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+.lg-table td {
+  padding: 9px 10px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--text);
+  white-space: nowrap;
+}
+.lg-table th.left, .lg-table td.left { text-align: left; }
+.lg-table td.name { font-weight: 600; }
+.lg-table td.key { color: var(--brand-bright); font-weight: 700; }  /* 关键列：积分/得分 */
+.lg-table tr:first-child td { border-top: none; }
+
+/* ---------- 状态提示 ---------- */
+.lg-error {
+  text-align: center;
+  padding: 40px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.lg-error button {
+  border: none;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 22px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+.lg-error button:hover { background: var(--brand-hover); }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 480px) {
+  .lg-match-main { flex-wrap: wrap; row-gap: 4px; }
+  .lg-team { flex-basis: 100%; }
+  .lg-team.away { text-align: left; }
+  .lg-score { flex: none; }
+  .lg-head { flex-wrap: wrap; }
+}

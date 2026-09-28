@@ -255,9 +255,13 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   .nav-filters { margin-top: 0; }
 }
 /* 窄屏：收紧导航（与 home.css 一致，320px 也不溢出）；
-   切换按钮浮到导航右上角，不与三链接/筛选行争宽度 */
+   切换按钮浮到导航右上角，不与六链接/筛选行争宽度。
+   Day 10 导航改六项后窄屏放不下：链接行横向滑动，
+   链接文字禁止内部断行（否则「热搜速览」会被拆成两行） */
 @media (max-width: 480px) {
-  .nav-link { padding: 6px 9px; font-size: 14px; }
+  .nav-link { padding: 6px 9px; font-size: 14px; white-space: nowrap; }
+  .nav-pages { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+  .nav-pages::-webkit-scrollbar { display: none; }
   .site-nav { position: relative; padding-right: 44px; }
   .theme-toggle { position: absolute; right: 0; top: 0; width: 34px; height: 34px; font-size: 15px; }
 }

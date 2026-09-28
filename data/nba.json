@@ -1,0 +1,36 @@
+{
+  "leagueId": "nba",
+  "leagueName": "NBA",
+  "sport": "basketball",
+  "emoji": "🏀",
+  "desc": "美职篮 · 假数据示例（MVP 结构预览，接真实数据时字段名不变）",
+  "updated_at": "2026-09-28T21:30:00+08:00",
+  "tabs": ["schedule", "standings", "playoffs", "players"],
+  "schedule": [
+    { "id": "nba-20260928-01", "date": "2026-09-28", "time": "07:30", "status": "已结束", "homeTeam": "凯尔特人", "awayTeam": "尼克斯", "homeScore": 112, "awayScore": 108, "round": "季前赛", "venue": "TD 花园" },
+    { "id": "nba-20260928-02", "date": "2026-09-28", "time": "10:00", "status": "进行中", "homeTeam": "勇士", "awayTeam": "太阳", "homeScore": 58, "awayScore": 52, "round": "季前赛", "venue": "大通中心" },
+    { "id": "nba-20260929-01", "date": "2026-09-29", "time": "08:00", "status": "未开始", "homeTeam": "雷霆", "awayTeam": "独行侠", "round": "季前赛", "venue": "Paycom 中心" },
+    { "id": "nba-20260929-02", "date": "2026-09-29", "time": "10:30", "status": "未开始", "homeTeam": "湖人", "awayTeam": "掘金", "round": "季前赛", "venue": "Crypto.com 球馆" },
+    { "id": "nba-20260929-03", "date": "2026-09-29", "time": "11:00", "status": "未开始", "homeTeam": "热火", "awayTeam": "骑士", "round": "季前赛", "venue": "卡西亚中心" }
+  ],
+  "standings": [
+    { "rank": 1, "teamName": "凯尔特人", "wins": 3, "losses": 0, "pointsDiff": "+24", "winRate": "100%" },
+    { "rank": 2, "teamName": "雷霆", "wins": 2, "losses": 1, "pointsDiff": "+15", "winRate": "67%" },
+    { "rank": 3, "teamName": "湖人", "wins": 2, "losses": 1, "pointsDiff": "+6", "winRate": "67%" },
+    { "rank": 4, "teamName": "勇士", "wins": 1, "losses": 2, "pointsDiff": "-4", "winRate": "33%" },
+    { "rank": 5, "teamName": "尼克斯", "wins": 0, "losses": 3, "pointsDiff": "-18", "winRate": "0%" }
+  ],
+  "playoffs": [
+    { "round": "西部半决赛 G4", "homeTeam": "雷霆", "awayTeam": "独行侠", "homeScore": 2, "awayScore": 1, "status": "进行中", "date": "2026-09-29 08:00", "note": "七战四胜制，雷霆大比分 2-1 领先" },
+    { "round": "东部半决赛 G4", "homeTeam": "凯尔特人", "awayTeam": "尼克斯", "homeScore": 2, "awayScore": 2, "status": "进行中", "date": "2026-09-30 07:30", "note": "七战四胜制，双方战成 2-2" },
+    { "round": "西部半决赛 G5", "homeTeam": "独行侠", "awayTeam": "雷霆", "status": "未开始", "date": "2026-10-02 09:30", "note": "若 G4 后系列赛战平，本场如期进行" },
+    { "round": "东部决赛 G1", "homeTeam": "热火", "awayTeam": "骑士", "status": "未开始", "date": "2026-10-05 08:00", "note": "等待半决赛胜者晋级" }
+  ],
+  "players": [
+    { "rank": 1, "playerName": "卢卡·东契奇", "teamName": "湖人", "points": 34.2, "rebounds": 8.9, "assists": 9.1 },
+    { "rank": 2, "playerName": "谢伊·吉尔杰斯-亚历山大", "teamName": "雷霆", "points": 32.7, "rebounds": 5.0, "assists": 6.4 },
+    { "rank": 3, "playerName": "扬尼斯·阿德托昆博", "teamName": "雄鹿", "points": 31.1, "rebounds": 11.8, "assists": 6.2 },
+    { "rank": 4, "playerName": "杰森·塔图姆", "teamName": "凯尔特人", "points": 28.4, "rebounds": 8.1, "assists": 5.3 },
+    { "rank": 5, "playerName": "安东尼·爱德华兹", "teamName": "森林狼", "points": 27.6, "rebounds": 5.7, "assists": 4.5 }
+  ]
+}

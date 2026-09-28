@@ -341,10 +341,15 @@ html[data-theme="light"] .rank-2 { color: #8a93a3; }
   body { padding: 40px 24px 64px; }
   h1 { font-size: 30px; }
 }
-/* 窄屏：收紧导航，360px 及以下不再折行/溢出（Day 9 修复） */
+/* 窄屏：收紧导航，360px 及以下不再折行/溢出（Day 9 修复）；
+   Day 10 导航改六项后窄屏放不下：整行不换行，链接行横向滑动，
+   链接文字禁止内部断行（否则「热搜速览」会被拆成两行） */
 @media (max-width: 480px) {
-  .nav-link { padding: 6px 9px; font-size: 14px; }
-  .theme-toggle { width: 34px; height: 34px; font-size: 15px; }
+  .nav-link { padding: 6px 9px; font-size: 14px; white-space: nowrap; }
+  .site-nav { flex-wrap: nowrap; }
+  .nav-pages { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+  .nav-pages::-webkit-scrollbar { display: none; }
+  .theme-toggle { width: 34px; height: 34px; font-size: 15px; flex: none; }
 }
 @media (max-width: 380px) {
   .hot-thumb, .hot-thumb img { width: 64px; height: 64px; }
