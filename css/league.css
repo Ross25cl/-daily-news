@@ -33,10 +33,14 @@
   transition: color .15s, border-color .15s;
 }
 .lg-tab:hover { color: var(--text); }
+/* 选中态：与筛选标签/导航/日期同款浅蓝渐变（Day 11 起全站标签统一）；
+   Tab 贴在底线容器上，圆角只做上部，原绿下划线由渐变块取代 */
 .lg-tab.active {
-  color: var(--text);
-  border-bottom-color: var(--brand);
+  color: var(--sel-text);
+  background: var(--sel-bg);
+  border-radius: 8px 8px 0 0;
   font-weight: 600;
+  box-shadow: var(--sel-glow);
 }
 .lg-tab:focus-visible { outline: 2px solid #60a5fa; outline-offset: -2px; }
 

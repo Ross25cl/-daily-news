@@ -25,6 +25,14 @@
       --danger: #f87171;
       --warn: #fb923c;
       --info: #60a5fa;
+      /* 标签选中态：水滴感浅蓝渐变（Day 11 起全站统一，与 css/style.css 同值） */
+      --sel-bg: linear-gradient(135deg,
+        rgba(96, 165, 250, 0.40),
+        rgba(59, 130, 246, 0.18) 55%,
+        rgba(147, 197, 253, 0.30));
+      --sel-border: rgba(147, 197, 253, 0.55);
+      --sel-text: #dbeafe;
+      --sel-glow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
     }
     * { box-sizing: border-box; }
     body {
@@ -57,7 +65,13 @@
       font-size: 15px;
       cursor: pointer;
     }
-    .tab.active { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+    .tab.active {
+      background: var(--sel-bg);
+      border-color: var(--sel-border);
+      color: var(--sel-text);
+      font-weight: 600;
+      box-shadow: var(--sel-glow);
+    }
     label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
     label b { color: var(--text); font-weight: 600; }
     input, select, textarea {
