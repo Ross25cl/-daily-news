@@ -5,7 +5,7 @@
   "emoji": "⚽",
   "desc": "欧洲冠军联赛 · 假数据示例（MVP 结构预览，接真实数据时字段名不变）",
   "updated_at": "2026-09-28T21:30:00+08:00",
-  "tabs": ["schedule", "standings", "knockout", "players"],
+  "tabs": ["schedule", "standings", "knockout", "bracket", "players"],
   "schedule": [
     { "id": "ucl-20260928-01", "date": "2026-09-28", "time": "03:00", "status": "已结束", "homeTeam": "皇家马德里", "awayTeam": "曼城", "homeScore": 3, "awayScore": 1, "round": "联赛阶段第 3 轮", "venue": "伯纳乌" },
     { "id": "ucl-20260928-02", "date": "2026-09-28", "time": "03:00", "status": "已结束", "homeTeam": "拜仁慕尼黑", "awayTeam": "阿森纳", "homeScore": 2, "awayScore": 2, "round": "联赛阶段第 3 轮", "venue": "安联球场" },
@@ -31,5 +31,55 @@
     { "rank": 3, "playerName": "拉明·亚马尔", "teamName": "巴塞罗那", "apps": 6, "goals": 3, "assists": 5, "rating": 8.2 },
     { "rank": 4, "playerName": "哈里·凯恩", "teamName": "拜仁慕尼黑", "apps": 6, "goals": 4, "assists": 3, "rating": 8.0 },
     { "rank": 5, "playerName": "埃尔林·哈兰德", "teamName": "曼城", "apps": 6, "goals": 5, "assists": 0, "rating": 7.9 }
-  ]
+  ],
+  "bracket": {
+    "season": "25-26",
+    "seasons": ["25-26", "24-25"],
+    "note": "本示例为「赛季进行中」快照：16 强有未开始/进行中场次，8 强起出现待定席位（胜者待定）；两回合总比分制，决赛单场。节点可扩展：halves[].rounds[].matches[] 数量不限",
+    "leagueStage": {
+      "title": "联赛阶段（瑞士轮）已结束",
+      "direct": ["利物浦", "阿森纳", "巴塞罗那", "拜仁慕尼黑", "曼城", "皇家马德里", "国际米兰", "巴黎圣日耳曼"],
+      "playoffWinners": ["热刺", "勒沃库森", "本菲卡", "尤文图斯", "切尔西", "那不勒斯", "多特蒙德", "马德里竞技"],
+      "note": "36 队联赛阶段前 8 名直通 16 强；9-24 名经淘汰赛附加赛决出另外 8 席（本区数据驱动，赛制再变只改 JSON）"
+    },
+    "halves": [
+      {
+        "name": "上半区",
+        "rounds": [
+          { "name": "16 强", "format": "两回合", "matches": [
+            { "id": "ucl-r1", "a": { "seed": 1, "name": "利物浦", "abbr": "LIV", "color": "#c8102e" }, "b": { "name": "巴黎圣日耳曼", "abbr": "PSG", "color": "#004170" }, "scoreA": 3, "scoreB": 1, "winner": "a", "status": "已结束" },
+            { "id": "ucl-r2", "a": { "seed": 2, "name": "阿森纳", "abbr": "ARS", "color": "#ef0107" }, "b": { "name": "勒沃库森", "abbr": "B04", "color": "#e32221" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" },
+            { "id": "ucl-r3", "a": { "seed": 3, "name": "巴塞罗那", "abbr": "BAR", "color": "#a50044" }, "b": { "name": "本菲卡", "abbr": "SLB", "color": "#e00027" }, "scoreA": 4, "scoreB": 2, "winner": "a", "status": "已结束" },
+            { "id": "ucl-r4", "a": { "seed": 4, "name": "国际米兰", "abbr": "INT", "color": "#0068a8" }, "b": { "name": "热刺", "abbr": "TOT", "color": "#132257" }, "scoreA": 2, "scoreB": 2, "winner": null, "status": "进行中" }
+          ]},
+          { "name": "8 强", "format": "两回合", "matches": [
+            { "id": "ucl-q1", "a": { "winnerOf": "ucl-r1" }, "b": { "winnerOf": "ucl-r2" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" },
+            { "id": "ucl-q2", "a": { "winnerOf": "ucl-r3" }, "b": { "winnerOf": "ucl-r4" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" }
+          ]},
+          { "name": "4 强", "format": "两回合", "matches": [
+            { "id": "ucl-s1", "a": { "winnerOf": "ucl-q1" }, "b": { "winnerOf": "ucl-q2" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" }
+          ]}
+        ]
+      },
+      {
+        "name": "下半区",
+        "rounds": [
+          { "name": "16 强", "format": "两回合", "matches": [
+            { "id": "ucl-r5", "a": { "seed": 5, "name": "拜仁慕尼黑", "abbr": "BAY", "color": "#dc052d" }, "b": { "name": "切尔西", "abbr": "CHE", "color": "#034694" }, "scoreA": 2, "scoreB": 0, "winner": "a", "status": "已结束" },
+            { "id": "ucl-r6", "a": { "seed": 6, "name": "曼城", "abbr": "MCI", "color": "#6cabdd" }, "b": { "name": "那不勒斯", "abbr": "NAP", "color": "#12a0d7" }, "scoreA": 5, "scoreB": 1, "winner": "a", "status": "已结束" },
+            { "id": "ucl-r7", "a": { "seed": 7, "name": "皇家马德里", "abbr": "RMA", "color": "#b8860b" }, "b": { "name": "尤文图斯", "abbr": "JUV", "color": "#5b5b5b" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" },
+            { "id": "ucl-r8", "a": { "seed": 8, "name": "多特蒙德", "abbr": "BVB", "color": "#c7a600" }, "b": { "name": "马德里竞技", "abbr": "ATM", "color": "#cb3524" }, "scoreA": 1, "scoreB": 2, "winner": null, "status": "进行中" }
+          ]},
+          { "name": "8 强", "format": "两回合", "matches": [
+            { "id": "ucl-q3", "a": { "winnerOf": "ucl-r5" }, "b": { "winnerOf": "ucl-r6" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" },
+            { "id": "ucl-q4", "a": { "winnerOf": "ucl-r7" }, "b": { "winnerOf": "ucl-r8" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" }
+          ]},
+          { "name": "4 强", "format": "两回合", "matches": [
+            { "id": "ucl-s2", "a": { "winnerOf": "ucl-q3" }, "b": { "winnerOf": "ucl-q4" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" }
+          ]}
+        ]
+      }
+    ],
+    "final": { "name": "决赛", "format": "单场决胜", "venue": "普斯卡什竞技场 · 布达佩斯", "a": { "winnerOf": "ucl-s1" }, "b": { "winnerOf": "ucl-s2" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" }
+  }
 }

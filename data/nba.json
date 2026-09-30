@@ -5,7 +5,7 @@
   "emoji": "🏀",
   "desc": "美职篮 · 假数据示例（MVP 结构预览，接真实数据时字段名不变）",
   "updated_at": "2026-09-28T21:30:00+08:00",
-  "tabs": ["schedule", "standings", "playoffs", "players"],
+  "tabs": ["schedule", "standings", "playoffs", "bracket", "players"],
   "schedule": [
     { "id": "nba-20260928-01", "date": "2026-09-28", "time": "07:30", "status": "已结束", "homeTeam": "凯尔特人", "awayTeam": "尼克斯", "homeScore": 112, "awayScore": 108, "round": "季前赛", "venue": "TD 花园" },
     { "id": "nba-20260928-02", "date": "2026-09-28", "time": "10:00", "status": "进行中", "homeTeam": "勇士", "awayTeam": "太阳", "homeScore": 58, "awayScore": 52, "round": "季前赛", "venue": "大通中心" },
@@ -32,5 +32,49 @@
     { "rank": 3, "playerName": "扬尼斯·阿德托昆博", "teamName": "雄鹿", "points": 31.1, "rebounds": 11.8, "assists": 6.2 },
     { "rank": 4, "playerName": "杰森·塔图姆", "teamName": "凯尔特人", "points": 28.4, "rebounds": 8.1, "assists": 5.3 },
     { "rank": 5, "playerName": "安东尼·爱德华兹", "teamName": "森林狼", "points": 27.6, "rebounds": 5.7, "assists": 4.5 }
-  ]
+  ],
+  "bracket": {
+    "season": "25-26",
+    "seasons": ["25-26", "24-25", "23-24"],
+    "note": "结构约定：halves[].rounds[].matches[]；a/b 可写具体队伍 {seed,name,abbr,color} 或引用 {\"winnerOf\":\"上一场id\"}；scoreA/scoreB 为系列赛大比分；轮次数与每轮场数不限——赛制变化只改数据不改渲染器",
+    "halves": [
+      {
+        "name": "东部",
+        "rounds": [
+          { "name": "首轮", "format": "BO7", "matches": [
+            { "id": "nba-e1", "a": { "seed": 1, "name": "活塞", "abbr": "DET", "color": "#1d428a" }, "b": { "seed": 8, "name": "魔术", "abbr": "ORL", "color": "#0077c0" }, "scoreA": 4, "scoreB": 3, "winner": "a", "status": "已结束" },
+            { "id": "nba-e2", "a": { "seed": 4, "name": "骑士", "abbr": "CLE", "color": "#860038" }, "b": { "seed": 5, "name": "猛龙", "abbr": "TOR", "color": "#ce1141" }, "scoreA": 4, "scoreB": 3, "winner": "a", "status": "已结束" },
+            { "id": "nba-e3", "a": { "seed": 3, "name": "尼克斯", "abbr": "NYK", "color": "#f58426" }, "b": { "seed": 6, "name": "老鹰", "abbr": "ATL", "color": "#e03a3e" }, "scoreA": 4, "scoreB": 2, "winner": "a", "status": "已结束" },
+            { "id": "nba-e4", "a": { "seed": 2, "name": "凯尔特人", "abbr": "BOS", "color": "#007a33" }, "b": { "seed": 7, "name": "76人", "abbr": "PHI", "color": "#006bb6" }, "scoreA": 3, "scoreB": 4, "winner": "b", "status": "已结束" }
+          ]},
+          { "name": "半决赛", "format": "BO7", "matches": [
+            { "id": "nba-e5", "a": { "winnerOf": "nba-e1" }, "b": { "winnerOf": "nba-e2" }, "scoreA": 3, "scoreB": 4, "winner": "b", "status": "已结束" },
+            { "id": "nba-e6", "a": { "winnerOf": "nba-e3" }, "b": { "winnerOf": "nba-e4" }, "scoreA": 4, "scoreB": 0, "winner": "a", "status": "已结束" }
+          ]},
+          { "name": "东部决赛", "format": "BO7", "matches": [
+            { "id": "nba-e7", "a": { "winnerOf": "nba-e5" }, "b": { "winnerOf": "nba-e6" }, "scoreA": 0, "scoreB": 4, "winner": "b", "status": "已结束" }
+          ]}
+        ]
+      },
+      {
+        "name": "西部",
+        "rounds": [
+          { "name": "首轮", "format": "BO7", "matches": [
+            { "id": "nba-w1", "a": { "seed": 1, "name": "雷霆", "abbr": "OKC", "color": "#007ac1" }, "b": { "seed": 8, "name": "太阳", "abbr": "PHX", "color": "#e56020" }, "scoreA": 4, "scoreB": 0, "winner": "a", "status": "已结束" },
+            { "id": "nba-w2", "a": { "seed": 4, "name": "湖人", "abbr": "LAL", "color": "#552583" }, "b": { "seed": 5, "name": "火箭", "abbr": "HOU", "color": "#ce1141" }, "scoreA": 4, "scoreB": 2, "winner": "a", "status": "已结束" },
+            { "id": "nba-w3", "a": { "seed": 3, "name": "掘金", "abbr": "DEN", "color": "#0e2240" }, "b": { "seed": 6, "name": "森林狼", "abbr": "MIN", "color": "#33455e" }, "scoreA": 2, "scoreB": 4, "winner": "b", "status": "已结束" },
+            { "id": "nba-w4", "a": { "seed": 2, "name": "马刺", "abbr": "SAS", "color": "#6f7683" }, "b": { "seed": 7, "name": "开拓者", "abbr": "POR", "color": "#e03a3e" }, "scoreA": 4, "scoreB": 1, "winner": "a", "status": "已结束" }
+          ]},
+          { "name": "半决赛", "format": "BO7", "matches": [
+            { "id": "nba-w5", "a": { "winnerOf": "nba-w1" }, "b": { "winnerOf": "nba-w3" }, "scoreA": 4, "scoreB": 2, "winner": "a", "status": "已结束" },
+            { "id": "nba-w6", "a": { "winnerOf": "nba-w2" }, "b": { "winnerOf": "nba-w4" }, "scoreA": 3, "scoreB": 4, "winner": "b", "status": "已结束" }
+          ]},
+          { "name": "西部决赛", "format": "BO7", "matches": [
+            { "id": "nba-w7", "a": { "winnerOf": "nba-w5" }, "b": { "winnerOf": "nba-w6" }, "scoreA": 3, "scoreB": 4, "winner": "b", "status": "已结束" }
+          ]}
+        ]
+      }
+    ],
+    "final": { "name": "总决赛", "format": "BO7", "a": { "winnerOf": "nba-e7" }, "b": { "winnerOf": "nba-w7" }, "scoreA": 4, "scoreB": 1, "winner": "a", "status": "已结束" }
+  }
 }

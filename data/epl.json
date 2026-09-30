@@ -5,7 +5,7 @@
   "emoji": "⚽",
   "desc": "英格兰足球超级联赛 · 假数据示例（MVP 结构预览，接真实数据时字段名不变）",
   "updated_at": "2026-09-28T21:30:00+08:00",
-  "tabs": ["schedule", "standings", "scorers", "players"],
+  "tabs": ["schedule", "standings", "race", "scorers", "players"],
   "schedule": [
     { "id": "epl-20260927-01", "date": "2026-09-27", "time": "22:00", "status": "已结束", "homeTeam": "阿森纳", "awayTeam": "利物浦", "homeScore": 3, "awayScore": 2, "round": "英超第 7 轮", "venue": "酋长球场" },
     { "id": "epl-20260927-02", "date": "2026-09-27", "time": "19:30", "status": "已结束", "homeTeam": "切尔西", "awayTeam": "曼城", "homeScore": 1, "awayScore": 1, "round": "英超第 7 轮", "venue": "斯坦福桥" },
@@ -33,5 +33,51 @@
     { "rank": 3, "playerName": "科尔·帕尔默", "teamName": "切尔西", "apps": 7, "goals": 5, "assists": 2, "rating": 7.8 },
     { "rank": 4, "playerName": "德克兰·赖斯", "teamName": "阿森纳", "apps": 7, "goals": 1, "assists": 2, "rating": 7.6 },
     { "rank": 5, "playerName": "埃尔林·哈兰德", "teamName": "曼城", "apps": 7, "goals": 8, "assists": 2, "rating": 8.0 }
-  ]
+  ],
+  "race": {
+    "season": "25-26",
+    "seasons": ["25-26"],
+    "note": "英超为联赛制、无季后赛——晋级图不适用，本标签改为「争冠形势」：分区与球队数量由数据驱动，可按需增减节点",
+    "asOf": "截至第 7 轮",
+    "zones": [
+      { "id": "title", "name": "争冠集团", "color": "#d4a017", "desc": "冠军大概率在本区产生，前 3 名分差仅 2 分",
+        "teams": [
+          { "rank": 1, "name": "阿森纳", "abbr": "ARS", "color": "#ef0107", "played": 7, "points": 16, "form": ["W", "W", "D", "W", "L"], "trend": "up", "gap": "领先第 2 名 1 分" },
+          { "rank": 2, "name": "利物浦", "abbr": "LIV", "color": "#c8102e", "played": 7, "points": 15, "form": ["W", "L", "W", "W", "W"], "trend": "flat", "gap": "落后榜首 1 分" },
+          { "rank": 3, "name": "曼城", "abbr": "MCI", "color": "#6cabdd", "played": 7, "points": 14, "form": ["D", "W", "W", "D", "W"], "trend": "up", "gap": "落后榜首 2 分" }
+        ]},
+      { "id": "ucl", "name": "欧冠区", "color": "#3b82f6", "desc": "第 4 名：最后一个直通正赛名额，距争冠集团 3 分",
+        "teams": [
+          { "rank": 4, "name": "切尔西", "abbr": "CHE", "color": "#034694", "played": 7, "points": 13, "form": ["W", "D", "L", "W", "D"], "trend": "flat", "gap": "距第 3 名 1 分" }
+        ]},
+      { "id": "uel", "name": "欧战区（5-7 名）", "color": "#0e9488", "desc": "欧联杯与欧协联资格争夺，分差均在 1 分之内",
+        "teams": [
+          { "rank": 5, "name": "热刺", "abbr": "TOT", "color": "#132257", "played": 7, "points": 11, "form": ["L", "W", "W", "D", "W"], "trend": "up", "gap": "距欧冠区 2 分" },
+          { "rank": 6, "name": "曼联", "abbr": "MUN", "color": "#da291c", "played": 7, "points": 10, "form": ["D", "L", "W", "W", "L"], "trend": "down", "gap": "距第 5 名 1 分" },
+          { "rank": 7, "name": "纽卡斯尔", "abbr": "NEW", "color": "#414a52", "played": 7, "points": 9, "form": ["W", "D", "L", "W", "D"], "trend": "flat", "gap": "距第 6 名 1 分" }
+        ]},
+      { "id": "mid", "name": "中游（8-14 名）", "color": "#9ca3af", "desc": "积分胶着：欧战渐远、降级尚远，一波连胜就能改写座次",
+        "teams": [
+          { "rank": 8, "name": "阿斯顿维拉", "abbr": "AVL", "color": "#670e36", "played": 7, "points": 8, "form": ["D", "D", "W", "L", "D"], "trend": "flat", "gap": "距欧战区 1 分" },
+          { "rank": 9, "name": "布莱顿", "abbr": "BHA", "color": "#0057b8", "played": 7, "points": 8, "form": ["W", "L", "D", "D", "W"], "trend": "up", "gap": "与第 8 名同分" },
+          { "rank": 10, "name": "水晶宫", "abbr": "CRY", "color": "#1b458f", "played": 7, "points": 7, "form": ["D", "W", "L", "D", "L"], "trend": "down", "gap": "距第 9 名 1 分" },
+          { "rank": 11, "name": "诺丁汉森林", "abbr": "NFO", "color": "#dd0000", "played": 7, "points": 6, "form": ["D", "W", "L", "D", "W"], "trend": "up", "gap": "距第 10 名 1 分" },
+          { "rank": 12, "name": "西汉姆联", "abbr": "WHU", "color": "#7a263a", "played": 7, "points": 6, "form": ["L", "D", "W", "L", "D"], "trend": "down", "gap": "与第 11 名同分" },
+          { "rank": 13, "name": "埃弗顿", "abbr": "EVE", "color": "#003399", "played": 7, "points": 6, "form": ["D", "D", "D", "W", "L"], "trend": "flat", "gap": "与第 12 名同分" },
+          { "rank": 14, "name": "富勒姆", "abbr": "FUL", "color": "#262626", "played": 7, "points": 5, "form": ["W", "L", "L", "D", "L"], "trend": "down", "gap": "距第 13 名 1 分" }
+        ]},
+      { "id": "drop", "name": "保级边缘（15-17 名）", "color": "#d97706", "desc": "距降级区一步之遥：圣诞赛程前拿不到分就会滑进降级区",
+        "teams": [
+          { "rank": 15, "name": "伯恩茅斯", "abbr": "BOU", "color": "#da291c", "played": 7, "points": 5, "form": ["L", "W", "L", "L", "D"], "trend": "down", "gap": "与第 14 名同分" },
+          { "rank": 16, "name": "桑德兰", "abbr": "SUN", "color": "#eb172b", "played": 7, "points": 4, "form": ["D", "L", "W", "L", "L"], "trend": "down", "gap": "距第 15 名 1 分" },
+          { "rank": 17, "name": "莱斯特城", "abbr": "LEI", "color": "#003090", "played": 7, "points": 4, "form": ["L", "D", "L", "D", "L"], "trend": "down", "gap": "与第 16 名同分" }
+        ]},
+      { "id": "releg", "name": "降级区（18-20 名）", "color": "#dc2626", "desc": "赛季结束后降入英冠，与身前的保级线一步之遥",
+        "teams": [
+          { "rank": 18, "name": "布伦特福德", "abbr": "BRE", "color": "#e30613", "played": 7, "points": 3, "form": ["L", "L", "D", "W", "L"], "trend": "down", "gap": "距安全线 1 分" },
+          { "rank": 19, "name": "伯恩利", "abbr": "BUR", "color": "#6c1d45", "played": 7, "points": 2, "form": ["L", "D", "L", "L", "D"], "trend": "flat", "gap": "距安全线 2 分" },
+          { "rank": 20, "name": "狼队", "abbr": "WOL", "color": "#b3850d", "played": 7, "points": 1, "form": ["L", "L", "L", "D", "L"], "trend": "down", "gap": "距安全线 3 分" }
+        ]}
+    ]
+  }
 }
