@@ -77,6 +77,27 @@ description: 每日体坛速览项目的作业手册。当需要抓取/整理赛
 - 录入优先走 `tools/entry.html`（自动生成 id/时间戳、字数校验、查重），不手写字段。
 - Skill 只负责**规则**；实际抓取脚本属于后续天的任务，不在此实现。
 
+### 2.5 本地预览（必须走 http，不能双击打开）
+
+- **本机没有 Python**（2026-10-01 确认），起服务用项目自带的 `serve.mjs`：
+  项目根目录执行 `node serve.mjs`（默认 8000，可 `node serve.mjs 8080`），或双击 `start-preview.cmd`。
+- **铁律**：本项目页面用 `fetch` 读 `data/*.json`，**直接双击 HTML（`file://`）浏览器会拦截本地 JSON 请求**，页面显示「加载失败」——这不是代码 bug，是协议限制。预览一律走 `http://127.0.0.1:端口/`。
+- 页面自带「加载失败」提示文案，其中已注明 `file://` 这一原因，便于自查时区分。
+- **`.cmd` 启动器必须纯 ASCII**（2026-10-01 踩坑）：Windows cmd 按 GBK 读批处理文件，UTF-8 中文会被拆成乱码并当命令执行，满屏「不是内部或外部命令」。给零的启动器一律只写英文。
+- **零的 cmd 里可能没有 node**（WorkBuddy 自带的 node 只在我的 shell 里可用）：`start-preview.cmd` 里已做兜底——`where node` 找不到就改用 `C:\Users\XH\.workbuddy\binaries\node\versions\<版本>\node.exe` 全路径。WorkBuddy 升级后版本号会变，失效时先确认该目录下的实际版本。
+
+---
+
+## 2.6 验证技巧（踩过的坑，直接复用）
+
+- **测路径穿越防护不能用普通 http 客户端**：`curl` / `http.get` 会在发出请求前自行把 `/../` 折叠掉，请求到不了服务器的防护逻辑，看起来「防护失效」其实是测不到。要用**原始 socket 手写请求行**（`net.connect` → 直接 write `GET /../../../Windows/win.ini HTTP/1.0`）才验得到。
+- **判定标准**：正确标准是「**项目目录外的访问是否被拦住**」，不是「某个路径返回 200 还是 403」。`/../AGENTS.md` 规范化后落在项目根内且文件确实存在，返回 200 是正确的。
+- **纯前端逻辑的离线验证法**：无浏览器环境时，用 Node **复刻前端的过滤/查找逻辑**跑真实数据，能覆盖大部分分支（分类过滤、草稿不可见、找不到 id、相关推荐为空等），比只做语法检查有效得多。注意复刻要照抄真实代码的判断条件，否则验证的是错的逻辑。
+- **更硬的验证：用 `vm` + DOM stub 真跑页面 JS**（2026-10-01 实测有效）。HTTP 200 只证明文件送达，**证明不了 JS 选对了分支**。做法：Node `vm.createContext` 造一个假 `document`（`getElementById` 返回 `{hidden, textContent, innerHTML, dataset, classList, setAttribute, addEventListener}` 的桩对象）+ 假 `location`/`history`/`fetch`/`URLSearchParams`，去掉文件末尾的 `initXXX()` 调用后执行，再手动调 `showState()`/`renderList()` 等函数，断言各状态容器的 `hidden` 是否互斥。这样能真正验到「四种状态每次只有一个显示」。
+  - 坑：`.mjs` 是 ES 模块不能用 `require`，临时脚本用 `.cjs` 或 `node -e` 内联。
+  - 坑：含正则的检查脚本用 `node -e` 容易被 shell 吃掉转义符，写成临时文件更稳。
+
+
 ---
 
 ## 三、排版样式

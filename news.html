@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>体坛资讯 · 每日体坛速览</title>
+  <script>
+    // 防闪烁：在样式表加载前就定好深浅（与其它页共用同一键，跨页同步）
+    document.documentElement.dataset.theme = localStorage.getItem('hot-theme') === 'light' ? 'light' : 'dark';
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/news.css?v=d13">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="tag">28days 项目 · MVP</span>
+      <h1>体坛资讯</h1>
+      <p class="meta">
+        <span id="today"></span>
+        <span>最近更新 <b id="updated-at">--</b></span>
+      </p>
+    </div>
+    <nav class="site-nav" aria-label="主导航">
+      <div class="nav-pages">
+        <a href="index.html" class="nav-link">热搜速览</a>
+        <a href="matches.html" class="nav-link">赛程比分</a>
+        <a href="news.html?cat=足球" class="nav-link active">资讯</a>
+        <a href="league.html?lg=nba" class="nav-link">NBA</a>
+        <a href="league.html?lg=cba" class="nav-link">CBA</a>
+        <a href="league.html?lg=ucl" class="nav-link">欧冠</a>
+        <a href="league.html?lg=epl" class="nav-link">英超</a>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换深浅模式">☀️</button>
+    </nav>
+  </header>
+
+  <main id="news-main">
+    <!-- 运动分类切换（Day 13）：地址参数 ?cat=，键盘左右箭头可切 -->
+    <div class="cat-tabs" id="cat-tabs" role="tablist" aria-label="运动分类">
+      <button type="button" role="tab" class="cat-tab" data-cat="足球"
+              aria-selected="true" aria-controls="news-panel">足球</button>
+      <button type="button" role="tab" class="cat-tab" data-cat="篮球"
+              aria-selected="false" aria-controls="news-panel">篮球</button>
+      <button type="button" role="tab" class="cat-tab" data-cat="综合"
+              aria-selected="false" aria-controls="news-panel">综合</button>
+    </div>
+
+    <p class="news-meta-line" id="news-meta">加载中…</p>
+
+    <!-- 状态播报区（Day 13）：仅供读屏软件，视觉上不可见 -->
+    <p class="sr-only" id="news-announce" role="status" aria-live="polite"></p>
+
+    <div id="news-panel" role="tabpanel" aria-live="polite">
+      <!-- 状态一：加载中（骨架屏） -->
+      <div id="state-loading">
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line"></div>
+          <div class="sk-line short"></div>
+        </div>
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line"></div>
+          <div class="sk-line short"></div>
+        </div>
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line"></div>
+          <div class="sk-line short"></div>
+        </div>
+      </div>
+
+      <!-- 状态四：错误 -->
+      <div id="state-error" class="state-box" hidden>
+        <p class="state-emoji">📡</p>
+        <p class="state-text">资讯加载失败，请检查网络后重试。</p>
+        <button id="retry-btn" type="button" class="retry-btn">重新加载</button>
+      </div>
+
+      <!-- 状态二（成功）/ 状态三（空）：由 news.js 渲染 -->
+      <div id="news-list" hidden></div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p><b>内容来源说明</b>：本页条目仅保留「标题 + 一句话摘要 + 原文链接」，标注来源名称，不整段转载正文。点击条目可查看该条的完整信息与原文入口。</p>
+    <p>每日体坛速览 · 28days 练习项目 · Day 13 资讯列表页。地址形如 <code>news.html?cat=足球</code>，对应设计稿的 <code>/news/:category</code>（纯静态站无服务端重写，以查询参数实现）。</p>
+  </footer>
+
+  <script src="js/theme.js"></script>
+  <script src="js/news.js?v=d13"></script>
+</body>
+</html>

@@ -115,13 +115,18 @@ function showError() {
   document.getElementById('updated-at').textContent = '未知';
 }
 
-// 渲染成功（某平台 items 为空时展示「空」状态提示）
+// 渲染成功（整页无数据 → 整页空；某平台 items 为空 → 该平台空）
+// Day 13：整页空补上副提示，与列表页/详情页的空态文案格式统一
 function renderPlatforms(data) {
   const wrap = document.getElementById('platforms');
   const platforms = data.platforms || [];
   wrap.innerHTML = platforms.length
     ? platforms.map(platformCardHTML).join('')
-    : '<div class="state-box"><p class="state-emoji">🈳</p><p class="state-text">今日暂无任何平台热搜数据</p></div>';
+    : '<div class="state-box">' +
+        '<p class="state-emoji">🈳</p>' +
+        '<p class="state-text">今日暂无任何平台热搜数据</p>' +
+        '<p class="state-sub">稍后再来看看，或先浏览下方的赛程比分与体坛资讯。</p>' +
+      '</div>';
   document.getElementById('updated-at').textContent = formatUpdatedAt(data.updated_at);
   showState('success');
 }
@@ -137,8 +142,14 @@ function formatUpdatedAt(iso) {
 const DEMO = new URLSearchParams(location.search).get('demo');
 
 async function loadHot() {
-  // 状态演示入口（便于自查四种状态）
+  // 状态演示入口（便于自查四种状态）——Day 13 补齐：
+  //   ?demo=loading     加载中（停在骨架屏）
+  //   ?demo=empty       空（三个平台各自无条目）
+  //   ?demo=empty-all   整页空（三平台全都没有数据）
+  //   ?demo=error       错误（加载失败 + 重试按钮）
+  //   不加参数          正常（成功）
   if (DEMO === 'error')   { showError(); return; }
+  if (DEMO === 'empty-all') { renderPlatforms({ updated_at: '', platforms: [] }); return; }
   if (DEMO === 'empty')   { renderPlatforms({ platforms: [{ id: 'hupu', name: '虎扑', desc: '步行街热帖榜', items: [] }, { id: 'tencent', name: '腾讯体育', desc: '视频热榜', items: [] }, { id: 'cctv5', name: '央视体育', desc: '官方权威发布', items: [] }] }); return; }
   if (DEMO === 'loading') { return; } // 保持骨架屏
 

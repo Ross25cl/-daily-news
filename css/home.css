@@ -292,7 +292,9 @@ html[data-theme="light"] .rank-2 { color: #8a93a3; }
   color: var(--muted);
 }
 .state-emoji { font-size: 34px; margin: 0 0 8px; }
-.state-text { margin: 0 0 16px; font-size: 14px; }
+.state-text { margin: 0 0 8px; font-size: 14px; color: var(--text); }
+/* 副提示（Day 13）：主文案下的一句引导，说明下一步能做什么 */
+.state-sub { margin: 0 0 16px; font-size: 12px; color: var(--muted); }
 .retry-btn {
   border: none;
   background: var(--brand);

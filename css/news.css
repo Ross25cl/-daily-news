@@ -1,0 +1,240 @@
+/* ============================================================
+   news.css — 资讯列表页 + 资讯详情页样式（Day 13 建）
+   作用于 news.html / news-detail.html 两页。
+
+   颜色一律复用 style.css 里的变量（--card / --border / --muted /
+   --brand / --sel-* / --chip-*），**不新造硬编码色**（Skill 第 3.3 节）。
+   选中态统一用 --sel-* 系列（水滴感浅蓝渐变），与导航/日期/筛选/Tab 同款。
+
+   本文件里的 .state-box 状态盒目前是本页自用的副本；
+   首页的同类样式在 home.css 中（首页专用）。若日后要三页统一，
+   应整体抽到 style.css，届时删掉这里的副本即可。
+   ============================================================ */
+* { box-sizing: border-box; }
+
+/* ---------- 无障碍工具类 ----------
+   .sr-only：视觉上不可见，但读屏软件仍会朗读。
+   不能用 display:none / visibility:hidden —— 那会让读屏也读不到。
+   状态切换时把当前状态写进这里，解决「JS 改 hidden 读屏察觉不到」的问题。 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- 运动分类切换（Tab 外观沿用全站药丸标签语言） ---------- */
+.cat-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.cat-tab {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 5px 18px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.cat-tab:hover { border-color: var(--brand-bright); color: var(--text); }
+/* 选中态：全站统一的浅蓝渐变（Skill 第 3.3 节） */
+.cat-tab.active {
+  background: var(--sel-bg);
+  border-color: var(--sel-border);
+  color: var(--sel-text);
+  font-weight: 600;
+  box-shadow: var(--sel-glow);
+}
+.cat-tab:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+
+/* 分类下的统计行（辅助文字，12px 起） */
+.news-meta-line {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+/* ---------- 资讯卡片 ---------- */
+.news-card {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: var(--card);
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.news-card:hover { border-color: var(--brand-bright); }
+.news-card .news-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.news-card .news-date { color: var(--muted); font-size: 12px; margin-left: auto; }
+.news-card h3 { font-size: 15px; margin: 0 0 4px; line-height: 1.5; }
+.news-card h3 a { color: var(--text); text-decoration: none; }
+.news-card h3 a:hover { color: var(--brand-bright); text-decoration: underline; }
+.news-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.news-card .news-source { margin-top: 6px; font-size: 12px; }
+
+/* ---------- 返回 / 面包屑 ---------- */
+.detail-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 14px;
+}
+.back-btn {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.back-btn:hover { border-color: var(--brand-bright); color: var(--text); }
+.back-btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.breadcrumb a { color: var(--muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--brand-bright); text-decoration: underline; }
+.breadcrumb a:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; border-radius: 4px; }
+.breadcrumb .crumb-sep { color: var(--border); }
+.breadcrumb .crumb-current {
+  color: var(--text);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 详情主体 ---------- */
+#detail-body {
+  padding: 18px 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.detail-head { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.detail-title { font-size: 21px; line-height: 1.45; margin: 0 0 10px; }
+.detail-summary {
+  margin: 0 0 16px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text);
+  padding-left: 12px;
+  border-left: 3px solid var(--brand);
+}
+
+.detail-fields {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+.detail-fields .field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 13px;
+}
+.detail-fields .field-row + .field-row { border-top: 1px solid var(--border); }
+.detail-fields dt { color: var(--muted); flex: none; min-width: 84px; }
+.detail-fields dd { margin: 0; color: var(--text); word-break: break-all; }
+
+/* 主操作按钮：品牌绿实底 + 白字（Skill 第 3.2 节） */
+.detail-source-btn {
+  display: inline-block;
+  background: var(--brand);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 9px 22px;
+  font-size: 14px;
+  transition: background .15s;
+}
+.detail-source-btn:hover { background: var(--brand-hover); }
+.detail-source-btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+
+.detail-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+/* ---------- 同类资讯 ---------- */
+.related { margin-top: 28px; }
+.related h2 {
+  font-size: 16px;
+  margin: 0 0 12px;
+  padding-left: 10px;
+  border-left: 4px solid var(--brand);
+}
+.related .news-card { margin-bottom: 8px; }
+.related .news-card p { display: none; }   /* 相关推荐只留标题，不重复摘要 */
+
+/* ---------- 状态盒（本页副本，语义与首页一致） ---------- */
+.state-box {
+  text-align: center;
+  padding: 40px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+}
+.state-emoji { font-size: 34px; margin: 0 0 8px; }
+.state-text { margin: 0 0 8px; font-size: 14px; color: var(--text); }
+.state-sub { margin: 0 0 16px; font-size: 12px; color: var(--muted); }
+.retry-btn {
+  display: inline-block;
+  border: none;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 22px;
+  font-size: 14px;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.retry-btn:hover { background: var(--brand-hover); }
+.retry-btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+
+/* 骨架屏补充：短行（本页三行结构比首页多一行） */
+.sk-line.short { width: 75%; }
+
+/* 系统开了「减弱动态效果」时动画降级（无障碍） */
+@media (prefers-reduced-motion: reduce) {
+  .sk-line { animation: none; opacity: .7; }
+}
+
+/* ---------- 响应式 ---------- */
+@media (min-width: 640px) {
+  .detail-title { font-size: 23px; }
+}
+/* 窄屏：分类 Tab 横向滑动不折行（与导航一致的做法） */
+@media (max-width: 480px) {
+  .cat-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .cat-tabs::-webkit-scrollbar { display: none; }
+  .cat-tab { flex: none; padding: 5px 14px; }
+  .detail-fields dt { min-width: 72px; }
+}

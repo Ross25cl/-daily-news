@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>资讯详情 · 每日体坛速览</title>
+  <script>
+    // 防闪烁：在样式表加载前就定好深浅（与其它页共用同一键，跨页同步）
+    document.documentElement.dataset.theme = localStorage.getItem('hot-theme') === 'light' ? 'light' : 'dark';
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/news.css?v=d13">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="tag">28days 项目 · MVP</span>
+      <h1>体坛资讯</h1>
+      <p class="meta">
+        <span id="today"></span>
+      </p>
+    </div>
+    <nav class="site-nav" aria-label="主导航">
+      <div class="nav-pages">
+        <a href="index.html" class="nav-link">热搜速览</a>
+        <a href="matches.html" class="nav-link">赛程比分</a>
+        <a href="news.html?cat=足球" class="nav-link active">资讯</a>
+        <a href="league.html?lg=nba" class="nav-link">NBA</a>
+        <a href="league.html?lg=cba" class="nav-link">CBA</a>
+        <a href="league.html?lg=ucl" class="nav-link">欧冠</a>
+        <a href="league.html?lg=epl" class="nav-link">英超</a>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换深浅模式">☀️</button>
+    </nav>
+  </header>
+
+  <main id="detail-main">
+    <!-- 返回上一页 + 面包屑（层级导航） -->
+    <div class="detail-topbar">
+      <button type="button" class="back-btn" id="back-btn">← 返回</button>
+      <nav class="breadcrumb" id="breadcrumb" aria-label="面包屑" hidden></nav>
+    </div>
+
+    <!-- 状态一：加载中（骨架屏） -->
+    <div id="state-loading">
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="sk-line sk-title"></div>
+        <div class="sk-line"></div>
+        <div class="sk-line"></div>
+        <div class="sk-line short"></div>
+      </div>
+    </div>
+
+    <!-- 状态四：错误 -->
+    <div id="state-error" class="state-box" hidden>
+      <p class="state-emoji">📡</p>
+      <p class="state-text">资讯详情加载失败，请刷新重试。</p>
+      <button id="retry-btn" type="button" class="retry-btn">重新加载</button>
+    </div>
+
+    <!-- 状态三：空（找不到该条） -->
+    <div id="state-notfound" class="state-box" hidden>
+      <p class="state-emoji">🔍</p>
+      <p class="state-text">没有找到这条资讯</p>
+      <p class="state-sub">可能链接有误，或该条尚未发布。</p>
+      <a class="retry-btn" href="news.html?cat=足球">← 返回资讯列表</a>
+    </div>
+
+    <!-- 状态二：成功 -->
+    <div id="state-success" hidden>
+      <article id="detail-body"></article>
+      <section class="related" id="detail-related" hidden>
+        <h2>同类资讯</h2>
+        <div id="related-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p><b>内容来源说明</b>：本页只呈现该条资讯的已有字段（标题、摘要、来源、板块、联赛、日期），<b>不转载原文正文</b>；完整内容请点「查看原文」跳转来源网站。</p>
+    <p>每日体坛速览 · 28days 练习项目 · Day 13 资讯详情页。地址形如 <code>news-detail.html?id=20260929-n01</code>，对应设计稿的 <code>/news/detail/:id</code>。</p>
+  </footer>
+
+  <script src="js/theme.js"></script>
+  <script src="js/news-detail.js?v=d13"></script>
+</body>
+</html>
