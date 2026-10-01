@@ -4,6 +4,9 @@
 // 职责：fetch 数据 → 昨天/今天/明天切换 → 渲染比赛卡片
 //       （四要素 + 状态 + 比分 + 页面内展开详情）+ 大类筛选
 //       （PRD 视图规则 2：大类筛选同时作用于速览与赛程列表）
+// Day 12：新增关键词搜索 + 联赛（平台）筛选，三种情况全覆盖——
+//       有匹配 → 显示匹配内容；无匹配 → 显示「暂无相关赛程」；
+//       清空 → 恢复完整列表。筛选条件与日期切换可叠加。
 // ============================================================
 
 // league → 大类映射（与 app.js 保持一致，硬编码前端）
@@ -22,6 +25,8 @@ const REQUIRED_FIELDS = ['league', 'home_team', 'away_team', 'match_time', 'stat
 let allMatches = [];        // 过滤后的合法比赛数据
 let currentOffset = 0;      // 日期偏移：-1 昨天 / 0 今天 / 1 明天
 let currentCategory = null; // 当前筛选大类；null = 全部显示
+let currentLeague = '';     // 当前联赛筛选；'' = 全部联赛（Day 12）
+let keyword = '';           // 当前搜索关键词，已 trim + 小写（Day 12）
 
 // ---------- 工具函数 ----------
 
@@ -88,23 +93,52 @@ function matchHTML(m) {
   );
 }
 
-// 按当前日期偏移 + 大类筛选重绘列表（PRD B2：无比赛日期显示提示）
+// 单场比赛是否命中当前搜索关键词（Day 12）
+// 命中范围：主队 / 客队 / 联赛 / 轮次 / 场地 —— 都是用户会输入的字段
+function matchKeyword(m) {
+  if (!keyword) return true;
+  const hay = [m.home_team, m.away_team, m.league, m.round, m.venue]
+    .filter(Boolean).join(' ').toLowerCase();
+  return hay.indexOf(keyword) >= 0;
+}
+
+// 按当前日期偏移 + 大字筛选 + 联赛筛选 + 关键词搜索重绘列表
+// （PRD B2：无比赛日期显示提示；Day 12：无匹配显示「暂无相关赛程」）
 function renderList() {
   const list = document.getElementById('match-list');
   const target = dateStr(currentOffset);
-  const shown = allMatches
-    .filter(m => m.match_time.substring(0, 10) === target)
-    .filter(m => !currentCategory || leagueCategory(m.league) === currentCategory);
+  const dateShown = allMatches.filter(m => m.match_time.substring(0, 10) === target);
+  const shown = dateShown
+    .filter(m => !currentCategory || leagueCategory(m.league) === currentCategory)
+    .filter(m => !currentLeague || m.league === currentLeague)
+    .filter(matchKeyword);
 
   const d = new Date(target + 'T00:00:00');
   const label = d.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
   const pre = currentOffset === -1 ? '昨天' : currentOffset === 1 ? '明天' : '今天';
-  document.getElementById('matches-date-label').textContent =
-    pre + ' · ' + label + ' · 共 ' + shown.length + ' 场';
 
-  list.innerHTML = shown.length
-    ? shown.map(matchHTML).join('')
-    : '<p class="empty-hint">当日无重点赛事</p>';
+  // 元信息行：有筛选时把条件带出来，让用户知道在看什么（含命中数）
+  const cond = [];
+  if (currentLeague) cond.push('联赛「' + currentLeague + '」');
+  if (currentCategory) cond.push('大类「' + currentCategory + '」');
+  if (keyword) cond.push('关键词「' + keyword + '」');
+  const condText = cond.length ? ' · 筛选：' + cond.join(' + ') : '';
+
+  document.getElementById('matches-date-label').textContent =
+    pre + ' · ' + label + ' · 共 ' + shown.length + ' 场' + condText;
+
+  // 三种情况（Day 12 完成标准）：
+  // ① 有匹配 → 渲染匹配内容
+  // ② 无匹配 → 「暂无相关赛程」（区别于「当日无重点赛事」：那是当天本来就没比赛）
+  // ③ 清空 → cond 为空、shown = 当天全部，恢复完整列表
+  if (shown.length) {
+    list.innerHTML = shown.map(matchHTML).join('');
+  } else if (cond.length) {
+    list.innerHTML = '<p class="empty-hint">暂无相关赛程</p>' +
+      '<p class="empty-hint sub">试试换个关键词，或点「全部」清除筛选条件。</p>';
+  } else {
+    list.innerHTML = '<p class="empty-hint">当日无重点赛事</p>';
+  }
 
   // 「数据最近更新时间」= 当前列表里最新的 updated_at（PRD 6.2：页面对用户展示）
   const times = shown.map(m => m.updated_at).filter(Boolean).sort();
@@ -154,6 +188,45 @@ function bindCardToggle() {
   });
 }
 
+// 联赛（平台）筛选按钮：点选生效；点同一个或「全部」恢复完整列表（Day 12）
+function bindPlatformButtons() {
+  const btns = document.querySelectorAll('.platform-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.platform || '';
+      // 再点同一个已选中的联赛 = 取消，回到「全部」（与首页/赛程大类筛选行为一致）
+      currentLeague = (next && currentLeague === next) ? '' : next;
+      btns.forEach(b => {
+        const on = (b.dataset.platform || '') === currentLeague;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      renderList();
+    });
+  });
+}
+
+// 关键词搜索：输入即筛（input 事件）；清空按钮恢复完整列表（Day 12）
+function bindSearch() {
+  const input = document.getElementById('search-input');
+  const clear = document.getElementById('search-clear');
+
+  input.addEventListener('input', () => {
+    keyword = input.value.trim().toLowerCase();
+    clear.hidden = !input.value;   // 有内容才显示清空按钮
+    renderList();
+  });
+
+  // 清空：恢复完整列表（第三种情况）
+  clear.addEventListener('click', () => {
+    input.value = '';
+    keyword = '';
+    clear.hidden = true;
+    input.focus();                 // 清空后焦点回到输入框，方便继续输入
+    renderList();
+  });
+}
+
 // ---------- 数据加载 ----------
 
 function loadMatches() {
@@ -190,6 +263,8 @@ function initMatches() {
 
   bindDateSwitch();
   bindFilterButtons();
+  bindPlatformButtons();   // Day 12：联赛筛选
+  bindSearch();            // Day 12：关键词搜索 + 清空
   bindCardToggle();
   loadMatches();
 }

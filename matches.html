@@ -44,8 +44,29 @@
       <button type="button" class="date-btn active" data-offset="0">今天</button>
       <button type="button" class="date-btn" data-offset="1">明天</button>
     </div>
+
+    <!-- 搜索与筛选（Day 12）：关键词搜索 + 联赛（平台）筛选 -->
+    <section class="search-bar" aria-label="搜索与筛选">
+      <div class="search-input-wrap">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input id="search-input" type="search" class="search-input"
+               placeholder="搜索球队或联赛，如：湖人 / 英超"
+               aria-label="关键词搜索" autocomplete="off">
+        <button id="search-clear" class="search-clear" type="button"
+                aria-label="清空搜索" title="清空搜索" hidden>✕</button>
+      </div>
+      <div class="platform-filters" id="platform-filters" role="group" aria-label="联赛筛选">
+        <button type="button" class="platform-btn active" data-platform="" aria-pressed="true">全部</button>
+        <button type="button" class="platform-btn" data-platform="NBA" aria-pressed="false">NBA</button>
+        <button type="button" class="platform-btn" data-platform="CBA" aria-pressed="false">CBA</button>
+        <button type="button" class="platform-btn" data-platform="英超" aria-pressed="false">英超</button>
+        <button type="button" class="platform-btn" data-platform="中超" aria-pressed="false">中超</button>
+        <button type="button" class="platform-btn" data-platform="欧冠" aria-pressed="false">欧冠</button>
+      </div>
+    </section>
+
     <p class="matches-meta" id="matches-date-label">加载中…</p>
-    <div id="match-list">
+    <div id="match-list" aria-live="polite">
       <p class="empty-hint">加载中…</p>
     </div>
   </main>

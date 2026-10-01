@@ -52,5 +52,71 @@
     "venue": "斯坦福桥",
     "data_source": "英超官网（示例）",
     "updated_at": "2026-09-25T09:00:00+08:00"
+  },
+  {
+    "id": "20261001-nba-01",
+    "league": "NBA",
+    "home_team": "湖人",
+    "away_team": "勇士",
+    "match_time": "2026-10-01 09:00",
+    "status": "已结束",
+    "home_score": 118,
+    "away_score": 112,
+    "round": "季前赛",
+    "venue": "Crypto.com Arena",
+    "data_source": "NBA官网（示例）",
+    "updated_at": "2026-10-01T11:30:00+08:00"
+  },
+  {
+    "id": "20261001-nba-02",
+    "league": "NBA",
+    "home_team": "凯尔特人",
+    "away_team": "热火",
+    "match_time": "2026-10-01 10:30",
+    "status": "进行中",
+    "home_score": 64,
+    "away_score": 58,
+    "round": "季前赛",
+    "venue": "TD Garden",
+    "data_source": "NBA官网（示例）",
+    "updated_at": "2026-10-01T11:45:00+08:00"
+  },
+  {
+    "id": "20261001-cba-01",
+    "league": "CBA",
+    "home_team": "辽宁本钢",
+    "away_team": "广东宏远",
+    "match_time": "2026-10-01 19:35",
+    "status": "未开始",
+    "round": "常规赛第 1 轮",
+    "venue": "沈阳奥体中心",
+    "data_source": "CBA 官网（示例）",
+    "updated_at": "2026-10-01T12:00:00+08:00"
+  },
+  {
+    "id": "20261001-epl-01",
+    "league": "英超",
+    "home_team": "曼联",
+    "away_team": "阿森纳",
+    "match_time": "2026-10-01 22:00",
+    "status": "未开始",
+    "round": "英超第 7 轮",
+    "venue": "老特拉福德",
+    "data_source": "英超官网（示例）",
+    "updated_at": "2026-10-01T12:10:00+08:00"
+  },
+  {
+    "id": "20261001-ucl-01",
+    "league": "欧冠",
+    "home_team": "皇家马德里",
+    "away_team": "拜仁慕尼黑",
+    "match_time": "2026-10-01 03:00",
+    "status": "已结束",
+    "home_score": 2,
+    "away_score": 2,
+    "round": "小组赛第 2 轮",
+    "venue": "伯纳乌",
+    "data_source": "欧足联官网（示例）",
+    "updated_at": "2026-10-01T05:20:00+08:00"
   }
 ]
