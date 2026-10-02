@@ -14,16 +14,33 @@
 //
 // 换端口：node serve.mjs 8080
 // 退出：在这个窗口按 Ctrl + C
+//
+// 【Day 14 改动】监听地址由 127.0.0.1 改为 0.0.0.0（全网卡），
+//   目的：让同一 WiFi 下的手机 / 别人的电脑也能打开本页做用户测试。
+//   代价：测试期间本目录文件在局域网内可被访问 —— 测完按 Ctrl+C 关掉即止。
+//   本机自用不受影响，仍可继续用 http://127.0.0.1:8000/index.html。
 // ============================================================
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
+import { networkInterfaces } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));   // 脚本所在目录 = 项目根目录
 const PORT = Number(process.argv[2]) || 8000;
-const HOST = '127.0.0.1';
+const HOST = '0.0.0.0';   // 监听全部网卡（原为 127.0.0.1，Day 14 为局域网测试放开）
+
+// 取出本机所有局域网 IPv4 地址，启动时打印出来，方便手机直接输入
+function lanIPv4List() {
+  const list = [];
+  for (const infos of Object.values(networkInterfaces())) {
+    for (const info of infos || []) {
+      if (info.family === 'IPv4' && !info.internal) list.push(info.address);
+    }
+  }
+  return list;
+}
 
 // 扩展名 → Content-Type（中文与 JSON 都要显式给 UTF-8，否则乱码）
 const MIME = {
@@ -107,13 +124,26 @@ server.on('error', err => {
 });
 
 server.listen(PORT, HOST, () => {
+  const lan = lanIPv4List();
   console.log('');
   console.log('  每日体坛速览 · 本地预览已启动');
   console.log('  ----------------------------------------');
-  console.log('  首页      http://' + HOST + ':' + PORT + '/index.html');
-  console.log('  资讯列表  http://' + HOST + ':' + PORT + '/news.html?cat=足球');
-  console.log('  资讯详情  http://' + HOST + ':' + PORT + '/news-detail.html?id=20260929-n01');
+  console.log('  本机（这台电脑自己看）：');
+  console.log('    首页      http://127.0.0.1:' + PORT + '/index.html');
+  console.log('    资讯列表  http://127.0.0.1:' + PORT + '/news.html?cat=足球');
+  console.log('    资讯详情  http://127.0.0.1:' + PORT + '/news-detail.html?id=20260929-n01');
+  console.log('  ----------------------------------------');
+  if (lan.length) {
+    console.log('  局域网（手机/别的电脑，需连同一个 WiFi）：');
+    for (const ip of lan) {
+      console.log('    ★ http://' + ip + ':' + PORT + '/');
+    }
+    console.log('    手机浏览器输入上面这条（含 http:// 和端口号）');
+  } else {
+    console.log('  没找到局域网 IPv4 地址 —— 检查电脑是否连着 WiFi/网线');
+  }
   console.log('  ----------------------------------------');
   console.log('  按 Ctrl + C 退出（退出后网页就打不开了）');
+  console.log('  退出后局域网内的手机也立刻打不开，测试完请关掉');
   console.log('');
 });

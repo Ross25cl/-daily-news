@@ -425,8 +425,9 @@ h1 { font-size: 26px; margin: 0 0 4px; }
    链接文字禁止内部断行（否则「热搜速览」会被拆成两行） */
 @media (max-width: 480px) {
   .nav-link { padding: 6px 9px; font-size: 14px; white-space: nowrap; }
-  .nav-pages { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
-  .nav-pages::-webkit-scrollbar { display: none; }
+  /* Day 14：横向滑动 + 隐藏滚动条让右侧入口（欧冠/英超等）无提示被藏，
+     真人测试中测试者在主页来回找入口；改为换行、七项全部可见 */
+  .nav-pages { flex-wrap: wrap; }
   .site-nav { position: relative; padding-right: 44px; }
   .theme-toggle { position: absolute; right: 0; top: 0; width: 34px; height: 34px; font-size: 15px; }
   /* Day 12：搜索框独占一行，筛选按钮整行横向滑动（Skill 第 4 节） */

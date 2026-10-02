@@ -5,12 +5,12 @@ cd /d "%~dp0"
 echo.
 echo Starting local preview server ...
 echo.
-echo Open in your browser:
+echo The window will print BOTH addresses:
+echo   - this computer : http://127.0.0.1:8000/
+echo   - same WiFi     : http://192.168.x.x:8000/   (the line marked with a star)
 echo.
-echo   http://127.0.0.1:8000/index.html
-echo.
-echo Then click the nav links to browse pages.
-echo Keep this window OPEN. Press Ctrl+C to stop.
+echo Phone / another device: use the STAR address, on the SAME WiFi.
+echo Keep this window OPEN. Press Ctrl+C to stop (the phone loses access too).
 echo.
 
 where node >nul 2>nul
