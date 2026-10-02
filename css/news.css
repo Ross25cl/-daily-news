@@ -9,6 +9,10 @@
    本文件里的 .state-box 状态盒目前是本页自用的副本；
    首页的同类样式在 home.css 中（首页专用）。若日后要三页统一，
    应整体抽到 style.css，届时删掉这里的副本即可。
+
+   Day 14 改动：列表页宽屏多列网格。见下方
+   「列表页宽屏网格」一节——只放宽 news.html 的宽度上限并把卡片
+   列表改成 CSS Grid，卡片自身样式与 DOM 结构一律不动。
    ============================================================ */
 * { box-sizing: border-box; }
 
@@ -87,6 +91,63 @@
 .news-card h3 a:hover { color: var(--brand-bright); text-decoration: underline; }
 .news-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .news-card .news-source { margin-top: 6px; font-size: 12px; }
+
+/* ============================================================
+   列表页宽屏网格（Day 14）
+   问题：卡片单列排下来，宽屏下只占屏幕中间一条，两侧留白过多。
+   做法：只在 news.html 上放宽宽度上限（body.page-news），
+         再把卡片容器改成 CSS Grid，350px 起自动排列
+         → 1280px 下自然排成 3 列，窄屏自动降回 1 列。
+
+   为什么全部规则都带 .page-news / .news-list 前缀：
+   news-detail.html 也加载本文件，详情页底部「同类资讯」用的是
+   同一个 .news-card 类。不带作用域会让那里的单列卡片一起变成
+   flex 等高卡片。加前缀后，详情页视觉零变化。
+
+   状态说明：容器靠 hidden 属性在四态（加载/成功/空/错误）间切换，
+   所以用 :not([hidden]) 限定——作者样式会盖掉浏览器给 [hidden]
+   的 display:none，直接写 display:grid 会让隐藏失效、四态失灵。
+   ============================================================ */
+
+/* 1) 加宽主容器。
+   style.css 把宽度上限放在 body 上（max-width:720px; margin:0 auto），
+   所以这里要覆盖的是 body 而不是某个 div；class 比标签选择器更具体，
+   且 news.css 在 style.css 之后加载，无需 !important。 */
+body.page-news {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* 2) 列表容器改 Grid。
+   auto-fill + minmax(350px, 1fr)：每列最窄 350px、能塞几列塞几列，
+   剩余空间由各列均分。骨架屏用同一套网格，加载完成时列数不跳变。 */
+.page-news .news-list:not([hidden]),
+.page-news #state-loading:not([hidden]) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+/* 3) 卡片等高对齐 + 来源沉底。
+   height:100% 让同一行的卡片撑满行高（Grid 默认 stretch，显式写出更稳）；
+   纵向 flex + space-between 让底部「来源」贴到卡片下沿。
+   额外加 margin-top:auto 是保险：摘要短时，多余空白只堆在「来源」之前，
+   不会把标题与摘要之间的间距也一起拉开。 */
+.page-news .news-list .news-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 0;   /* 行列间距统一交给 gap，避免与原有 10px 叠加成 30px */
+}
+.page-news .news-list .news-card .news-source { margin-top: auto; }
+
+/* 进网格后同样去掉骨架屏卡片自带的下外边距 */
+.page-news #state-loading .skeleton-card { margin-bottom: 0; }
+
+/* 空态盒（该分类暂无资讯）要跨满整行，
+   否则会被当成普通网格项、缩成第一格 350px 宽 */
+.page-news .news-list .state-box { grid-column: 1 / -1; }
 
 /* ---------- 返回 / 面包屑 ---------- */
 .detail-topbar {
@@ -237,4 +298,15 @@
   .cat-tabs::-webkit-scrollbar { display: none; }
   .cat-tab { flex: none; padding: 5px 14px; }
   .detail-fields dt { min-width: 72px; }
+}
+
+/* 5) 极小屏：强制单列。
+   视口 ≤400px 时，左右各 16px 内边距后留给内容的宽度已不足 350px，
+   此时 minmax(350px,1fr) 会把列撑破容器、出现横向滚动条。
+   覆盖成 1fr 让它跟容器等宽，375px（iPhone SE/8 一档）也不会横滚。 */
+@media (max-width: 400px) {
+  .page-news .news-list:not([hidden]),
+  .page-news #state-loading:not([hidden]) {
+    grid-template-columns: 1fr;
+  }
 }

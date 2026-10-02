@@ -9,9 +9,9 @@
     document.documentElement.dataset.theme = localStorage.getItem('hot-theme') === 'light' ? 'light' : 'dark';
   </script>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/news.css?v=d13">
+  <link rel="stylesheet" href="css/news.css?v=d14">
 </head>
-<body>
+<body class="page-news">
   <header class="site-header">
     <div class="brand">
       <span class="tag">28days 项目 · MVP</span>
@@ -79,7 +79,8 @@
       </div>
 
       <!-- 状态二（成功）/ 状态三（空）：由 news.js 渲染 -->
-      <div id="news-list" hidden></div>
+      <!-- class="news-list" 只用于网格布局，id 仍是 JS 的挂载点，JS 不用改 -->
+      <div id="news-list" class="news-list" hidden></div>
     </div>
   </main>
 
