@@ -39,18 +39,38 @@
 
 ```
 28days/
-├── index.html          # P1 每日速览页（首页）
+├── index.html          # P1 首页：三平台热搜（虎扑/腾讯/央视）
 ├── matches.html        # P2 赛程比分页
-├── css/style.css       # 共用样式（移动端优先）
-├── js/app.js           # 首页逻辑：fetch 数据 → 渲染四板块 + 大类筛选
-├── js/matches.js       # 赛程页逻辑：日期切换 → 渲染比赛卡片
-├── data/news.json      # 速览条目数据（字段定义见 TECH_DESIGN 4.1）
-├── data/matches.json   # 比赛数据（字段定义见 TECH_DESIGN 4.2）
-├── docs/dataflow.svg   # 数据流图（TECH_DESIGN 第 6 节）
-├── docs/structure.svg  # 项目结构图（Day 7 余力加练）
+├── news.html           # P3 资讯列表页（?cat=足球|篮球|综合）
+├── news-detail.html    # P4 资讯详情页（?id=...）
+├── league.html         # P5 联赛板块页（?lg=nba|cba|ucl|epl）
+├── digest.html         # 旧四板块速览页（Day 8 版迁出，暂无导航入口）
+├── tools/entry.html    # 本地 JSON 录入表单
+├── css/                # 分页样式：style / home / news / league
+├── js/                 # 分页逻辑：home / matches / news / news-detail / league / theme / app
+├── data/               # 示例数据：hot / news / matches / {nba,cba,ucl,epl}.json
+│
+├── cloudfunctions/     # 【Day 15】CloudBase 云函数
+│   └── health/         #   健康检查函数（GET /api/health）
+├── scripts_cloudbase/  # 【Day 15】部署脚本（health 函数 / 静态托管 / 换行规范）
+├── cloudbaserc.json    # 【Day 15】CloudBase CLI 部署配置
+├── api-contract.md     # 【Day 15】接口契约（第 3 周建表与写接口的依据）
+├── docs/
+│   ├── cloudbase-deploy-day15.md  # 【Day 15】部署手册
+│   ├── dataflow.svg / structure.svg / views.md / usability-test-day14.md
+├── skills/tiyu-daily/  # 录入用 Skill
 ├── research.md / PRD.md / TECH_DESIGN.md / AGENTS.md  # 项目文档
 └── .env                # 本地调试密钥（已 gitignore，永不提交）
 ```
+
+## 部署到公网（云开发 CloudBase）
+
+第 2 周前的页面是本地预览（`node serve.mjs`）。从 **Day 15** 起接入腾讯云开发，公网可访问：
+
+- 云函数：`/api/health`（健康检查）
+- 静态托管：上面那些 `.html` + `css/` + `js/` + `data/`
+
+完整步骤见 [docs/cloudbase-deploy-day15.md](docs/cloudbase-deploy-day15.md)，接口约定见 [api-contract.md](api-contract.md)。
 
 ## 数据更新方式（MVP 示例阶段）
 

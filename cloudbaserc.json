@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "version": "2.1",
+  "envId": "{{env.TCB_ENV_ID}}",
+  "region": "ap-shanghai",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    {
+      "name": "health",
+      "type": "HTTP",
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "timeout": 10,
+      "memorySize": 256,
+      "description": "每日体坛速览 · 健康检查（GET /api/health）",
+      "ignore": [
+        "node_modules/**",
+        ".git/**",
+        "*.md"
+      ]
+    }
+  ],
+  "gateway": {
+    "routes": [
+      {
+        "path": "/api/health",
+        "target": "function:health",
+        "enableAuth": false
+      }
+    ]
+  }
+}
