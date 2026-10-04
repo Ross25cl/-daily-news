@@ -2,10 +2,21 @@
    Day 9：与 home.css 对齐同一套颜色变量——三个页面一种面孔，
    导航切换不再深浅跳变；布局规则原样保留，只改颜色与按钮状态。
    Day 11：标签筛选反馈——选中标签水滴感浅蓝渐变、进场动画、
-   处理态骨架屏与禁用样式（matches 页共用 .filter-btn，同筛同貌）。 */
+   处理态骨架屏与禁用样式（matches 页共用 .filter-btn，同筛同貌）。
+   Day 16 前置优化：全站统一外层容器宽度 —— 见下方 --page-max 注释。 */
 * { box-sizing: border-box; }
 
 :root {
+  /* ---------- 布局（Day 16 前置优化：全站统一外层容器） ----------
+     背景：此前三个页面各写各的宽度上限 —— 首页 860px（home.css）、
+     赛程/联赛/四板块 720px（本文件）、资讯页 1280px（news.css），
+     切页时正文宽度会跳，看起来像没套同一个框架。
+     做法：宽度收口到一个变量，三个样式表都引用它，
+     以资讯页那档 1280px 为基准（宽屏下表格/晋级图才放得开）。
+     --page-pad 是页面左右内边距，晋级图做「全宽出血」时要用它对位。 */
+  --page-max: 1280px;
+  --page-pad: 16px;
+
   --bg: #111827;          /* 页面底色（与 home.css 一致） */
   --card: #1f2937;        /* 卡片：比底色亮一级 */
   --border: #374151;
@@ -28,7 +39,7 @@
 
 body {
   font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
-  max-width: 720px;
+  max-width: var(--page-max);   /* Day 16：全站统一容器宽度，不再各页一套 */
   margin: 0 auto;
   padding: 24px 16px 48px;
   color: var(--text);
@@ -414,6 +425,8 @@ h1 { font-size: 26px; margin: 0 0 4px; }
 
 /* ---------- 宽屏微调（375px 下无需横向滚动） ---------- */
 @media (min-width: 640px) {
+  /* 左右内边距加到 24px，--page-pad 跟着走（晋级图全宽出血靠它对齐） */
+  :root { --page-pad: 24px; }
   body { padding: 48px 24px 64px; }
   h1 { font-size: 30px; }
   .site-nav { display: flex; align-items: flex-end; justify-content: space-between; }

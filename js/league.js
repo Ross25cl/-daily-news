@@ -303,6 +303,33 @@ function bkBuildEdges(bk) {
   return edges;
 }
 
+// ---------- Day 16 前置优化：晋级图全宽出血的两件小事 ----------
+
+// ① 把「视口宽 − 纵向滚动条宽」写进 CSS 变量 --vw。
+//    league.css 里 .bk-wrap 用 --vw 做全宽出血（左右负外边距）。
+//    为什么不用 100vw：100vw 把滚动条那一份也算进去，页面有纵向滚动条时
+//    条带会比可视区宽十几像素，反而顶出一条横向滚动条。
+//    为什么不用 window.innerWidth：同上，它含滚动条。
+//    documentElement.clientWidth 才是真正的可视内容宽度。
+//    传 0 表示不清除（ResizeObserver 也会调它），只有值变了才写，避免反复触发重排。
+function syncViewportVar() {
+  const w = document.documentElement.clientWidth;
+  if (w && w !== syncViewportVar._w) {
+    syncViewportVar._w = w;
+    document.documentElement.style.setProperty('--vw', w + 'px');
+  }
+}
+
+// ② 按「是否真的溢出」决定横滑提示显不显示。
+//    容器宽度统一后，能否放下取决于视口宽度而不是设备档位，
+//    所以不再用固定断点，直接量 .bk-wrap 的内容宽和可视宽。
+function syncBracketHint() {
+  const wrap = document.querySelector('#lg-panel .bk-wrap');
+  const hint = document.querySelector('#lg-panel .bk-scroll-hint');
+  if (!wrap || !hint) return;
+  hint.classList.toggle('off', wrap.scrollWidth <= wrap.clientWidth + 1);
+}
+
 // 渲染后按实际卡片坐标画 SVG 折线（轮次间 90° 转角连接线）；
 // 已结束对局的晋级路径亮蓝，未完成路径灰色 —— 晋级路径一眼可读
 function drawBracketLines() {
@@ -331,7 +358,21 @@ function drawBracketLines() {
       ' H' + mid + ' V' + t.cy + ' H' + x2 + '" />';
   }).join('');
 }
-window.addEventListener('resize', drawBracketLines);
+
+// 一次把三件事做完：视口变量 → 连线（依赖最终布局尺寸）→ 提示显隐
+function syncBracketLayout() {
+  syncViewportVar();
+  drawBracketLines();
+  syncBracketHint();
+}
+
+window.addEventListener('resize', syncBracketLayout);
+
+// 纵向滚动条出现/消失也会改变可视宽度（但不触发 resize），
+// 所以再挂一个 ResizeObserver 兜住这种情况，否则 --vw 会留一个旧值
+if (window.ResizeObserver) {
+  new ResizeObserver(syncViewportVar).observe(document.documentElement);
+}
 
 function renderBracket(bk) {
   if (!bk || !bk.halves || bk.halves.length < 2) return emptyBlock();
@@ -524,8 +565,9 @@ function draw(tab) {
     '<div id="lg-panel">' + renderTab(tab, LEAGUE_DATA) + '</div>';
 
   // 面板内交互（关注/赛季切换/球队点击）与晋级图连线（Day 12）
+  // Day 16：改为 syncBracketLayout —— 顺带同步 --vw（全宽出血用）与横滑提示
   attachLgPanelEvents(main.querySelector('#lg-panel'));
-  requestAnimationFrame(drawBracketLines);
+  requestAnimationFrame(syncBracketLayout);
 
   // Tab 点击切换：写入 hash，方便刷新/后退保留
   main.querySelectorAll('.lg-tab').forEach(btn => {

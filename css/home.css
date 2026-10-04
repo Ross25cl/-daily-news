@@ -16,6 +16,12 @@
 * { box-sizing: border-box; }
 
 :root {
+  /* ---------- 布局（Day 16 前置优化） ----------
+     首页只加载本文件、不加载 style.css，所以这里要自己声明一次。
+     值与 style.css / news.css 保持一致，全站一个外层容器宽度。 */
+  --page-max: 1280px;
+  --page-pad: 16px;
+
   --bg: #111827;        /* 页面底色：深灰、藏淡蓝调，长时间浏览压力小 */
   --card: #1f2937;      /* 卡片：比底色亮一级，条目层次分明 */
   --border: #374151;    /* 分隔线：蓝灰 */
@@ -68,7 +74,7 @@ html[data-theme="light"] {
 
 body {
   font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
-  max-width: 860px;
+  max-width: var(--page-max);   /* Day 16：由 860px 统一到全站同一宽度 */
   margin: 0 auto;
   padding: 24px 16px 48px;
   color: var(--text);
@@ -358,6 +364,7 @@ html[data-theme="light"] .rank-2 { color: #8a93a3; }
 
 /* ---------- 响应式 ---------- */
 @media (min-width: 640px) {
+  :root { --page-pad: 24px; }
   body { padding: 40px 24px 64px; }
   h1 { font-size: 30px; }
 }

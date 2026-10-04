@@ -110,13 +110,13 @@
    ============================================================ */
 
 /* 1) 加宽主容器。
+   Day 14 时这里是唯一一处放宽宽度的地方：
    style.css 把宽度上限放在 body 上（max-width:720px; margin:0 auto），
-   所以这里要覆盖的是 body 而不是某个 div；class 比标签选择器更具体，
-   且 news.css 在 style.css 之后加载，无需 !important。 */
-body.page-news {
-  max-width: 1280px;
-  margin: 0 auto;
-}
+   本页要覆盖 body。
+   Day 16 前置优化：宽度上限已收口到 style.css 的 --page-max（1280px），
+   全站统一，本页不再需要单独覆盖 —— 原来那条
+   `body.page-news { max-width: 1280px }` 因此删除。
+   下面的网格布局仍保留（列表页要靠它排多列）。 */
 
 /* 2) 列表容器改 Grid。
    auto-fill + minmax(350px, 1fr)：每列最窄 350px、能塞几列塞几列，
