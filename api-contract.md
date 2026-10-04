@@ -3,11 +3,11 @@
 | 项目 | 内容 |
 | ---- | ---- |
 | 文档名称 | 接口契约（api-contract） |
-| 撰写日期 | 2026-10-03（Day 15｜第 3 周） |
+| 撰写日期 | 2026-10-03（Day 15｜第 3 周）；**2026-10-04（Day 16）更新：表结构定稿并已建表** |
 | 依据 | 前端第 2 周实际页面（`index.html` / `matches.html` / `news.html` / `news-detail.html` / `league.html`）+ `TECH_DESIGN.md` 第 5 节 |
-| 文档地位 | **第 3 周建表与写接口的唯一依据**。今天只登记占位，不实现。 |
-| 实现时点 | Day 16–17 建表、Day 18–19 写读接口、Day 20 配跨域 |
-| 今日不实现 | 所有 `/api/*` 业务接口，均为占位；今天唯一实际部署的是 `/api/health` |
+| 文档地位 | **第 3 周建表与写接口的唯一依据**。接口仍为占位（Day 17–19 实现）；**第 3 节的表结构 Day 16 已定稿，且与线上库逐字一致**。 |
+| 实现时点 | Day 16 建表 ✅ · Day 17–19 写读接口 · Day 20 配跨域 |
+| 今日不实现 | 所有 `/api/*` 业务接口仍为占位；Day 15 唯一实际部署的是 `/api/health` |
 
 ---
 
@@ -442,23 +442,137 @@
 
 ---
 
-## 3. 数据表设计草案（Day 16 建表依据）
+## 3. 数据表设计（Day 16 定稿并已建表）
 
-> 今天**只登记**，不建。字段与第 2 节接口一一对应，id 规则不变。
+> **状态**：Day 15 只登记草案、不建；**Day 16 定稿并已建表**——CloudBase PostgreSQL 17，库 `postgres-emxo9nse` / schema `public`，10 张表全部建成、种子各 ≥5 行（实测见 §3.5）。
+> **唯一权威**：建表语句 [`db/schema.sql`](db/schema.sql)、种子数据 [`db/seed.sql`](db/seed.sql)。本节与两个脚本保持一致；以后改结构先改脚本、再回写本节。
 
-| 表名 | 来源数据 | 主键 | 关键字段 |
-| ---- | ---- | ---- | ---- |
-| `hot_items` | `data/hot.json` | `id` | `platform` / `rank` / `title` / `heat` / `url` / `tag` / `is_video` / `fetched_at` |
-| `news_items` | `data/news.json` | `id` | `title` / `summary` / `section` / `league` / `source_name` / `source_url` / `digest_date` / `status` / `created_at` |
-| `matches` | `data/matches.json` | `id` | `league` / `home_team` / `away_team` / `match_time` / `status` / `home_score` / `away_score` / `round` / `venue` / `data_source` / `updated_at` |
-| `league_schedule` | `data/{lg}.json` → `schedule` | `id` | `league_id` / `date` / `time` / `status` / `home_team` / `away_team` / `home_score` / `away_score` / `round` / `venue` |
-| `league_standings` | `→ standings` | `id` | `league_id` / `rank` / `team_name` / `wins` / `losses` / `draws` / `played` / `points` / `points_diff` / `win_rate` / `goals_for` / `goals_against` |
-| `league_players` | `→ players` / `scorers` | `id` | `league_id` / `rank` / `player_name` / `team_name` / `points` / `rebounds` / `assists` / `apps` / `goals` / `rating` |
-| `league_brackets` | `→ bracket` / `race` | `id` | `league_id` / `season` / `payload_json`（结构复杂，整体存 JSON） |
-| `push_log` | — | `id` | `digest_date` / `sent_at` / `recipient_count` / `status` / `failure_note` |
-| `subscribers` | GitHub Secrets | `id` | `email` / `status` / `subscribed_at` / `unsubscribe_token` / `last_sent_at` |
+### 3.1 命名约定（数据库与接口是两套风格）
 
-> 说明：`league_brackets` 的晋级图/争冠形势结构嵌套较深（halves→rounds→matches），**不适合拆成关系表**，整体存 JSON 字段即可。
+| 层 | 风格 | 例子 | 为什么 |
+| -- | ---- | ---- | ---- |
+| **数据库列** | `snake_case` | `source_name`、`digest_date`、`home_team` | 与现有 `data/news.json`、`data/matches.json` **一字不差**，迁移零改名 |
+| **接口输出** | `camelCase` | `sourceName`、`digestDate`、`homeTeam` | 契约 0.1；与 Day 10 起各联赛 JSON 一致 |
+
+> 两套风格的映射在 **Day 18 的接口层**完成（`SELECT ... AS "sourceName"` 或结果重命名），**数据库侧不改名**。
+
+### 3.2 表清单与关联
+
+| # | 表名 | 来源数据 | 主键 | 关联 |
+| - | ---- | ---- | ---- | ---- |
+| 1 | `leagues` | `data/{lg}.json` 头部字段 | `id` | **维度表**，被 5–8 引用 |
+| 2 | `hot_items` | `data/hot.json` | `id` | — |
+| 3 | `news_items` | `data/news.json` | `id` | 靠 `league` 与 `matches` 对齐 |
+| 4 | `matches` | `data/matches.json` | `id` | 靠 `league` 与 `news_items` 对齐 |
+| 5 | `league_schedule` | `→ schedule` | `id` | `league_id → leagues.id` |
+| 6 | `league_standings` | `→ standings` | `id` | `league_id → leagues.id` |
+| 7 | `league_players` | `→ players` / `scorers` | `id` | `league_id → leagues.id` |
+| 8 | `league_brackets` | `→ bracket` / `race` | `id` | `league_id → leagues.id` |
+| 9 | `push_log` | —（订阅线） | `id` | — |
+| 10 | `subscribers` | —（订阅线） | `id` | — |
+
+**关联字段（今日掌握项）**
+
+- 「两张核心表」= `news_items`（一条资讯一行）+ `matches`（一场比赛一行）。
+- 二者靠 **`league`** 关联：资讯的联赛标签与比赛的联赛标签同域（NBA / 英超 / CBA / 欧冠），「某联赛今天有什么资讯、有什么比赛」就按它 join：
+  ```sql
+  SELECT m.league, count(DISTINCT m.id) AS 比赛数, count(DISTINCT n.id) AS 资讯数
+  FROM   matches m JOIN news_items n ON n.league = m.league
+  GROUP  BY m.league;
+  ```
+- 联赛页那四张表（5–8）靠 **`league_id`** 外键挂到 `leagues`，值是 `nba/cba/ucl/epl` 短标识。
+
+### 3.3 各表字段（与 `db/schema.sql` 一致）
+
+**1. `leagues`**（维度表）
+`id` TEXT PK · `name` TEXT NN · `sport` TEXT NN `CHECK(basketball/football)` · `emoji` TEXT · `description` TEXT · `tabs` JSONB NN · `updated_at` TIMESTAMPTZ NN
+
+**2. `hot_items`**
+`id` TEXT PK · `platform` TEXT NN `CHECK(hupu/tencent/cctv5)` · `platform_name` TEXT NN · `platform_desc` TEXT · `rank` INT NN · `title` TEXT NN · `heat` BIGINT NN · `url` TEXT NN · `tag` TEXT · `is_video` BOOL NN · `fetched_at` TIMESTAMPTZ NN
+`UNIQUE(platform, rank)`
+
+**3. `news_items`**
+`id` TEXT PK · `title` TEXT NN（≤30 字）· `summary` TEXT NN（≤60 字）· `section` TEXT NN `CHECK(头条/转会伤病/热议/明日看点)` · `league` TEXT NN · `source_name` TEXT NN · `source_url` TEXT NN · `digest_date` DATE NN · `status` TEXT NN `CHECK(draft/published)` · `created_at` TIMESTAMPTZ NN
+
+**4. `matches`**
+`id` TEXT PK · `league` TEXT NN · `home_team` / `away_team` TEXT NN · `match_time` TIMESTAMP NN · `status` TEXT NN `CHECK(未开始/进行中/已结束/延期/取消)` · `home_score` / `away_score` INT · `round` / `venue` TEXT · `data_source` TEXT NN · `updated_at` TIMESTAMPTZ NN
+约束：`status='已结束'` 时两个比分必须非空（防「状态说打完、比分为空」）
+
+**5. `league_schedule`**
+`id` TEXT PK · `league_id` TEXT NN **FK→leagues** · `match_date` DATE NN · `match_time` TEXT · `status` TEXT NN `CHECK(五种)` · `home_team` / `away_team` TEXT NN · `home_score` / `away_score` INT · `round` / `venue` TEXT
+
+**6. `league_standings`**
+`id` TEXT PK · `league_id` TEXT NN **FK** · `rank` INT NN · `team_name` TEXT NN · `played` INT · `wins` INT NN · `draws` INT · `losses` INT NN · `goals_for` / `goals_against` INT · `points` INT · `points_diff` TEXT · `win_rate` TEXT
+`UNIQUE(league_id, rank)`
+
+**7. `league_players`**
+`id` TEXT PK · `league_id` TEXT NN **FK** · `board` TEXT NN `CHECK(players/scorers)` · `rank` INT NN · `player_name` / `team_name` TEXT NN · `points` / `rebounds` / `assists` NUMERIC(5,1) · `apps` INT · `goals` INT · `rating` NUMERIC(3,1)
+`UNIQUE(league_id, board, rank)`
+
+**8. `league_brackets`**
+`id` TEXT PK · `league_id` TEXT NN **FK** · `season` TEXT NN · `kind` TEXT NN `CHECK(bracket/race)` · `payload_json` JSONB NN · `updated_at` TIMESTAMPTZ NN
+`UNIQUE(league_id, season, kind)`
+
+**9. `push_log`**
+`id` TEXT PK · `digest_date` DATE NN · `sent_at` TIMESTAMPTZ · `recipient_count` INT NN · `status` TEXT NN · `failure_note` TEXT
+
+**10. `subscribers`**
+`id` TEXT PK · `email` TEXT NN `UNIQUE` · `status` TEXT NN `CHECK(active/unsubscribed)` · `subscribed_at` TIMESTAMPTZ NN · `unsubscribe_token` TEXT NN `UNIQUE` · `last_sent_at` TIMESTAMPTZ
+
+### 3.4 与 Day 15 草案的四处改动（改动都有理由）
+
+| 处 | 草案 | 定稿 | 原因 |
+| -- | ---- | ---- | ---- |
+| `leagues` | 无 | **新增维度表** | 4 张 `league_*` 要外键父表；字段取自各 JSON 头部（id/name/sport/emoji/desc/tabs） |
+| `league_schedule` | `date` / `time` | **`match_date` / `match_time`** | `date`、`time` 是 PG 类型关键字，作列名易踩坑；也与 `matches.match_time` 命名统一 |
+| `league_players` | 无 `board` | **新增 `board`** | 英超同时有「球员数据榜」和「射手榜」两套榜单，必须区分 |
+| `league_brackets` | 无 `kind` | **新增 `kind`** | 晋级图（NBA/CBA/欧冠）与争冠形势（英超 `race`）结构不同 |
+
+### 3.5 建表 · 灌种 · 验证（Day 16 实测步骤）
+
+**A. 控制台执行（推荐，脚本大也能贴）**
+
+1. 打开 CloudBase 控制台 → 环境 `ross-d2gimwy406e0d6812` → **数据库 → SQL 编辑器**
+2. 粘贴 [`db/schema.sql`](db/schema.sql) 全文 → 执行 → 应看到 10 行表名
+3. 粘贴 [`db/seed.sql`](db/seed.sql) 全文 → 执行 → 末尾自检表打印每张表行数
+4. 到「表管理」逐张点开，核对数据（**今日截图**就在这里取）
+
+**B. CLI 执行（本机实测可用）**
+
+```bash
+# 单条查询
+tcb db execute -e ross-d2gimwy406e0d6812 --sql "SELECT 1"
+
+# 执行 schema.sql（18KB，命令行能过）
+tcb db execute -e ross-d2gimwy406e0d6812 --sql "$(cat db/schema.sql)"
+
+# seed.sql 有 40KB，超过命令行长度上限（实测报 Argument list too long），
+# 按语句边界分段执行（本项目实测切 5 段，每段 <20KB）
+```
+
+**C. select 验证（每张表 ≥5 行）**
+
+```sql
+SELECT 'hot_items' AS t, count(*) FROM hot_items
+UNION ALL SELECT 'news_items',       count(*) FROM news_items
+UNION ALL SELECT 'matches',          count(*) FROM matches
+UNION ALL SELECT 'league_schedule',  count(*) FROM league_schedule
+UNION ALL SELECT 'league_standings', count(*) FROM league_standings
+UNION ALL SELECT 'league_players',   count(*) FROM league_players
+UNION ALL SELECT 'league_brackets',  count(*) FROM league_brackets
+ORDER BY 1;
+```
+
+实测结果：`hot_items` 24 · `news_items` 8 · `matches` 9 · `league_schedule` 20 · `league_standings` 20 · `league_players` 25 · `league_brackets` 5（`leagues` 4 是维度表、`push_log`/`subscribers` 各 5）。
+
+**D. 约束自测（都如期被拦下）**
+
+| 动作 | 期望 | 实测 |
+| ---- | ---- | ---- |
+| 插不存在的 `league_id` | 外键报错 | ✅ `23503 violates foreign key constraint` |
+| `hot_items` 同平台重复名次 | 唯一报错 | ✅ `23505 duplicate key value` |
+| `news_items` 标题 31 字 | 长度报错 | ✅ `23514 violates check constraint` |
+| 重跑 `seed.sql` | 不报错、不重复 | ✅ 五段全部重跑成功、行数不变 |
 
 ---
 
@@ -477,7 +591,9 @@
 
 ---
 
-## 5. 今天（Day 15）已完成 vs 未完成
+## 5. 进度（Day 15 完成情况 + Day 16 更新）
+
+**Day 15（第 3 周第 1 天）**
 
 | 项 | 状态 |
 | -- | ---- |
@@ -487,8 +603,18 @@
 | 网关路由 `/api/health` | ✅ 已落地（`tcb deploy --only gateway`） |
 | 前端静态托管部署 | ✅ 已部署，24 个文件上传成功，主要页面实测 200 |
 | 本契约 8 个接口 | ✅ 已登记（1 个已实现 + 7 个占位） |
-| 数据库建表 | ❌ 今日不做（Day 16） |
-| 真实业务接口 | ❌ 今日不做（Day 18–19） |
-| 跨域配置 | ❌ 今日不做（Day 20） |
 
-**仍待办（不阻塞今日完成标准）**：同伴手机验证前端公网地址；三张截图归档（云函数返回 / 前端页面 / 控制台环境信息）。
+**Day 16（第 3 周第 2 天）**
+
+| 项 | 状态 |
+| -- | ---- |
+| 数据模型设计 | ✅ 10 张表（含新增 `leagues` 维度表），详见 §3 |
+| `db/schema.sql` / `db/seed.sql` 入库 | ✅ 本次提交 |
+| 线上建表（CloudBase PG 17 / schema `public`） | ✅ 10 张表全部建成 |
+| 种子数据（每张核心表 ≥5 行） | ✅ hot 24 · news 8 · matches 9 · schedule 20 · standings 20 · players 25 · brackets 5 |
+| `seed.sql` 重复执行不报错 | ✅ 重跑五段全部成功、行数不变 |
+| 约束自测（外键 / 唯一 / 长度） | ✅ `23503` / `23505` / `23514` 三类都被正确拦下 |
+| 真实业务接口 | ❌ Day 17–19 |
+| 跨域配置 | ❌ Day 20 |
+
+**仍待办（不阻塞完成标准）**：Day 15 的同伴手机验证与三张截图归档；Day 16 的控制台「表数据页」截图。

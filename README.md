@@ -53,8 +53,9 @@
 ├── cloudfunctions/     # 【Day 15】CloudBase 云函数
 │   └── health/         #   健康检查函数（GET /api/health）
 ├── scripts_cloudbase/  # 【Day 15】部署脚本（health 函数 / 静态托管 / 换行规范）
+├── db/                 # 【Day 16】数据库脚本（schema.sql 建表 / seed.sql 种子）
 ├── cloudbaserc.json    # 【Day 15】CloudBase CLI 部署配置
-├── api-contract.md     # 【Day 15】接口契约（第 3 周建表与写接口的依据）
+├── api-contract.md     # 【Day 15 建，Day 16 表结构定稿】接口契约
 ├── docs/
 │   ├── cloudbase-deploy-day15.md  # 【Day 15】部署手册
 │   ├── dataflow.svg / structure.svg / views.md / usability-test-day14.md
@@ -71,6 +72,16 @@
 - 静态托管：上面那些 `.html` + `css/` + `js/` + `data/`
 
 完整步骤见 [docs/cloudbase-deploy-day15.md](docs/cloudbase-deploy-day15.md)，接口约定见 [api-contract.md](api-contract.md)。
+
+## 数据库（Day 16 起）
+
+第 3 周把示例数据搬进 CloudBase 云开发 **PostgreSQL**（库 `postgres-emxo9nse`，schema `public`）：
+
+- `db/schema.sql`——建 10 张表（主键 / 外键 / CHECK 约束 / 字段注释），可重复执行；
+- `db/seed.sql`——先清后插的种子数据，每张核心表 ≥5 行，可重复执行；
+- 表结构、关联字段与接口的对应关系，见 [api-contract.md](api-contract.md) 第 3 节。
+
+控制台 / CLI 的执行方式与 select 验证语句，见契约 §3.5。
 
 ## 数据更新方式（MVP 示例阶段）
 
