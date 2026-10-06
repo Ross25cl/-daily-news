@@ -3,11 +3,11 @@
 | 项目 | 内容 |
 | ---- | ---- |
 | 文档名称 | 接口契约（api-contract） |
-| 撰写日期 | 2026-10-03（Day 15｜第 3 周）；**2026-10-04（Day 16）更新：表结构定稿并已建表** |
+| 撰写日期 | 2026-10-03（Day 15｜第 3 周）；**2026-10-04（Day 16）更新：表结构定稿并已建表**；**2026-10-05（Day 17）更新：`/api/hot` 已实现** |
 | 依据 | 前端第 2 周实际页面（`index.html` / `matches.html` / `news.html` / `news-detail.html` / `league.html`）+ `TECH_DESIGN.md` 第 5 节 |
-| 文档地位 | **第 3 周建表与写接口的唯一依据**。接口仍为占位（Day 17–19 实现）；**第 3 节的表结构 Day 16 已定稿，且与线上库逐字一致**。 |
-| 实现时点 | Day 16 建表 ✅ · Day 17–19 写读接口 · Day 20 配跨域 |
-| 今日不实现 | 所有 `/api/*` 业务接口仍为占位；Day 15 唯一实际部署的是 `/api/health` |
+| 文档地位 | **第 3 周建表与写接口的唯一依据**。接口 Day 17 起逐个落地；**第 3 节的表结构 Day 16 已定稿，且与线上库逐字一致**。 |
+| 实现时点 | Day 16 建表 ✅ · Day 17 `/api/hot` ✅ · Day 18–19 其余读接口 · Day 20 配跨域 |
+| 今日不实现 | 业务写入接口（收藏写入属 Day 18）；其余 `/api/*` 读接口仍为占位 |
 
 ---
 
@@ -82,7 +82,7 @@
 | # | 路径 | 方法 | 服务页面 | 今日状态 |
 | - | ---- | ---- | ---- | ---- |
 | 0 | `/api/health` | GET | — | ✅ **已部署**（Day 15） |
-| 1 | `/api/hot` | GET | `index.html` | ⏳ 占位 |
+| 1 | `/api/hot` | GET | `index.html` | ✅ **已实现**（Day 17） |
 | 2 | `/api/news` | GET | `index.html` / `news.html` / `news-detail.html` | ⏳ 占位 |
 | 3 | `/api/news/:id` | GET | `news-detail.html` | ⏳ 占位 |
 | 4 | `/api/matches` | GET | `matches.html` | ⏳ 占位 |
@@ -91,6 +91,7 @@
 | 7 | `/api/unsubscribe` | GET | （人工退订，暂不做页面） | ⏳ 占位（暂不实现） |
 
 > 表 1–5 是前端**当前页面直接依赖**的读接口，是 Day 16–19 的重点。
+> `/api/favorites` 为 Day 18 新增（收藏线），届时在此表补充登记。
 > 表 6–7 属订阅线，按 `TECH_DESIGN` 第 11 节仍走人工流程，此处仅登记。
 
 ---
@@ -118,15 +119,21 @@
 
 ---
 
-### 2.1 `GET /api/hot` ⏳ 占位
+### 2.1 `GET /api/hot` ✅ 已实现（Day 17）
+
+> **实现说明（Day 17）**：云函数 `cloudfunctions/api/index.js`，网关路由 `/api/hot`。
+> 数据链路：浏览器 → 网关 → 云函数 → **CloudBase PG 的 HTTP API（PostgREST）** → `hot_items` 表。
+> **为何不走 pg 直连**：体验版（个人版）不支持数据库 TCP 直连；且 HTTP 云函数不能云端装依赖，
+> 故用零依赖 + Node 原生 `https` 调 HTTP API。查询条件全部走 PostgREST 参数，不拼 SQL。
+> 数据由 `scripts_cloudbase/fetch-hot.ps1` 每日从三平台官网同步（Day 17 实测 63 条）。
 
 | 项 | 内容 |
 | -- | ---- |
 | 用途 | 首页三平台热搜榜（虎扑 / 腾讯体育 / 央视体育） |
 | 服务页面 | `index.html` |
-| 请求参数 | `platform`（选填）：`hupu` / `tencent` / `cctv5`，省略则返回全部三个；`limit`（选填，默认 10）：每个平台返回条数 |
+| 请求参数 | `platform`（选填）：`hupu` / `tencent` / `cctv5`，省略则返回全部三个；`limit`（选填，默认 10）：每个平台返回条数（上限 50） |
 | 对应数据 | `data/hot.json` |
-| 对应表 | `hot_items`（Day 16 建） |
+| 对应表 | `hot_items`（Day 16 建，Day 17 起为三平台官网同步的真实数据） |
 
 **成功响应** `200`：
 
@@ -617,4 +624,17 @@ ORDER BY 1;
 | 真实业务接口 | ❌ Day 17–19 |
 | 跨域配置 | ❌ Day 20 |
 
-**仍待办（不阻塞完成标准）**：Day 15 的同伴手机验证与三张截图归档；Day 16 的控制台「表数据页」截图。
+**Day 17（第 3 周第 3 天）**
+
+| 项 | 状态 |
+| -- | ---- |
+| 真实热搜数据同步脚本 | ✅ `scripts_cloudbase/fetch-hot.ps1`（虎扑/腾讯体育/央视体育三源） |
+| 真实数据入库 | ✅ 63 条（虎扑 49 · 腾讯 7 · 央视 7），替换 Day 16 的 24 条示例种子 |
+| `GET /api/hot` 云函数 | ✅ `cloudfunctions/api/index.js`（零依赖，HTTP API 方式访问 PG） |
+| 网关路由 `/api/hot` | ✅ 已写入 `cloudbaserc.json` |
+| 本地分支验证 | ✅ 5 条断言全过（400 / 404 / 405 / 500 各分支） |
+| 公网部署 + 真库验证 | ⏳ 待零创建 API Key 后执行（见 `docs/cloudbase-deploy-day17.md`） |
+| `/api/favorites` | ❌ Day 18（读需先有收藏表，今日不做） |
+| 跨域配置 | ❌ Day 20 |
+
+**仍待办（不阻塞完成标准）**：Day 15 的同伴手机验证与三张截图归档；Day 16 的控制台「表数据页」截图；Day 17 的 API Key 创建与公网验证。

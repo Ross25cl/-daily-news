@@ -51,9 +51,17 @@
 ├── data/               # 示例数据：hot / news / matches / {nba,cba,ucl,epl}.json
 │
 ├── cloudfunctions/     # 【Day 15】CloudBase 云函数
-│   └── health/         #   健康检查函数（GET /api/health）
-├── scripts_cloudbase/  # 【Day 15】部署脚本（health 函数 / 静态托管 / 换行规范）
-├── db/                 # 【Day 16】数据库脚本（schema.sql 建表 / seed.sql 种子）
+│   ├── health/         #   健康检查函数（GET /api/health）
+│   └── api/            #   【Day 17】业务读接口（GET /api/hot）
+├── scripts_cloudbase/  # 【Day 15】部署脚本
+│   ├── fetch-hot.ps1       # 【Day 17】三平台热搜同步抓取
+│   ├── run-fetch-hot.ps1   # 【Day 17】ASCII 启动器（绕开 PS 5.1 中文编码坑）
+│   ├── test-api-local.cjs  # 【Day 17】接口分支本地验证
+│   └── ...
+├── db/                 # 【Day 16】数据库脚本
+│   ├── schema.sql          #   建表（10 张表）
+│   ├── seed.sql            #   种子数据
+│   └── hot_sync.sql        # 【Day 17】热搜同步产物（脚本生成，可重复执行）
 ├── cloudbaserc.json    # 【Day 15】CloudBase CLI 部署配置
 ├── api-contract.md     # 【Day 15 建，Day 16 表结构定稿】接口契约
 ├── docs/
@@ -68,10 +76,23 @@
 
 第 2 周前的页面是本地预览（`node serve.mjs`）。从 **Day 15** 起接入腾讯云开发，公网可访问：
 
-- 云函数：`/api/health`（健康检查）
+- 云函数：`/api/health`（健康检查，Day 15）· `/api/hot`（三平台热搜，Day 17）
 - 静态托管：上面那些 `.html` + `css/` + `js/` + `data/`
 
-完整步骤见 [docs/cloudbase-deploy-day15.md](docs/cloudbase-deploy-day15.md)，接口约定见 [api-contract.md](api-contract.md)。
+完整步骤见 [docs/cloudbase-deploy-day15.md](docs/cloudbase-deploy-day15.md) 与 [day17](docs/cloudbase-deploy-day17.md)，接口约定见 [api-contract.md](api-contract.md)。
+
+### 云函数访问数据库的方式（Day 17 定案）
+
+体验版（个人版）**不支持 PostgreSQL 的 TCP 直连**（内网互联不开放、公网直连打不开），
+且 HTTP 云函数不能云端装 npm 依赖。因此云函数**零依赖**，用 Node 原生 `https`
+调 CloudBase PG 的 **HTTP API（PostgREST）**：
+
+```
+https://<envId>.api.tcloudbasegateway.com/v1/rdb/rest/<table>?<查询参数>
+Authorization: Bearer <服务端 API Key>
+```
+
+服务端 API Key 通过云函数**环境变量** `CB_API_KEY` 注入，**不进代码、不进仓库**。
 
 ## 数据库（Day 16 起）
 
@@ -79,7 +100,19 @@
 
 - `db/schema.sql`——建 10 张表（主键 / 外键 / CHECK 约束 / 字段注释），可重复执行；
 - `db/seed.sql`——先清后插的种子数据，每张核心表 ≥5 行，可重复执行；
+- `db/hot_sync.sql`——**【Day 17】三平台热搜同步数据**，由 `scripts_cloudbase/fetch-hot.ps1` 生成；
 - 表结构、关联字段与接口的对应关系，见 [api-contract.md](api-contract.md) 第 3 节。
+
+### 每日热搜同步（Day 17 起）
+
+真实热搜数据来自三平台官网（虎扑 / 腾讯体育 / 央视体育），只取「标题 + 链接 + 热度」，
+不存正文。同步命令：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts_cloudbase/run-fetch-hot.ps1
+$sql = Get-Content db\hot_sync.sql -Raw -Encoding UTF8
+tcb db execute -e ross-d2gimwy406e0d6812 --sql $sql
+```
 
 控制台 / CLI 的执行方式与 select 验证语句，见契约 §3.5。
 

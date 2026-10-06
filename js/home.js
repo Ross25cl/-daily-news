@@ -1,6 +1,7 @@
 // ============================================================
-// home.js — 首页「三平台热搜」主视图渲染逻辑（Day 8）
-// 数据来源：data/hot.json（本地 mock 数据，真实数据源第 2 周接入）
+// home.js — 首页「三平台热搜」主视图渲染逻辑（Day 8 建，Day 17 接真实接口）
+// 数据来源：GET /api/hot（云函数 → CloudBase PG，Day 17 起为真实热搜）
+//           接口不可用时降级本地 data/hot.json（示例数据）
 // 职责：fetch 数据 → 四种页面状态（加载中/成功/空/错误）→ 三平台卡片渲染
 // 状态演示：URL 加 ?demo=error（错误）、?demo=empty（空）、?demo=loading（加载中）
 // ============================================================
@@ -141,6 +142,42 @@ function formatUpdatedAt(iso) {
 
 const DEMO = new URLSearchParams(location.search).get('demo');
 
+// Day 17：首页热搜改为调用云函数接口 GET /api/hot（网关已配路由）。
+// 接口返回 { ok, data:{platforms}, meta:{updatedAt} }，这里适配成
+// 渲染层需要的 { platforms, updated_at }，并把失败降级到本地 data/hot.json
+// ——接口不可用时首页仍可看示例数据（不白屏）。
+//
+// 地址为什么用绝对地址、不用相对路径 "/api/hot"：
+//   前端托管在静态托管域名（xxx.tcloudbaseapp.com），
+//   接口在云函数网关域名（xxx.app.tcloudbase.com），**两者不同域**。
+//   相对路径会打到静态托管自身、拿不到接口（返回 404 → 降级示例数据）。
+//   本地预览（serve.mjs / 127.0.0.1 / 局域网 IP）也没有 /api 路由，同样要直连线上。
+//   → 所以统一写死函数网关地址。跨域由 CloudBase 网关自动回 CORS 头（实测已生效）。
+//   将来若把接口挂到同域自定义路径，可改回相对路径。
+const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+
+function apiHotURL() {
+  return FUNC_ORIGIN + '/api/hot';
+}
+
+async function fetchHotFromAPI() {
+  const res = await fetch(apiHotURL(), { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const body = await res.json();
+  if (!body || body.ok !== true) {
+    throw new Error((body && body.error && body.error.message) || '接口返回异常');
+  }
+  const d = body.data || {};
+  const meta = body.meta || {};
+  return { platforms: d.platforms || [], updated_at: meta.updatedAt || '' };
+}
+
+async function fetchHotFromLocal() {
+  const res = await fetch('data/hot.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
 async function loadHot() {
   // 状态演示入口（便于自查四种状态）——Day 13 补齐：
   //   ?demo=loading     加载中（停在骨架屏）
@@ -150,14 +187,19 @@ async function loadHot() {
   //   不加参数          正常（成功）
   if (DEMO === 'error')   { showError(); return; }
   if (DEMO === 'empty-all') { renderPlatforms({ updated_at: '', platforms: [] }); return; }
-  if (DEMO === 'empty')   { renderPlatforms({ platforms: [{ id: 'hupu', name: '虎扑', desc: '步行街热帖榜', items: [] }, { id: 'tencent', name: '腾讯体育', desc: '视频热榜', items: [] }, { id: 'cctv5', name: '央视体育', desc: '官方权威发布', items: [] }] }); return; }
+  if (DEMO === 'empty')   { renderPlatforms({ platforms: [{ id: 'hupu', name: '虎扑', desc: '步行街 24 小时榜', items: [] }, { id: 'tencent', name: '腾讯体育', desc: '首页要闻热榜', items: [] }, { id: 'cctv5', name: '央视体育', desc: '官方要闻', items: [] }] }); return; }
   if (DEMO === 'loading') { return; } // 保持骨架屏
 
   showState('loading');
   try {
-    const res = await fetch('data/hot.json');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
+    // 优先真实接口；失败降级到本地示例数据（保持页面可用）
+    let data;
+    try {
+      data = await fetchHotFromAPI();
+    } catch (apiErr) {
+      console.warn('[home.js] 接口 /api/hot 不可用，降级本地示例数据:', apiErr);
+      data = await fetchHotFromLocal();
+    }
     renderPlatforms(data);
   } catch (err) {
     console.warn('[home.js] 热搜数据加载失败:', err);
