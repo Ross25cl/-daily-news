@@ -1,0 +1,10 @@
+{
+  "name": "favorites",
+  "version": "0.1.0",
+  "private": true,
+  "description": "每日体坛速览 · 收藏接口云函数（Day 18｜POST + GET /api/favorites）",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  }
+}

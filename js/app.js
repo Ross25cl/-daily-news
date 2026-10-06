@@ -140,12 +140,41 @@ function showUpdatedAt() {
 
 // ---------- 数据加载 ----------
 
+// Day 18：接入接口层（与 js/home.js / js/news.js 同一套做法）。
+// 绝对网关地址的原因见 js/news.js 顶部注释：静态托管域名与函数网关域名不同域。
+// 字段名本日保持 snake_case，camelCase 改名留到 /api/news 上线那天统一做。
+const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+
+// 通用接口取数：解包 { ok, data, meta }
+async function fetchFromAPI(path) {
+  const res = await fetch(FUNC_ORIGIN + path, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const body = await res.json();
+  if (!body || body.ok !== true) {
+    throw new Error((body && body.error && body.error.message) || '接口返回异常');
+  }
+  return body.data;
+}
+
+async function fetchNewsFromLocal() {
+  const res = await fetch('data/news.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// 优先接口，失败降级本地示例数据；两条都失败才进错误态
+async function fetchNewsList() {
+  try {
+    const data = await fetchFromAPI('/api/news');
+    return Array.isArray(data) ? data : ((data && data.items) || []);
+  } catch (apiErr) {
+    console.warn('[app.js] 接口 /api/news 不可用，降级本地示例数据:', apiErr);
+    return await fetchNewsFromLocal();
+  }
+}
+
 function loadNews() {
-  fetch('data/news.json')
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
+  fetchNewsList()
     .then(list => {
       const today = todayStr();
       // 前端过滤（TECH_DESIGN 5.1-1）：digest_date = 今天 且 status = published；
@@ -163,7 +192,7 @@ function loadNews() {
       applyFilter();
     })
     .catch(err => {
-      // fetch 失败/超时：不白屏，各板块显示可读提示（TECH_DESIGN 第 7 节）
+      // 接口与本地都失败：不白屏，各板块显示可读提示（TECH_DESIGN 第 7 节）
       console.warn('[app.js] 数据加载失败:', err);
       document.querySelectorAll('.section-body').forEach(body => {
         body.innerHTML = '<p class="empty-hint">加载失败，请刷新重试</p>';

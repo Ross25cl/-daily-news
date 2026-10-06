@@ -603,14 +603,46 @@ function currentLeague() {
   return LG_WHITELIST.indexOf(lg) >= 0 ? lg : 'nba';
 }
 
+// Day 18：接入接口层（与 js/home.js / js/news.js 同一套做法）。
+// 绝对网关地址的原因见 js/news.js 顶部注释：静态托管域名与函数网关域名不同域。
+// 本文件字段本来就用 camelCase（date/homeTeam/teamName/race.zones…），
+// 与契约 §2.5 的输出口径一致，所以这里只需要换地址 + 解包络，不涉及改名。
+const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+
+// 通用接口取数：解包 { ok, data, meta }
+async function fetchFromAPI(path) {
+  const res = await fetch(FUNC_ORIGIN + path, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const body = await res.json();
+  if (!body || body.ok !== true) {
+    throw new Error((body && body.error && body.error.message) || '接口返回异常');
+  }
+  return body.data;
+}
+
+// 本地示例数据兜底
+async function fetchLeagueFromLocal(lg) {
+  // no-store：本地 JSON 会随录入频繁更新，禁用启发式缓存避免「看到旧一天的数据」
+  const res = await fetch('data/' + lg + '.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// 优先接口 /api/leagues/<lg>，失败降级本地 data/<lg>.json；两条都失败才进错误态
+async function fetchLeagueData(lg) {
+  try {
+    return await fetchFromAPI('/api/leagues/' + encodeURIComponent(lg));
+  } catch (apiErr) {
+    console.warn('[league.js] 接口 /api/leagues/' + lg + ' 不可用，降级本地示例数据:', apiErr);
+    return await fetchLeagueFromLocal(lg);
+  }
+}
+
 async function initLeague() {
   // hash 变化（点 Tab / 前进后退）→ 重画内容区
   window.addEventListener('hashchange', () => { if (LEAGUE_DATA) draw(currentTab()); });
   try {
-    // no-store：本地 JSON 会随录入频繁更新，禁用启发式缓存避免「看到旧一天的数据」
-    const res = await fetch('data/' + currentLeague() + '.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    paint(await res.json());
+    paint(await fetchLeagueData(currentLeague()));
   } catch (err) {
     console.warn('[league.js] 联赛数据加载失败:', err);
     showError();

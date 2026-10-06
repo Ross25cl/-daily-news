@@ -4,9 +4,17 @@
  * ------------------------------------------------------------
  * 今日实现：GET /api/hot —— 首页三平台热搜榜
  *
- * 数据链路（重要，和 Day 15 的 health 不同）：
+ * 【Day 18 重要发现】为什么收藏接口没并进本函数：
+ *   CloudBase 网关转发时会**剥掉路由前缀**，且**不把原始路径放进任何请求头**
+ *   （Day 18 实测：请求头只有 x-scf-* / x-cloudbase-* / forwarded 等，没有
+ *   original-path / forwarded-uri 一类字段）。结果外部访问 /api/hot 与
+ *   /api/favorites，函数内收到的 req.url **都是 "/"**，无法区分。
+ *   → 解法：**一个路由一个云函数**。本函数只服务 /api/hot（下方恒为根路径），
+ *     /api/favorites 独立为 cloudfunctions/favorites（Day 18 新建）。
+ *
+ * 数据链路：
  *   浏览器 → 网关 /api/hot → 本云函数 → CloudBase PG 的 HTTP API
- *                                    （PostgREST，走 https，非 TCP 直连）
+ *                                     （PostgREST，走 https，非 TCP 直连）
  *
  * 为什么走 HTTP API 而不是 pg 驱动：
  *   CloudBase 体验版（个人版）**不支持数据库 TCP 直连**——内网互联不开放、
@@ -47,16 +55,6 @@ const PLATFORMS = {
   cctv5: { name: '央视体育', desc: '官方要闻', order: 3 }
 };
 
-// 契约 0.1：接口输出 camelCase（数据库是 snake_case，在这一层做映射）
-const FIELD_MAP = {
-  rank: 'rank',
-  title: 'title',
-  heat: 'heat',
-  url: 'url',
-  tag: 'tag',
-  is_video: 'video'
-};
-
 // ---------- 统一响应（契约 0.2） ----------
 
 function sendJSON(res, statusCode, body) {
@@ -75,6 +73,24 @@ function ok(res, data, meta) {
 
 function fail(res, statusCode, code, message) {
   sendJSON(res, statusCode, { ok: false, error: { code: code, message: message } });
+}
+
+// ---------- 服务端日志（Day 18 余力加练） ----------
+
+/**
+ * 统一日志：一行 JSON，云函数控制台按「[api]」过滤即可回溯。
+ * 记什么：事件名 + 关键字段 + 耗时 + 结果；**不记 API Key**。
+ */
+function log(event, fields) {
+  console.log('[api] ' + JSON.stringify(Object.assign({
+    ts: new Date().toISOString(),
+    event: event
+  }, fields || {})));
+}
+
+function timer() {
+  const t0 = Date.now();
+  return () => Date.now() - t0;
 }
 
 // ---------- PostgREST 查询 ----------
@@ -134,11 +150,14 @@ function queryTable(table, query) {
  * 契约 2.1：platform（选填，白名单）；limit（选填，默认 10，每个平台条数）
  */
 async function handleHot(res, params) {
+  const elapsed = timer();
+
   // ---- 参数校验（契约 2.1 错误表：platform 不在白名单 → 400） ----
   const platformParam = params.get('platform');
   let targets;
   if (platformParam) {
     if (!PLATFORMS[platformParam]) {
+      log('hot.reject', { reason: 'platform 非白名单', platform: platformParam, ms: elapsed() });
       return fail(res, 400, 'BAD_REQUEST',
         'platform 取值无效，只支持 hupu / tencent / cctv5');
     }
@@ -178,10 +197,12 @@ async function handleHot(res, params) {
   // ---- 空态（契约 2.1：当天无数据 → 404，前端显示整页空态） ----
   const total = platforms.reduce((n, p) => n + p.items.length, 0);
   if (total === 0) {
+    log('hot.empty', { targets: targets.join('/'), ms: elapsed() });
     return fail(res, 404, 'NOT_FOUND', '今日暂无热搜数据');
   }
 
-  // 用最早一条抓取时间做 meta.updatedAt 更准确，但需额外查询；这里取当前时间
+  log('hot.ok', { targets: targets.join('/'), limit: limit, count: total, ms: elapsed() });
+
   ok(res, { platforms: platforms }, {
     count: total,
     updatedAt: new Date().toISOString()
@@ -189,6 +210,9 @@ async function handleHot(res, params) {
 }
 
 // ---------- 路由 ----------
+//
+// 本函数只服务 /api/hot 一个路由（Day 18 起：收藏线独立为 favorites 函数）。
+// 网关剥前缀后 req.url 恒为 "/"，因此路径判断恒真，不需要区分。
 
 const server = http_createServer();
 
@@ -197,6 +221,7 @@ function http_createServer() {
   return http.createServer(async (req, res) => {
     const u = new URL(req.url || '/', 'http://localhost');
     const path = u.pathname;
+    const started = Date.now();
 
     // ---- 路径兼容（重要，实测坑）----
     // CloudBase 网关转发到函数时会**剥掉路由前缀**：外部访问 /api/hot，
@@ -205,6 +230,7 @@ function http_createServer() {
     const isHot = path === '/api/hot' || path === '/' || path === '/hot';
 
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+      log('method_not_allowed', { method: req.method, path: path });
       return fail(res, 405, 'METHOD_NOT_ALLOWED', '仅支持 GET');
     }
 
@@ -215,10 +241,14 @@ function http_createServer() {
       }
 
       // ---- 兜底 404 ----
+      log('not_found', { method: req.method, path: path, ms: Date.now() - started });
       return fail(res, 404, 'NOT_FOUND', '接口不存在：' + path);
     } catch (err) {
       // 错误信息给中文可读说明（契约 0.3：500 INTERNAL_ERROR）
-      console.error('[api] 处理失败：', err);
+      log('error', {
+        method: req.method, path: path,
+        message: err && err.message, ms: Date.now() - started
+      });
       return fail(res, 500, 'INTERNAL_ERROR',
         '服务端开小差了，请稍后重试。' + (err && err.message ? '（' + err.message + '）' : ''));
     }
@@ -228,8 +258,10 @@ function http_createServer() {
 server.listen(PORT, () => {
   console.log('[每日体坛速览] api 云函数已启动，监听端口 ' + PORT +
     '（env=' + ENV_ID + '，API Key ' + (API_KEY ? '已注入' : '缺失！') + '）');
+  log('boot', { port: PORT, env: ENV_ID, apiKey: API_KEY ? 'injected' : 'missing' });
 });
 
 process.on('uncaughtException', err => {
-  console.error('[api] 未捕获异常：', err);
+  log('uncaught_exception', { message: err && err.message, stack: err && err.stack });
 });
+

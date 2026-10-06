@@ -1,7 +1,9 @@
 // ============================================================
 // news-detail.js — 资讯详情页（V3）渲染逻辑（Day 13 建）
 // 地址约定：news-detail.html?id=20260929-n01
-// 数据来源：data/news.json（与列表页、首页速览同一份数据）
+// 数据来源：优先接口 GET /api/news，失败降级本地 data/news.json
+//           （Day 18 接入接口层；该接口契约已登记但后端未实现，
+//            因此现阶段实际总是走降级分支）
 //
 // 职责：读 URL 的 id → fetch → 找到该条（须为已发布）→ 渲染完整信息
 //       + 同联赛相关条目推荐；找不到 → 空态；fetch 失败 → 错误态
@@ -9,6 +11,10 @@
 // 内容边界（遵守 SKILL 1.2 与 PRD 9.1）：
 //   只呈现该条**已有字段**（标题/摘要/板块/联赛/来源/日期），
 //   **不转载原文正文、不存储全文**；完整内容走「查看原文」外链。
+//
+// Day 18 新增：收藏按钮 —— 点一下把当前这条写进后端（POST /api/favorites），
+//   接口按 sourceUrl 去重：首次写入返回 created:true（「收藏成功」），
+//   重复提交返回 created:false（「已在收藏中」）——两种都不算失败。
 // ============================================================
 
 // league → 大类映射（与其它页完全一致）
@@ -97,8 +103,14 @@ function detailHTML(it) {
     '<h2 class="detail-title">' + esc(it.title) + '</h2>' +
     '<p class="detail-summary">' + esc(it.summary) + '</p>' +
     '<dl class="detail-fields">' + rows + '</dl>' +
-    '<a class="detail-source-btn" href="' + esc(it.source_url) + '" ' +
-       'target="_blank" rel="noopener">查看原文 ↗</a>' +
+    // Day 18：动作区 —— 收藏（写接口）与查看原文（外链）并排
+    '<div class="detail-actions">' +
+      '<button type="button" class="fav-btn" id="fav-btn">☆ 收藏这条</button>' +
+      '<a class="detail-source-btn" href="' + esc(it.source_url) + '" ' +
+         'target="_blank" rel="noopener">查看原文 ↗</a>' +
+    '</div>' +
+    // 收藏结果的就地提示（aria-live 让读屏也能听到）
+    '<p class="fav-msg" id="fav-msg" role="status" aria-live="polite"></p>' +
     '<p class="detail-note">本页只呈现该条资讯的已有字段，不转载原文正文；' +
        '完整内容请点上方按钮跳转来源网站。</p>'
   );
@@ -147,6 +159,37 @@ function paint(it) {
 
 // ---------- 数据加载 ----------
 
+// Day 18：接入接口层。绝对网关地址的原因见 js/news.js 顶部注释：
+// 前端在静态托管域名、接口在云函数网关域名，两者不同域，相对路径拿不到接口。
+// 字段名本日保持 snake_case，camelCase 改名留到 /api/news 上线那天统一做。
+const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+
+async function fetchFromAPI(path) {
+  const res = await fetch(FUNC_ORIGIN + path, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const body = await res.json();
+  if (!body || body.ok !== true) {
+    throw new Error((body && body.error && body.error.message) || '接口返回异常');
+  }
+  return body.data;
+}
+
+async function fetchNewsFromLocal() {
+  const res = await fetch('data/news.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function fetchNewsList() {
+  try {
+    const data = await fetchFromAPI('/api/news');
+    return Array.isArray(data) ? data : ((data && data.items) || []);
+  } catch (apiErr) {
+    console.warn('[news-detail.js] 接口 /api/news 不可用，降级本地示例数据:', apiErr);
+    return await fetchNewsFromLocal();
+  }
+}
+
 function loadDetail() {
   const id = idFromURL();
 
@@ -164,11 +207,7 @@ function loadDetail() {
   if (demo === 'loading')  { showState('loading'); return; }
 
   showState('loading');
-  fetch('data/news.json', { cache: 'no-store' })
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
+  fetchNewsList()
     .then(list => {
       allItems = (list || []).filter(it => {
         if (it.status !== 'published') return false;
@@ -189,12 +228,91 @@ function loadDetail() {
         return;
       }
       paint(found);
+      bindFavorite();
       bindRelatedClick();
     })
     .catch(err => {
       console.warn('[news-detail.js] 详情加载失败:', err);
       showState('error');
     });
+}
+
+// ---------- 收藏（POST /api/favorites） ----------
+
+let favBusy = false;   // 防连点：请求在飞时忽略后续点击
+
+function setFavMsg(text, kind) {
+  const el = document.getElementById('fav-msg');
+  if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('fav-msg-ok', kind === 'ok');
+  el.classList.toggle('fav-msg-err', kind === 'err');
+}
+
+// 把当前条目按契约字段名（camelCase）提交；
+// 注意接口侧要的是 camelCase，而本页数据仍是 snake_case，故在此显式映射。
+function favoritePayload(it) {
+  return {
+    title: it.title,
+    summary: it.summary,
+    section: it.section,
+    league: it.league,
+    sourceName: it.source_name,
+    sourceUrl: it.source_url,
+    digestDate: it.digest_date
+  };
+}
+
+async function submitFavorite() {
+  if (favBusy || !currentItem) return;
+  favBusy = true;
+
+  const btn = document.getElementById('fav-btn');
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '收藏中…'; }
+  setFavMsg('正在提交…', '');
+
+  try {
+    const res = await fetch(FUNC_ORIGIN + '/api/favorites', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(favoritePayload(currentItem))
+    });
+    const body = await res.json().catch(() => null);
+
+    if (!res.ok || !body || body.ok !== true) {
+      const msg = (body && body.error && body.error.message) || ('提交失败（HTTP ' + res.status + '）');
+      console.warn('[news-detail.js] 收藏失败:', msg);
+      setFavMsg(msg, 'err');
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+      return;
+    }
+
+    // meta.created：true = 本次真的写入了；false = 之前已收藏过（去重命中）
+    const created = body.meta ? body.meta.created !== false : true;
+    setFavMsg(
+      (body.meta && body.meta.message) || (created ? '收藏成功' : '这篇文章已在收藏中'),
+      'ok'
+    );
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = created ? '★ 已收藏' : '★ 已在收藏中';
+      btn.classList.add('fav-btn-done');
+    }
+  } catch (err) {
+    console.warn('[news-detail.js] 收藏请求异常:', err);
+    setFavMsg('网络异常，收藏没提交成功，稍后再试。', 'err');
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  } finally {
+    favBusy = false;
+  }
+}
+
+function bindFavorite() {
+  const btn = document.getElementById('fav-btn');
+  if (!btn) return;
+  btn.addEventListener('click', submitFavorite);
 }
 
 // 相关推荐整卡可点（点标题链接时不拦截）

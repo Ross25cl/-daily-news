@@ -99,7 +99,11 @@ CREATE TABLE public.news_items (
   CONSTRAINT news_items_section_check CHECK (section IN ('头条', '转会伤病', '热议', '明日看点')),
   CONSTRAINT news_items_status_check  CHECK (status IN ('draft', 'published')),
   CONSTRAINT news_items_title_len     CHECK (char_length(title)   <= 30),  -- 契约 2.2 字数规范
-  CONSTRAINT news_items_summary_len   CHECK (char_length(summary) <= 60)
+  CONSTRAINT news_items_summary_len   CHECK (char_length(summary) <= 60),
+  -- Day 18：防重复收藏 —— 同一篇文章（同 source_url）只允许入库一次。
+  -- 接口层 POST /api/favorites 据此判重：撞唯一键即返回 409 CONFLICT + 已有记录。
+  -- 用「约束兜底 + 接口预检」双保险：并发下也能挡住（预检与写入之间仍有竞态）。
+  CONSTRAINT news_items_source_url_uniq UNIQUE (source_url)
 );
 
 COMMENT ON TABLE  public.news_items             IS '资讯条目，一条新闻一行；首页四板块与资讯列表/详情共用';
@@ -107,6 +111,7 @@ COMMENT ON COLUMN public.news_items.id          IS '带日期的业务主键，�
 COMMENT ON COLUMN public.news_items.section     IS '四板块归属，CHECK 限定四种取值防止拼写漂移';
 COMMENT ON COLUMN public.news_items.digest_date IS '归属日期，首页「今日速览」按它过滤；用 DATE 便于按天比较';
 COMMENT ON COLUMN public.news_items.status      IS 'draft 草稿不入接口，published 才对外';
+COMMENT ON COLUMN public.news_items.source_url  IS '原文链接，Day 18 起唯一：同一篇文章重复收藏由它挡下';
 
 
 -- ============================================================

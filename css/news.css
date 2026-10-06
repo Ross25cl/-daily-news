@@ -240,6 +240,49 @@
 .detail-source-btn:hover { background: var(--brand-hover); }
 .detail-source-btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
 
+/* Day 18：动作区 —— 收藏（写接口）与查看原文并排；窄屏自动换行 */
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 收藏按钮：默认描边（次级动作），与实心的「查看原文」区分主次 */
+.fav-btn {
+  display: inline-block;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.fav-btn:hover { border-color: var(--brand); color: var(--brand-bright); }
+.fav-btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+.fav-btn:disabled { cursor: default; opacity: .75; }
+/* 已完成态：无论是「已收藏」还是「已在收藏中」，统一用品牌绿描边表示落定 */
+.fav-btn-done {
+  border-color: var(--brand);
+  color: var(--brand-bright);
+  opacity: 1;
+}
+
+/* 收藏结果就地提示（成功/失败同位置，避免弹窗打断） */
+.fav-msg {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 0;
+}
+.fav-msg:not(:empty) { min-height: 20px; }
+.fav-msg-ok { color: var(--brand-bright); }
+.fav-msg-err { color: #f87171; }
+
 .detail-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
 
 /* ---------- 同类资讯 ---------- */

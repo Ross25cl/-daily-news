@@ -36,6 +36,24 @@
         ".git/**",
         "*.md"
       ]
+    },
+    {
+      "name": "favorites",
+      "type": "HTTP",
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "timeout": 15,
+      "memorySize": 256,
+      "description": "每日体坛速览 · 收藏接口（Day 18：POST + GET /api/favorites）",
+      "envVariables": {
+        "CB_ENV_ID": "{{env.TCB_ENV_ID}}",
+        "CB_API_KEY": "{{env.CB_API_KEY}}"
+      },
+      "ignore": [
+        "node_modules/**",
+        ".git/**",
+        "*.md"
+      ]
     }
   ],
   "gateway": {
@@ -48,6 +66,11 @@
       {
         "path": "/api/hot",
         "target": "function:api",
+        "enableAuth": false
+      },
+      {
+        "path": "/api/favorites",
+        "target": "function:favorites",
         "enableAuth": false
       }
     ]

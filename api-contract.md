@@ -3,11 +3,11 @@
 | 项目 | 内容 |
 | ---- | ---- |
 | 文档名称 | 接口契约（api-contract） |
-| 撰写日期 | 2026-10-03（Day 15｜第 3 周）；**2026-10-04（Day 16）更新：表结构定稿并已建表**；**2026-10-05（Day 17）更新：`/api/hot` 已实现** |
+| 撰写日期 | 2026-10-03（Day 15｜第 3 周）；**2026-10-04（Day 16）更新：表结构定稿并已建表**；**2026-10-05（Day 17）更新：`/api/hot` 已实现**；**2026-10-06（Day 18）更新：`/api/favorites` 写入接口已实现，前端接入接口层** |
 | 依据 | 前端第 2 周实际页面（`index.html` / `matches.html` / `news.html` / `news-detail.html` / `league.html`）+ `TECH_DESIGN.md` 第 5 节 |
 | 文档地位 | **第 3 周建表与写接口的唯一依据**。接口 Day 17 起逐个落地；**第 3 节的表结构 Day 16 已定稿，且与线上库逐字一致**。 |
-| 实现时点 | Day 16 建表 ✅ · Day 17 `/api/hot` ✅ · Day 18–19 其余读接口 · Day 20 配跨域 |
-| 今日不实现 | 业务写入接口（收藏写入属 Day 18）；其余 `/api/*` 读接口仍为占位 |
+| 实现时点 | Day 16 建表 ✅ · Day 17 `/api/hot` ✅ · **Day 18 `/api/favorites` ✅** · Day 19 其余读接口 · Day 20 配跨域 |
+| 今日不实现 | `PATCH` / `DELETE`（第 4 周）；批量写入；`/api/news` 等读接口仍为占位 |
 
 ---
 
@@ -21,7 +21,7 @@
 | 响应格式 | `application/json; charset=utf-8` |
 | 时间格式 | 日期 `YYYY-MM-DD`；时间 `YYYY-MM-DD HH:mm`（北京时间）；时间戳用 ISO 8601 |
 | 命名风格 | **camelCase**（对齐 Day 10 起各联赛 JSON 已统一的字段名） |
-| 鉴权 | 第 3 周读接口**公开**（`enableAuth: false`）；写接口暂不开放 |
+| 鉴权 | 第 3 周读接口**公开**（`enableAuth: false`）；**Day 18 的 `POST /api/favorites` 同样公开**（体验版暂无写鉴权，靠字段校验 + 唯一约束兜底），第 4 周再议 |
 
 **已部署环境（Day 15 实测）**：
 
@@ -34,7 +34,9 @@
 
 > 后续各 `/api/*` 接口将挂在同一网关域名下（`.../api/news`、`.../api/matches` 等）。
 
-> ⚠️ 命名风格说明：老文件 `data/news.json` / `data/matches.json` 用的是蛇形（`digest_date` / `home_team`）。Day 10 起新建的联赛 JSON 已统一为 camelCase。**契约统一采用 camelCase**，Day 18 迁移前端时把旧字段一并改名，避免两套风格并存。
+> ⚠️ 命名风格说明：老文件 `data/news.json` / `data/matches.json` 用的是蛇形（`digest_date` / `home_team`）。Day 10 起新建的联赛 JSON 已统一为 camelCase。**契约统一采用 camelCase**。
+
+> 📌 **Day 18 实际执行口径（与原计划有出入，以本节为准）**：Day 18 迁移前端时**只接响应包络，字段名暂不改**。原因是 `/api/news`、`/api/matches`、`/api/leagues/:id` 三个读接口本日仍未实现，前端接上去也只能走本地 JSON 兜底，改名既测不出效果又要动 100+ 处取值。因此**蛇形→驼峰的改名推迟到各读接口真正上线那天（Day 19 起），跟着对应文件一起改**。本日已落地的两个接口（`/api/hot`、`/api/favorites`）本来就用 camelCase，不受影响。
 
 ### 0.2 统一响应包络
 
@@ -87,12 +89,15 @@
 | 3 | `/api/news/:id` | GET | `news-detail.html` | ⏳ 占位 |
 | 4 | `/api/matches` | GET | `matches.html` | ⏳ 占位 |
 | 5 | `/api/leagues/:id` | GET | `league.html` | ⏳ 占位 |
-| 6 | `/api/subscribe` | POST | （第 4 周订阅功能） | ⏳ 占位（暂不实现） |
-| 7 | `/api/unsubscribe` | GET | （人工退订，暂不做页面） | ⏳ 占位（暂不实现） |
+| 6 | `/api/favorites` | **POST** | `news-detail.html`（收藏按钮） | ✅ **已实现**（Day 18） |
+| 7 | `/api/favorites` | **GET** | （收藏列表，暂无页面） | ✅ **已实现**（Day 18） |
+| 8 | `/api/subscribe` | POST | （第 4 周订阅功能） | ⏳ 占位（暂不实现） |
+| 9 | `/api/unsubscribe` | GET | （人工退订，暂不做页面） | ⏳ 占位（暂不实现） |
 
 > 表 1–5 是前端**当前页面直接依赖**的读接口，是 Day 16–19 的重点。
-> `/api/favorites` 为 Day 18 新增（收藏线），届时在此表补充登记。
-> 表 6–7 属订阅线，按 `TECH_DESIGN` 第 11 节仍走人工流程，此处仅登记。
+> **6–7 是 Day 18 新增的收藏线**（同一路径的两个方法）：`POST` 写一条、`GET` 读回来，详情页的「收藏这条」按钮走的就是 6。
+> ⚠️ **同一路径的两个方法必须拆成两个云函数**：CloudBase 网关会把路由前缀剥掉再转给函数，函数侧拿不到原始路径（Day 18 实测，无任何请求头携带），所以一个函数没法同时分辨 `/api/favorites` 的 POST 与 GET——`POST`/`GET` 能共处一个函数是因为它们**靠 HTTP 方法区分**，而不是靠路径。
+> 表 8–9 属订阅线，按 `TECH_DESIGN` 第 11 节仍走人工流程，此处仅登记。
 
 ---
 
@@ -447,6 +452,90 @@
 | 成功响应 | `200` · `{"ok": true, "data": {"message": "已退订"}}` |
 | 错误 | 400 `BAD_REQUEST` 令牌无效 |
 
+### 2.8 `POST /api/favorites` ✅ 已实现（Day 18）
+
+| 项 | 内容 |
+| -- | ---- |
+| 用途 | **收藏写入**：把详情页的一条资讯写进核心表 `news_items`，同一条不允许重复入库 |
+| 请求体 | JSON，7 个字段全必填（见下表） |
+| 成功响应 | `200`（首次写入 `meta.created: true`；重复提交也返回 `200`，`meta.created: false`） |
+| 错误 | 400 `BAD_REQUEST` 字段缺失/格式错；405 `METHOD_NOT_ALLOWED` 非 POST/GET；500 `INTERNAL_ERROR` |
+| 写入表 | `public.news_items`（核心表，**不新建 favorites 表**） |
+| 部署 | 独立云函数 `favorites`，网关路由 `/api/favorites` → `function:favorites` |
+
+**请求体字段**：
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+| ---- | ---- | :--: | ---- | ---- |
+| `title` | string | ✔ | 长度 ≤ 30 | 标题 |
+| `summary` | string | ✔ | 长度 ≤ 60 | 一句话摘要 |
+| `section` | string | ✔ | 白名单：`头条` / `转会伤病` / `热议` / `明日看点` | 所属板块 |
+| `league` | string | ✔ | 非空 | 联赛 / 项目 |
+| `sourceName` | string | ✔ | 非空 | 来源名称 |
+| `sourceUrl` | string | ✔ | 必须 `http(s)://` 开头，**且全表唯一** | 原文链接，防重依据 |
+| `digestDate` | string | ✔ | `YYYY-MM-DD`，且必须是真实存在的日期 | 归属日期（原「所属计划日」） |
+
+> 未列出的字段由服务端生成：`status` 固定 `published`，`createdAt` 取写入时刻，`id` 按 `YYYYMMDD-nNN` 生成（如 `20261006-n02`）。
+
+**成功响应示例（首次写入）**：
+
+```json
+{
+  "ok": true,
+  "data": {
+    "id": "20261006-n02",
+    "title": "国乒包揽男女单打冠军",
+    "summary": "……",
+    "section": "头条",
+    "league": "综合",
+    "sourceName": "央视体育",
+    "sourceUrl": "https://sports.cctv.com/2026/10/06/xxx.html",
+    "digestDate": "2026-10-06",
+    "status": "published",
+    "createdAt": "2026-10-06T11:47:10.943594+08:00"
+  },
+  "meta": { "created": true, "message": "收藏成功" }
+}
+```
+
+**防重复（本接口的重点）** —— 两层，都是「**返回已存在**」而不是报错：
+
+| 层 | 触发场景 | 机制 | 返回 |
+| -- | ---- | ---- | ---- |
+| 1 | 同一篇文章被重复收藏 | 写入前按 `source_url` 查一次 | `200` + `meta.created: false` + `message:"这篇文章已在收藏中"` |
+| 2 | 两个请求同时到达（并发） | 写入时撞上 `news_items_source_url_uniq` 唯一索引（SQLSTATE `23505`） | 捕获后回查该行，同样返回 `200` + `created:false` |
+
+> **DB 侧约束**：`news_items` 上有唯一索引 `news_items_source_url_uniq (source_url)`（见 §3.3）。两层防重合起来保证：**同一 `sourceUrl` 在表里永远只有 0 或 1 行**。
+>
+> 「同一天发布重复的速览」由第 1 层覆盖——同一天的重复条目指向同一篇原文，`sourceUrl` 相同即被挡下。
+
+**缺字段的错误响应（中文列清缺了什么）**：
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "BAD_REQUEST",
+    "message": "缺少必填字段：摘要 summary、板块 section、联赛 league、来源名称 sourceName、原文链接 sourceUrl、归属日期 digestDate。请补齐后重新提交。"
+  }
+}
+```
+
+> 校验**一次性收集全部问题**再返回，不是缺一个报一个——省得用户来回试。
+
+### 2.9 `GET /api/favorites` ✅ 已实现（Day 18）
+
+| 项 | 内容 |
+| -- | ---- |
+| 用途 | **读回收藏**：验证写入的数据能被读出来（Day 18 验收用的就是它） |
+| 请求参数 | `limit`（默认 20，上限 50）、`offset`（默认 0） |
+| 成功响应 | `200` · `data` 为条目数组（字段同 2.8 的 `data`） |
+| `meta` | `{ count, limit, offset, updatedAt }` |
+| 排序 | `created_at` 倒序（最新收藏在前） |
+| 错误 | 400 `BAD_REQUEST` 参数非法；405 `METHOD_NOT_ALLOWED` |
+
+> **与 `POST` 同函数**：`/api/favorites` 的 `POST` 与 `GET` 由**同一个云函数**处理，靠 HTTP 方法分支（`POST` → 写，`GET`/`HEAD` → 读，其它 → 405）。这是 §1 那条「同路径不同方法必须拆函数」的**例外说明**：**方法不同可以同函数，路径不同才必须拆**。
+
 ---
 
 ## 3. 数据表设计（Day 16 定稿并已建表）
@@ -461,7 +550,9 @@
 | **数据库列** | `snake_case` | `source_name`、`digest_date`、`home_team` | 与现有 `data/news.json`、`data/matches.json` **一字不差**，迁移零改名 |
 | **接口输出** | `camelCase` | `sourceName`、`digestDate`、`homeTeam` | 契约 0.1；与 Day 10 起各联赛 JSON 一致 |
 
-> 两套风格的映射在 **Day 18 的接口层**完成（`SELECT ... AS "sourceName"` 或结果重命名），**数据库侧不改名**。
+> 两套风格的映射在**接口层**完成（结果重命名），**数据库侧不改名**。
+>
+> **Day 18 执行说明**：本日只有 `/api/hot`（Day 17 已做）与 `/api/favorites`（本日新增）两个接口上线，映射写在各自的云函数里（`cloudfunctions/api/index.js`、`cloudfunctions/favorites/index.js`）。`/api/news`、`/api/matches`、`/api/leagues/:id` 三个读接口的映射等它们实现时再写。
 
 ### 3.2 表清单与关联
 
@@ -500,6 +591,7 @@
 
 **3. `news_items`**
 `id` TEXT PK · `title` TEXT NN（≤30 字）· `summary` TEXT NN（≤60 字）· `section` TEXT NN `CHECK(头条/转会伤病/热议/明日看点)` · `league` TEXT NN · `source_name` TEXT NN · `source_url` TEXT NN · `digest_date` DATE NN · `status` TEXT NN `CHECK(draft/published)` · `created_at` TIMESTAMPTZ NN
+**`UNIQUE(source_url)`** —— 唯一索引 `news_items_source_url_uniq`（**Day 18 新增**）：同一篇文章只允许入库一次，是 `POST /api/favorites` 防重的底层保证（见 §2.8）
 
 **4. `matches`**
 `id` TEXT PK · `league` TEXT NN · `home_team` / `away_team` TEXT NN · `match_time` TIMESTAMP NN · `status` TEXT NN `CHECK(未开始/进行中/已结束/延期/取消)` · `home_score` / `away_score` INT · `round` / `venue` TEXT · `data_source` TEXT NN · `updated_at` TIMESTAMPTZ NN
@@ -583,18 +675,41 @@ ORDER BY 1;
 
 ---
 
-## 4. 前端改造对照（Day 18–19 迁移时用）
+## 4. 前端改造对照（Day 18 已执行）
 
-前端现在 `fetch` 的是本地文件，将来换成接口路径：
+前端原来 `fetch` 的是本地文件，现在改成先打接口、失败降级本地示例数据：
 
-| 现在（静态） | 将来（接口） | 涉及文件 |
-| ---- | ---- | ---- |
-| `fetch('data/hot.json')` | `fetch('/api/hot')` | `js/home.js` |
-| `fetch('data/news.json')` | `fetch('/api/news' + 查询串)` | `js/news.js`、`js/news-detail.js`、`js/app.js` |
-| `fetch('data/matches.json')` | `fetch('/api/matches' + 查询串)` | `js/matches.js` |
-| `fetch('data/' + lg + '.json')` | `fetch('/api/leagues/' + lg)` | `js/league.js` |
+| 现在（接口） | 降级（本地） | 涉及文件 | Day 18 状态 |
+| ---- | ---- | ---- | ---- |
+| `GET /api/hot` | `data/hot.json` | `js/home.js` | ✅ Day 17 已接 |
+| `GET /api/news` | `data/news.json` | `js/news.js`、`js/news-detail.js`、`js/app.js` | ✅ 已接（接口未实现，实际走降级） |
+| `GET /api/matches` | `data/matches.json` | `js/matches.js` | ✅ 已接（接口未实现，实际走降级） |
+| `GET /api/leagues/:id` | `data/<lg>.json` | `js/league.js` | ✅ 已接（接口未实现，实际走降级） |
+| `POST /api/favorites` | —（写操作无降级） | `js/news-detail.js` | ✅ Day 18 新增：详情页「收藏这条」按钮 |
 
-> 响应包络从「裸数组/裸对象」变成 `{ok, data, meta}`，前端取值处需加一层 `res.data`。这是 Day 18 的主要改动量。
+**⚠️ 地址必须用绝对域名，不能用 §0.1 里那种相对路径 `/api/xxx`**（本节原文如此写，Day 18 实测纠正）：
+
+```js
+const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+```
+
+原因：前端托管在**静态托管域名**（`...tcloudbaseapp.com`），接口在**云函数网关域名**（`...app.tcloudbase.com`），**两者不同域**。用相对路径会打到静态托管自身、拿不到接口（404 → 一律降级）；本地预览（`serve.mjs` / `127.0.0.1`）也没有 `/api` 路由。所以统一写死函数网关地址，跨域由 CloudBase 网关自动回 CORS 头（Day 17 实测已生效）。将来若把接口挂到同域自定义路径，可改回相对路径。
+
+**统一取数写法**（5 个文件同一套，见 `js/news.js` 顶部注释）：
+
+```js
+async function fetchFromAPI(path) {
+  const res = await fetch(FUNC_ORIGIN + path, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const body = await res.json();
+  if (!body || body.ok !== true) throw new Error((body?.error?.message) || '接口返回异常');
+  return body.data;          // ← 包络解一层：原来裸数组，现在取 body.data
+}
+```
+
+> 响应包络从「裸数组/裸对象」变成 `{ok, data, meta}`，前端取值处加一层 `res.data`——这是 Day 18 的主要改动量，**5 个文件全部完成**。
+>
+> **字段改名未做**，理由见 §0.1 的 Day 18 执行口径说明。所以现在 `news.js` 等文件里仍是 `it.digest_date`、`m.home_team`；等对应读接口上线那天跟着一起改。
 
 ---
 
@@ -633,8 +748,25 @@ ORDER BY 1;
 | `GET /api/hot` 云函数 | ✅ `cloudfunctions/api/index.js`（零依赖，HTTP API 方式访问 PG） |
 | 网关路由 `/api/hot` | ✅ 已写入 `cloudbaserc.json` |
 | 本地分支验证 | ✅ 5 条断言全过（400 / 404 / 405 / 500 各分支） |
-| 公网部署 + 真库验证 | ⏳ 待零创建 API Key 后执行（见 `docs/cloudbase-deploy-day17.md`） |
-| `/api/favorites` | ❌ Day 18（读需先有收藏表，今日不做） |
+| 公网部署 + 真库验证 | ✅ 已完成（`docs/cloudbase-deploy-day17.md`） |
+| `/api/favorites` | ❌ 顺延至 Day 18 |
+| 跨域配置 | ❌ Day 20 |
+
+**Day 18（第 3 周第 4 天）**
+
+| 项 | 状态 |
+| -- | ---- |
+| `POST /api/favorites` 写入接口 | ✅ `cloudfunctions/favorites/index.js`（零依赖，HTTP API 方式访问 PG） |
+| `GET /api/favorites` 读回接口 | ✅ 同函数，按 HTTP 方法分支 |
+| 网关路由 `/api/favorites` | ✅ 已写入 `cloudbaserc.json`（→ `function:favorites`） |
+| `news_items` 唯一索引 | ✅ `news_items_source_url_uniq (source_url)`（线上已建） |
+| 必填校验 + 中文错误信息 | ✅ 一次性收集全部缺失字段再返回 |
+| 防重复（两层） | ✅ 预查 + 唯一索引兜底，均返回 `200` + `created:false` |
+| 真库写入 + 读回验证 | ✅ 行数 9→10，`GET /api/favorites` 读回该行；重复提交行数不变 |
+| 前端接入接口层（5 文件） | ✅ 换绝对域名 + 解包络 + 本地降级（字段名暂不改，见 §0.1） |
+| 详情页收藏按钮 | ✅ `js/news-detail.js` + `css/news.css`，真实浏览器点击验证通过 |
+| 服务端日志 | ✅ 单行 JSON（`[api] {...}`），加练项 |
+| `PATCH` / `DELETE` | ❌ 第 4 周 |
 | 跨域配置 | ❌ Day 20 |
 
 **仍待办（不阻塞完成标准）**：Day 15 的同伴手机验证与三张截图归档；Day 16 的控制台「表数据页」截图；Day 17 的 API Key 创建与公网验证。

@@ -1,7 +1,9 @@
 // ============================================================
 // news.js — 体坛资讯列表页（V2）渲染逻辑（Day 13 建）
 // 地址约定：news.html?cat=足球|篮球|综合
-// 数据来源：data/news.json（与首页速览共用同一份数据，本日不新增数据）
+// 数据来源：优先接口 GET /api/news，失败降级本地 data/news.json
+//           （Day 18 接入接口层；该接口契约已登记但后端未实现，
+//            因此现阶段实际总是走降级分支，页面表现与 Day 13 一致）
 //
 // 职责：读 URL 分类参数 → fetch → 按大类过滤 → 渲染列表 → 点击进入详情页
 //
@@ -12,6 +14,9 @@
 //
 // 状态：加载中（骨架屏）/ 成功 / 空 / 错误 —— 四种，与其它页同一套做法。
 // 演示入口：?demo=loading|empty|error（板块③补齐，见 docs/views.md 第 3.4 节）
+//
+// Day 18 命名口径：本次只接包络（{ok,data,meta}），字段名暂时保留 snake_case，
+//   camelCase 改名留到 /api/news 真正上线那天统一做（见 api-contract.md §3.1）。
 // ============================================================
 
 // league → 大类映射（与 app.js / matches.js 完全一致，硬编码前端）
@@ -177,6 +182,46 @@ function bindCardClick() {
 
 // ---------- 数据加载 ----------
 
+// Day 18：接入接口层的公共取数逻辑。
+// 地址为什么用绝对地址、不用相对路径 "/api/news"：
+//   前端托管在静态托管域名（xxx.tcloudbaseapp.com），接口在云函数网关域名
+//   （xxx.app.tcloudbase.com），**两者不同域**；相对路径会打到静态托管自身、
+//   拿不到接口。本地预览（serve.mjs / 127.0.0.1）同样没有 /api 路由。
+//   → 统一写死函数网关地址，跨域由 CloudBase 网关自动回 CORS 头（Day 17 实测生效）。
+//   与 js/home.js 的做法保持一致。
+const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+
+// 通用接口取数：解包 { ok, data, meta }；非 2xx 或 ok!==true 一律抛错
+// （抛出的错由调用方决定是降级还是进错误态）
+async function fetchFromAPI(path) {
+  const res = await fetch(FUNC_ORIGIN + path, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const body = await res.json();
+  if (!body || body.ok !== true) {
+    throw new Error((body && body.error && body.error.message) || '接口返回异常');
+  }
+  return body.data;
+}
+
+// 本地示例数据兜底（接口不可用时页面不白屏）
+async function fetchNewsFromLocal() {
+  const res = await fetch('data/news.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// 优先接口，失败降级本地；两条路都失败才向上抛（进错误态）
+async function fetchNewsList() {
+  try {
+    const data = await fetchFromAPI('/api/news');
+    // 契约约定 data 为条目数组；兼容后端将来包一层 { items: [] } 的情况
+    return Array.isArray(data) ? data : ((data && data.items) || []);
+  } catch (apiErr) {
+    console.warn('[news.js] 接口 /api/news 不可用，降级本地示例数据:', apiErr);
+    return await fetchNewsFromLocal();
+  }
+}
+
 function loadNews() {
   const demo = new URLSearchParams(location.search).get('demo');
 
@@ -186,11 +231,7 @@ function loadNews() {
   if (demo === 'loading') { showState('loading'); return; }
 
   showState('loading');
-  fetch('data/news.json', { cache: 'no-store' })
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
+  fetchNewsList()
     .then(list => {
       allItems = (list || []).filter(it => {
         if (it.status !== 'published') return false;   // 草稿对用户不可见
