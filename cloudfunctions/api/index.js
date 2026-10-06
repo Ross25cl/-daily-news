@@ -212,7 +212,10 @@ async function handleHot(res, params) {
 // ---------- 路由 ----------
 //
 // 本函数只服务 /api/hot 一个路由（Day 18 起：收藏线独立为 favorites 函数）。
-// 网关剥前缀后 req.url 恒为 "/"，因此路径判断恒真，不需要区分。
+// 网关是前缀匹配：剥掉路由前缀（/api/hot）后，剩余部分留在 req.url。
+// 本路由不带后缀，所以线上收到的就是 "/"；本地直连则收到完整 "/api/hot"。
+// （2026-10-06 更正：此前注释写「恒为 /」，实为前缀剥净后的特例，
+//   带后缀的请求会把后缀留在 req.url，见 docs/data-source-status.md §5.1。）
 
 const server = http_createServer();
 
@@ -224,8 +227,8 @@ function http_createServer() {
     const started = Date.now();
 
     // ---- 路径兼容（重要，实测坑）----
-    // CloudBase 网关转发到函数时会**剥掉路由前缀**：外部访问 /api/hot，
-    // 函数内收到的 req.url 是 "/"（Day 15 的 health 也遇到过，见其注释）。
+    // CloudBase 网关是**前缀匹配**：转发时剥掉路由前缀（/api/hot），
+    // 剩余部分原样留在 req.url —— 本路由无后缀，故线上收到 "/"。
     // 为兼容本地直连测试（此时收到的是完整 /api/hot），两种形态都认。
     const isHot = path === '/api/hot' || path === '/' || path === '/hot';
 

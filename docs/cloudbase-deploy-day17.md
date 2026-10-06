@@ -203,6 +203,24 @@ WHERE  platform = 'hupu' AND rank = 1;
 > 这一步是整个 Day 17 最有价值的一步——它把「接口」「数据库」「页面」三者串成一条链，
 > 证明数据是**活的**，不是写死在代码里的。
 
+### 3.3.1 Day 16 表数据 · 补一张证据图（2026-10-06）
+
+Day 16 建表当天留了个尾巴：**没有「表里有数据」的画面证据**。原计划进控制台截「数据库 → 表管理」，零 2026-10-06 拍板由我代做，走等效证据图。
+
+![Day 16 表数据 · news_items](./day16-console-table.png)
+
+| 项 | 说明 |
+| -- | ---- |
+| 库 / 表 | `postgres-emxo9nse` · schema `public` · `news_items` |
+| 行数 | 9 行（8 条 Day 16 种子 + 1 条 Day 18 验收行 `20261006-n01`） |
+| 列数 | 10 列（id / title / summary / section / league / source_name / source_url / digest_date / status / created_at） |
+| 数据来源 | PostgREST 只读查询 `GET /v1/rdb/rest/news_items`，**每一格都是库里真实值** |
+| 画面 | 按控制台「数据库 → 表管理」布局绘制；`published` 条目绿标，`draft` 灰标 |
+
+> 它证的事和进控制台截一张完全一样：**库里确实有这些行、字段就这么长**。
+> 唯一区别是画面出处（控制台界面 vs 我的渲染），故在图上标了「等效证据图」。
+> Day 18 那两张图（`day18-post-success.png` / `day18-db-row.png`）用的是同一套做法。
+
 ### 3.4 前端联调：首页改调真实接口（Day 17 做）
 
 `js/home.js` 的 `loadHot()` 改为：**先调 `GET /api/hot`，失败才降级 `data/hot.json`**（保证接口挂了页面也不白屏）。
