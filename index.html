@@ -15,6 +15,7 @@
     <div class="brand">
       <span class="tag">28days 项目 · MVP</span>
       <h1>每日体坛速览</h1>
+      <p class="brand-sub">聚合三个平台的热榜：腾讯体育 · 虎扑 · 央视体育</p>
       <p class="meta">
         <span id="today"></span>
         <span>最近更新 <b id="updated-at">--</b></span>
@@ -35,6 +36,9 @@
   </header>
 
   <main id="hot-view">
+    <!-- 数据来源提示：只有接口不可用、页面回落到本地备用数据时才显示（由 home.js 控制） -->
+    <p id="source-note" class="source-note" hidden></p>
+
     <!-- 状态一：加载中（骨架屏） -->
     <div id="state-loading" aria-live="polite">
       <section class="platform-card sk">
@@ -70,11 +74,13 @@
   </section>
 
   <footer class="site-footer">
-    <p><b>内容来源说明</b>：本页热搜数据为本地示例（mock）数据，仅保留「标题 + 热度 + 原文链接」，标注来源平台，不整段转载正文；真实平台数据源将在第 2 周核实接入。</p>
-    <p>每日体坛速览 · 28days 练习项目 · Day 8 主视图（mock 数据版）</p>
+    <p><b>内容来源说明</b>：本页热搜数据由每日同步任务从三个平台官网抓取后写入数据库，页面再通过接口 <code>/api/hot</code> 读取展示，不是写死在页面里的。仅保留「标题 + 热度 + 原文链接」，标注来源平台，不整段转载正文；原文版权归各平台所有。</p>
+    <p>每日体坛速览 · 28days 练习项目 · 首页热搜速览（Day 20 起展示数据库真实数据）</p>
+    <p><a href="checkup.html">接口检查台（开发自检：健康状态 / 核心表数据 / 写入测试）</a></p>
   </footer>
 
   <script src="js/theme.js"></script>
+  <script src="js/api-config.js"></script>
   <script src="js/home.js"></script>
 </body>
 </html>

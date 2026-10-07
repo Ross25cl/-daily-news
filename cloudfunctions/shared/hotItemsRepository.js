@@ -14,6 +14,7 @@
  *
  * 重构前这些代码在 cloudfunctions/api/index.js 里（内联的 queryTable +
  * handleHot 里一段行映射），Day 19 原样搬到这里，行为一字未改。
+ * Day 20 只加了一个 latestFetchedAt()（接口的 meta.updatedAt 要显示真实抓取时间）。
  * ============================================================
  */
 
@@ -24,6 +25,11 @@ const TABLE = 'hot_items';
 
 // 查询列（与契约 2.1 输出字段一一对应）
 const COLUMNS = 'rank,title,heat,url,tag,is_video';
+
+// 「数据是什么时候抓的」那一列。
+// 它不参与条目输出，只用来回答首页那句「最近更新」——
+// 说「最近更新」时指的是**官网抓取时间**，不是接口被调用的时间（Day 20 修正）。
+const FETCHED_AT = 'fetched_at';
 
 /**
  * 取某平台热搜前 N 名。
@@ -39,6 +45,25 @@ function findByPlatform(platform, limit) {
     order: 'rank.asc',
     limit: limit
   });
+}
+
+/**
+ * 【Day 20 新增】取全表最新一次抓取时间（ISO 字符串）。
+ *
+ * 用途：接口 meta.updatedAt —— 页面上的「最近更新」要显示**真实抓取时间**，
+ * 不能拿 new Date() 顶替：那样每次刷新都会显示「刚刚」，看着新、其实数据是昨天的。
+ *
+ * 取法是「按 fetched_at 倒序取 1 行」而不是 max()：
+ * PostgREST 的聚合查询要额外开权限，而本层本来就只有查询参数可用（不拼 SQL）。
+ *
+ * @returns {Promise<string>} 形如 `2026-10-05T15:30:00+00:00`；表为空时返回 ''
+ */
+function latestFetchedAt() {
+  return pg.selectRows(TABLE, {
+    select: FETCHED_AT,
+    order: FETCHED_AT + '.desc',
+    limit: 1
+  }).then(rows => (rows[0] && rows[0][FETCHED_AT]) || '');
 }
 
 /**
@@ -62,5 +87,6 @@ function toItemJSON(row) {
 module.exports = {
   TABLE: TABLE,
   findByPlatform: findByPlatform,
+  latestFetchedAt: latestFetchedAt,
   toItemJSON: toItemJSON
 };

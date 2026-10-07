@@ -19,5 +19,7 @@ Thumbs.db
 # ===== CloudBase 部署临时产物（Day 15，不入库）=====
 # .cloudbase-publish/ 是上传静态托管前的临时发布目录（脚本每次重建）
 # .cloudbase-backup/ 是 tcb hosting deploy --safe 生成的发布前备份
+# .cloudbase-build/ 是云函数部署前的组装目录（Day 20 起，含 shared/ 拷贝）
 .cloudbase-publish/
 .cloudbase-backup/
+.cloudbase-build/

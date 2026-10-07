@@ -4,6 +4,11 @@
  * ------------------------------------------------------------
  * 今日实现：GET /api/hot —— 首页三平台热搜榜
  *
+ * 【Day 20 改动】只有一处：meta.updatedAt 由 new Date()（接口被调用的时刻）
+ *   改为 hot_items.fetched_at 的最新值（三平台官网最后一次被抓取的时间）。
+ *   原因：前端要在页面上显示「真实抓取时间」，拿请求时刻顶替是假的新鲜。
+ *   路由、字段、状态码、包络形状一律未动。
+ *
  * 【Day 19 分层重构】本文件现在只做三件事：**接请求、调函数、返响应**。
  *   数据库怎么连、hot_items 怎么查、「行 → 接口字段」怎么映射，
  *   全搬到数据访问层了：
@@ -143,11 +148,28 @@ async function handleHot(res, params) {
     return fail(res, 404, 'NOT_FOUND', '今日暂无热搜数据');
   }
 
-  log('hot.ok', { targets: targets.join('/'), limit: limit, count: total, ms: elapsed() });
+  // ---- meta.updatedAt = 真实抓取时间（Day 20 修正） ----
+  // 以前这里写的是 new Date()（= 接口被调用的时刻）。那是「假的新鲜」：
+  // 页面会显示「最近更新 刚刚」，而数据可能还是前一天的。
+  // 现在改成读 hot_items.fetched_at 的最新值 —— 页面上的「最近更新」
+  // 就是「三平台官网最后一次被我们抓取的时间」，与数据一致。
+  // 取不到（表空/查询失败）才退回当前时间，且不因此让接口失败。
+  let updatedAt = '';
+  try {
+    updatedAt = await hotRepo.latestFetchedAt();
+  } catch (e) {
+    log('hot.fetched_at_failed', { message: e && e.message });
+  }
+  if (!updatedAt) updatedAt = new Date().toISOString();
+
+  log('hot.ok', {
+    targets: targets.join('/'), limit: limit, count: total,
+    updatedAt: updatedAt, ms: elapsed()
+  });
 
   ok(res, { platforms: platforms }, {
     count: total,
-    updatedAt: new Date().toISOString()
+    updatedAt: updatedAt
   });
 }
 

@@ -1,7 +1,7 @@
 // ============================================================
-// home.js — 首页「三平台热搜」主视图渲染逻辑（Day 8 建，Day 17 接真实接口）
-// 数据来源：GET /api/hot（云函数 → CloudBase PG，Day 17 起为真实热搜）
-//           接口不可用时降级本地 data/hot.json（示例数据）
+// home.js — 首页「三平台热搜」主视图渲染逻辑（Day 8 建，Day 17 接真实接口，Day 20 由 mock 收口）
+// 数据来源：GET /api/hot（云函数 → CloudBase PG 的 hot_items 表，三平台官网真实热搜）
+//           接口不可用时回落本地 data/hot.json（**并在页面上显式提示不是实时数据**）
 // 职责：fetch 数据 → 四种页面状态（加载中/成功/空/错误）→ 三平台卡片渲染
 // 状态演示：URL 加 ?demo=error（错误）、?demo=empty（空）、?demo=loading（加载中）
 // ============================================================
@@ -26,7 +26,7 @@ function emojiFor(tag) {
   return ({ 'NBA': '🏀', 'CBA': '🏀', '英超': '⚽', '中超': '⚽', '欧冠': '⚽', '电竞': '🎮' })[tag] || '🏟️';
 }
 
-// 平台 Logo 徽标文字（mock 阶段用文字徽标，不复制官方 Logo 素材）
+// 平台 Logo 徽标文字（用文字徽标代替官方 Logo 素材，避免使用未授权图形）
 const LOGO_TEXT = { hupu: '虎扑', tencent: '腾讯体育', cctv5: 'CCTV·5' };
 
 // 本地生成 80x80 SVG 缩略图（data URI，离线可用，无图片文件）
@@ -132,36 +132,43 @@ function renderPlatforms(data) {
   showState('success');
 }
 
-// "2026-09-25T22:30:00+08:00" → "09-25 22:30"
+// "2026-10-05T23:30:58+08:00" → "10-05 23:30"
+// 传进来的是接口 meta.updatedAt，即数据库里的**真实抓取时间**（不是刷新时刻）。
 function formatUpdatedAt(iso) {
-  if (!iso || iso.length < 16) return '暂无';
-  return iso.substring(5, 16).replace('T', ' ');
+  if (!iso) return '暂无';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '暂无';
+  const p = n => String(n).padStart(2, '0');
+  return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+// 数据来源提示条（Day 20）：只在「接口不可用、回落本地备用数据」时显示。
+// 宁可显式说明这份不是实时的，也不让页面默认看起来就是实时的。
+function setSourceNote(text) {
+  const el = document.getElementById('source-note');
+  if (!el) return;
+  el.textContent = text || '';
+  el.hidden = !text;
 }
 
 // ---------- 数据加载 ----------
 
 const DEMO = new URLSearchParams(location.search).get('demo');
 
-// Day 17：首页热搜改为调用云函数接口 GET /api/hot（网关已配路由）。
-// 接口返回 { ok, data:{platforms}, meta:{updatedAt} }，这里适配成
-// 渲染层需要的 { platforms, updated_at }，并把失败降级到本地 data/hot.json
-// ——接口不可用时首页仍可看示例数据（不白屏）。
-//
-// 地址为什么用绝对地址、不用相对路径 "/api/hot"：
-//   前端托管在静态托管域名（xxx.tcloudbaseapp.com），
-//   接口在云函数网关域名（xxx.app.tcloudbase.com），**两者不同域**。
-//   相对路径会打到静态托管自身、拿不到接口（返回 404 → 降级示例数据）。
-//   本地预览（serve.mjs / 127.0.0.1 / 局域网 IP）也没有 /api 路由，同样要直连线上。
-//   → 所以统一写死函数网关地址。跨域由 CloudBase 网关自动回 CORS 头（实测已生效）。
-//   将来若把接口挂到同域自定义路径，可改回相对路径。
-const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+// 接口地址由 js/api-config.js 统一给出（必须先于本文件加载）：
+//   线上 → 云函数网关绝对域名（跨域由网关的「跨域安全域名白名单」放行）
+//   本地 → 空串，配合 serve.mjs 的 /api 同源代理，本地不产生跨域
+// 为什么不能写相对路径 '/api/hot' 了事：静态托管域名与网关域名不同域，
+//   相对路径会打到静态托管自身（404）。这条 Day 17 实测过，见
+//   docs/cloudbase-deploy-day17.md 踩坑 5。
+const FUNC_ORIGIN = window.API_ORIGIN || '';
 
-function apiHotURL() {
-  return FUNC_ORIGIN + '/api/hot';
+function apiUrl(path) {
+  return FUNC_ORIGIN + path;
 }
 
 async function fetchHotFromAPI() {
-  const res = await fetch(apiHotURL(), { cache: 'no-store' });
+  const res = await fetch(apiUrl('/api/hot'), { cache: 'no-store' });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const body = await res.json();
   if (!body || body.ok !== true) {
@@ -172,7 +179,9 @@ async function fetchHotFromAPI() {
   return { platforms: d.platforms || [], updated_at: meta.updatedAt || '' };
 }
 
-async function fetchHotFromLocal() {
+// 本地备用数据：一份随站点发布的快照，只用于「接口挂了页面也不白屏」。
+// 它不是实时数据，所以用上它时页面会同时亮出提示条。
+async function fetchHotFromSnapshot() {
   const res = await fetch('data/hot.json', { cache: 'no-store' });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
@@ -185,24 +194,29 @@ async function loadHot() {
   //   ?demo=empty-all   整页空（三平台全都没有数据）
   //   ?demo=error       错误（加载失败 + 重试按钮）
   //   不加参数          正常（成功）
-  if (DEMO === 'error')   { showError(); return; }
-  if (DEMO === 'empty-all') { renderPlatforms({ updated_at: '', platforms: [] }); return; }
-  if (DEMO === 'empty')   { renderPlatforms({ platforms: [{ id: 'hupu', name: '虎扑', desc: '步行街 24 小时榜', items: [] }, { id: 'tencent', name: '腾讯体育', desc: '首页要闻热榜', items: [] }, { id: 'cctv5', name: '央视体育', desc: '官方要闻', items: [] }] }); return; }
+  if (DEMO === 'error')   { setSourceNote(''); showError(); return; }
+  if (DEMO === 'empty-all') { setSourceNote(''); renderPlatforms({ updated_at: '', platforms: [] }); return; }
+  if (DEMO === 'empty')   { setSourceNote(''); renderPlatforms({ platforms: [{ id: 'hupu', name: '虎扑', desc: '步行街 24 小时榜', items: [] }, { id: 'tencent', name: '腾讯体育', desc: '首页要闻热榜', items: [] }, { id: 'cctv5', name: '央视体育', desc: '官方要闻', items: [] }] }); return; }
   if (DEMO === 'loading') { return; } // 保持骨架屏
 
   showState('loading');
   try {
-    // 优先真实接口；失败降级到本地示例数据（保持页面可用）
     let data;
     try {
+      // 只有一条路：调接口。接口挂了才允许回落，且回落必须让用户看得见。
       data = await fetchHotFromAPI();
+      setSourceNote('');
     } catch (apiErr) {
-      console.warn('[home.js] 接口 /api/hot 不可用，降级本地示例数据:', apiErr);
-      data = await fetchHotFromLocal();
+      const url = apiUrl('/api/hot');
+      console.warn('[home.js] 接口 ' + url + ' 不可用，回落本地备用数据：', apiErr);
+      setSourceNote('提示：接口暂时不可用，本页显示的是本地备用数据（非实时）。' +
+        (apiErr && apiErr.message ? '原因：' + apiErr.message : ''));
+      data = await fetchHotFromSnapshot();
     }
     renderPlatforms(data);
   } catch (err) {
-    console.warn('[home.js] 热搜数据加载失败:', err);
+    console.warn('[home.js] 热搜数据加载失败：', err);
+    setSourceNote('');
     showError();
   }
 }

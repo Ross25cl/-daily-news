@@ -214,6 +214,17 @@ function uniqUrl() {
 
   // ================= 第三组：真连库（--with-db 才跑） =================
   if (WITH_DB && API_KEY) {
+    // ---- Day 20：meta.updatedAt 必须是「真实抓取时间」，不是接口被调用的时刻 ----
+    // 判法：拿 updatedAt 与当前时刻比。若实现还在用 new Date()，两者会几乎相等（< 1 秒）。
+    // 只有真的读了 hot_items.fetched_at，才会与「现在」差出明显的量级。
+    const h1 = await request(PORT_API, 'GET', '/api/hot?platform=hupu&limit=2');
+    const hb1 = safeParse(h1.body) || {};
+    const updatedAt = (hb1.meta && hb1.meta.updatedAt) || '';
+    const gapMs = updatedAt ? Math.abs(Date.now() - new Date(updatedAt).getTime()) : -1;
+    check('GET /api/hot → meta.updatedAt 是真实抓取时间（与此刻相差 > 5 秒）',
+      h1.status === 200 && hb1.ok === true && !isNaN(new Date(updatedAt).getTime()) && gapMs > 5000,
+      'updatedAt=' + updatedAt + '，距此刻 ' + Math.round(gapMs / 1000) + ' 秒');
+
     const url = uniqUrl();
     const payload = {
       title: '【Day 18 实测】湖人加时险胜',

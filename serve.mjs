@@ -21,7 +21,16 @@
 //   本机自用不受影响，仍可继续用 http://127.0.0.1:8000/index.html。
 // ============================================================
 
+// 【Day 20 改动】新增 /api/* 同源代理 → 云函数网关。
+//   起因：线上页面直连网关绝对地址（跨域，靠网关的「跨域安全域名白名单」放行），
+//   但 127.0.0.1 / localhost 加不进那份白名单（体验版实测报「当前套餐无法执行此操作」）
+//   → 本地打开页面时浏览器按跨域处理，取不到数据，只能落到本地备用数据。
+//   解法：本地由这个小服务器把 /api/* 转发到网关。页面请求的是相对路径，
+//   对浏览器来说是同源，压根不发生跨域；白名单也不必为本地开口子。
+//   线上页面不受影响：api-config.js 在线上依然给出网关绝对地址。
+
 import { createServer } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { networkInterfaces } from 'node:os';
@@ -30,6 +39,41 @@ import { fileURLToPath } from 'node:url';
 const ROOT = fileURLToPath(new URL('.', import.meta.url));   // 脚本所在目录 = 项目根目录
 const PORT = Number(process.argv[2]) || 8000;
 const HOST = '0.0.0.0';   // 监听全部网卡（原为 127.0.0.1，Day 14 为局域网测试放开）
+
+// 云函数网关地址（与 js/api-config.js 里的线上地址保持一致）
+const API_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+
+// /api/* → 网关。方法、路径、查询串、请求体原样转发，响应原样回给浏览器。
+function proxyApi(req, res) {
+  const target = new URL(req.url, API_ORIGIN);
+  const headers = Object.assign({}, req.headers);
+  headers.host = target.hostname;
+  // 这是服务器发出的请求，不是浏览器的跨域请求：去掉 Origin / Referer，
+  // 免得网关把它当成一个不在白名单里的来源来处理。
+  delete headers.origin;
+  delete headers.referer;
+
+  const upstream = httpsRequest({
+    host: target.hostname,
+    path: target.pathname + target.search,
+    method: req.method,
+    headers: headers
+  }, up => {
+    res.writeHead(up.statusCode || 502, up.headers);
+    up.pipe(res);
+  });
+
+  upstream.on('error', err => {
+    console.log('502  ' + req.url + ' → 代理失败：' + err.message);
+    res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      ok: false,
+      error: { code: 'PROXY_ERROR', message: '本地代理到云函数失败：' + err.message }
+    }));
+  });
+
+  req.pipe(upstream);
+}
 
 // 取出本机所有局域网 IPv4 地址，启动时打印出来，方便手机直接输入
 function lanIPv4List() {
@@ -65,6 +109,12 @@ const server = createServer(async (req, res) => {
   try {
     // 1) 解析 URL，去掉查询参数（?cat=足球&demo=empty 这类前端参数服务器不关心）
     const urlPath = decodeURIComponent(new URL(req.url, 'http://' + HOST).pathname);
+
+    // 1.5) /api/* 交给代理（Day 20）：本地无跨域，页面拿到的就是真接口数据
+    if (urlPath.indexOf('/api/') === 0) {
+      console.log(req.method + '  ' + req.url + ' → 代理到网关');
+      return proxyApi(req, res);
+    }
 
     // 2) 目录 → 默认首页；并做路径穿越防护（不允许请求到项目目录以外）
     //    注意：必须先把 .. 与 . 解析掉，再判断最终路径是否还在 ROOT 之内，
@@ -132,6 +182,9 @@ server.listen(PORT, HOST, () => {
   console.log('    首页      http://127.0.0.1:' + PORT + '/index.html');
   console.log('    资讯列表  http://127.0.0.1:' + PORT + '/news.html?cat=足球');
   console.log('    资讯详情  http://127.0.0.1:' + PORT + '/news-detail.html?id=20260929-n01');
+  console.log('    接口检查台 http://127.0.0.1:' + PORT + '/checkup.html');
+  console.log('  ----------------------------------------');
+  console.log('  接口 /api/* 已代理到云函数网关（本地不产生跨域）');
   console.log('  ----------------------------------------');
   if (lan.length) {
     console.log('  局域网（手机/别的电脑，需连同一个 WiFi）：');

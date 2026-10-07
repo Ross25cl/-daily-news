@@ -3,10 +3,10 @@
 | 项目 | 内容 |
 | ---- | ---- |
 | 文档名称 | 接口契约（api-contract） |
-| 撰写日期 | 2026-10-03（Day 15｜第 3 周）；**2026-10-04（Day 16）更新：表结构定稿并已建表**；**2026-10-05（Day 17）更新：`/api/hot` 已实现**；**2026-10-06（Day 18）更新：`/api/favorites` 写入接口已实现，前端接入接口层** |
+| 撰写日期 | 2026-10-03（Day 15｜第 3 周）；**2026-10-04（Day 16）更新：表结构定稿并已建表**；**2026-10-05（Day 17）更新：`/api/hot` 已实现**；**2026-10-06（Day 18）更新：`/api/favorites` 写入接口已实现，前端接入接口层**；**2026-10-07（Day 20）更新：跨域实测确认（白名单精确匹配、无 `*`），前端接口地址收口到 `js/api-config.js`，新增接口检查台 `checkup.html`** |
 | 依据 | 前端第 2 周实际页面（`index.html` / `matches.html` / `news.html` / `news-detail.html` / `league.html`）+ `TECH_DESIGN.md` 第 5 节 |
 | 文档地位 | **第 3 周建表与写接口的唯一依据**。接口 Day 17 起逐个落地；**第 3 节的表结构 Day 16 已定稿，且与线上库逐字一致**。 |
-| 实现时点 | Day 16 建表 ✅ · Day 17 `/api/hot` ✅ · **Day 18 `/api/favorites` ✅** · Day 19 其余读接口 · Day 20 配跨域 |
+| 实现时点 | Day 16 建表 ✅ · Day 17 `/api/hot` ✅ · **Day 18 `/api/favorites` ✅** · Day 19 后端分层重构（读接口顺延）· **Day 20 跨域实测确认 + 前端接口地址收口 + 接口检查台 ✅** |
 | 今日不实现 | `PATCH` / `DELETE`（第 4 周）；批量写入；`/api/news` 等读接口仍为占位 |
 
 ---
@@ -77,6 +77,20 @@
 | 409 | `CONFLICT` | 冲突（如重复订阅） | 提示已存在 |
 | 500 | `INTERNAL_ERROR` | 服务端异常 | 显示「加载失败，请重试」+ 重试按钮 |
 
+### 0.4 跨域（CORS）——Day 20 实测确认
+
+| 项 | 结论 |
+| -- | ---- |
+| 谁在处理 | **网关层自动处理**，云函数里**不写**任何 CORS 头 |
+| 放行规则 | 按「跨域安全域名白名单」**精确匹配**；白名单内回显 `access-control-allow-origin: <该域名>`，预检 `OPTIONS` 返回 `204` |
+| 白名单内容 | 本项目静态托管域名 `ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com` + 若干腾讯云官方域名（`tcb cors list -e <envId>`） |
+| 通配符 | **没有 `*`**，符合「只允许自己的域名」的要求 |
+| ⚠️ 判断依据 | 白名单**外**的 Origin，服务端**也返回 200**，但**不带 ACAO 头**（浏览器侧才拦）。所以「curl 打能通」≠「跨域配好了」，要看**响应头** |
+| ⚠️ 本地开发 | 体验版套餐**不允许**往白名单加 `localhost`（`tcb cors add` 报「当前套餐无法执行此操作」）。本地改用 `serve.mjs` 的 `/api/*` **同源代理**，页面代码与线上一致 |
+
+> 前端因此**必须用绝对地址**打网关域名（见 §4）；本地则由 `js/api-config.js` 切回相对路径、交给本地代理。
+> 详见 `docs/cloudbase-deploy-day20.md`。
+
 ---
 
 ## 1. 接口总览
@@ -101,6 +115,12 @@
 > （例：路由 `/api/news` 收到请求 `/api/news/20260929-n01` → 函数内 `req.url` 为 `/20260929-n01`；收到 `/api/news` → 为 `/`。）
 > ⚠️ Day 18 曾误记为「函数内恒为 `/`、拿不到原始路径」——那是测试请求恰好把前缀剥干净造成的错判，详见 `docs/data-source-status.md` §5.1。
 > 表 8–9 属订阅线，按 `TECH_DESIGN` 第 11 节仍走人工流程，此处仅登记。
+
+> 🔎 **接口自检页（Day 20 新增）**：`checkup.html` — 「接口检查台」。
+> 一个页面同时看 `/api/health` 状态、`hot_items` / `news_items` 真实数据（含**真实抓取时间**）、
+> 以及一次 `POST /api/favorites` 写入测试（提交后自动读回验证）。
+> 页顶直接显示当前 `API_ORIGIN` 与页面域名，一眼看出请求打的是不是公网地址。
+> 公网地址：`https://ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com/checkup.html`
 
 ---
 
@@ -184,6 +204,11 @@
 | `platforms[].items[].url` | string | ✓ | 原文链接 |
 | `platforms[].items[].tag` | string | — | 联赛/项目标签 |
 | `platforms[].items[].video` | boolean | — | 是否视频条目（仅腾讯体育有） |
+
+> 📌 **`meta.updatedAt` 的语义（Day 20 修正）**：以前取的是**渲染时刻**（`new Date()`），
+> 现在改为读 `hot_items.fetched_at` 的**最大值**——即「这批数据是什么时候从官网抓的」。
+> 页面上的「最近更新」因此显示的是**真实抓取时间**，而不是用户打开页面的时间。
+> 取不到时才退回当前时刻。实现见 `cloudfunctions/shared/hotItemsRepository.js` 的 `latestFetchedAt()`。
 
 **错误返回**：
 
@@ -690,13 +715,19 @@ ORDER BY 1;
 | `GET /api/leagues/:id` | `data/<lg>.json` | `js/league.js` | ✅ 已接（接口未实现，实际走降级） |
 | `POST /api/favorites` | —（写操作无降级） | `js/news-detail.js` | ✅ Day 18 新增：详情页「收藏这条」按钮 |
 
-**⚠️ 地址必须用绝对域名，不能用 §0.1 里那种相对路径 `/api/xxx`**（本节原文如此写，Day 18 实测纠正）：
+**⚠️ 地址必须用绝对域名，不能用 §0.1 里那种相对路径 `/api/xxx`**（本节原文如此写，Day 18 实测纠正；**Day 20 已把这个地址收口到 `js/api-config.js`**）：
 
 ```js
-const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
+// js/api-config.js —— 接口地址的唯一出处（Day 20 新建）
+// 本地预览 → API_ORIGIN = ''            → 请求 /api/xxx，由 serve.mjs 同源代理转发
+// 线上托管 → API_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com'
 ```
 
-原因：前端托管在**静态托管域名**（`...tcloudbaseapp.com`），接口在**云函数网关域名**（`...app.tcloudbase.com`），**两者不同域**。用相对路径会打到静态托管自身、拿不到接口（404 → 一律降级）；本地预览（`serve.mjs` / `127.0.0.1`）也没有 `/api` 路由。所以统一写死函数网关地址，跨域由 CloudBase 网关自动回 CORS 头（Day 17 实测已生效）。将来若把接口挂到同域自定义路径，可改回相对路径。
+```js
+const FUNC_ORIGIN = window.API_ORIGIN;   // ← 各页面统一取这个，不再各自写死域名
+```
+
+原因：前端托管在**静态托管域名**（`...tcloudbaseapp.com`），接口在**云函数网关域名**（`...app.tcloudbase.com`），**两者不同域**。用相对路径会打到静态托管自身、拿不到接口（404 → 一律降级）；本地预览（`serve.mjs` / `127.0.0.1`）也没有 `/api` 路由。所以统一写死函数网关地址，跨域由 CloudBase 网关自动回 CORS 头（Day 17 实测已生效、**Day 20 实测确认白名单无 `*`**）。将来若把接口挂到同域自定义路径，可改回相对路径。
 
 **统一取数写法**（5 个文件同一套，见 `js/news.js` 顶部注释）：
 
@@ -772,4 +803,28 @@ async function fetchFromAPI(path) {
 | `PATCH` / `DELETE` | ❌ 第 4 周 |
 | 跨域配置 | ❌ Day 20 |
 
-**仍待办（不阻塞完成标准）**：Day 15 的同伴手机验证与三张截图归档；Day 16 的控制台「表数据页」截图；Day 17 的 API Key 创建与公网验证。
+**Day 19（第 3 周第 5 天）**
+
+| 项 | 状态 |
+| -- | ---- |
+| 后端分层重构（查库代码从接口文件拆进 `shared/`） | ✅ `cloudfunctions/shared/{pg,hotItemsRepository,…}.js` |
+| 分层文档 | ✅ `docs/layers-day19.md` + `layers-day19.svg` |
+| 提交 | ⏳ 本地 `27a8031`，**未推送**（远端仍 `e47237a`） |
+
+**Day 20（第 3 周第 6 天）**
+
+| 项 | 状态 |
+| -- | ---- |
+| 跨域可用性确认（白名单 / 无 `*` / 预检 204） | ✅ 实测确认，白名单含自有静态托管域名 |
+| 本地域名加白名单 | ❌ 体验版限制，改用 `serve.mjs` `/api/*` 同源代理 |
+| 前端从 mock 切真实接口 | ✅ `js/api-config.js` 统一出口；`js/home.js` 改读 `API_ORIGIN` |
+| 页面去 mock 字样 + 三平台副标题 | ✅ 页脚说明改写；`<h1>` 下加副标题 |
+| 「最近更新」显示真实抓取时间 | ✅ 后端 `latestFetchedAt()` + 前端格式化 |
+| 接口检查台页 | ✅ `checkup.html` / `css/checkup.css` / `js/checkup.js` |
+| 静态托管重新构建上传 | ✅ `build-publish.mjs` → 28 个文件；新增 `build-functions.mjs` 修 `../shared` 打包坑 |
+| 公网逐项验证 | ✅ 12 项清单全过（`docs/cloudbase-deploy-day20.md` §4） |
+| `/api/news`、`/api/matches`、`/api/leagues/:id` 读接口 | ⏳ 仍占位 |
+| `PATCH` / `DELETE` | ❌ 第 4 周 |
+| 提交 | ⏳ 本地，**未推送**（等零确认；与 Day 19 一起上） |
+
+**仍待办（不阻塞完成标准）**：Day 15 的同伴手机验证与三张截图归档；Day 16 的控制台「表数据页」截图；Day 19 与 Day 20 的推送。

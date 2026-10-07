@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>接口检查台 · 每日体坛速览</title>
+  <script>
+    // 防闪烁：与其它页面共用同一个主题键
+    document.documentElement.dataset.theme = localStorage.getItem('hot-theme') === 'light' ? 'light' : 'dark';
+  </script>
+  <link rel="stylesheet" href="css/checkup.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="tag">开发自检页 · 不面向读者</span>
+      <h1>接口检查台</h1>
+      <p class="brand-sub">一眼看清三件事：健康状态 · 核心表真实数据 · 一次写入测试</p>
+      <p class="meta">
+        <span>接口地址 <b id="api-origin">--</b></span>
+        <span>请求来源 <b id="page-origin">--</b></span>
+      </p>
+    </div>
+    <nav class="site-nav" aria-label="主导航">
+      <div class="nav-pages">
+        <a href="index.html" class="nav-link">热搜速览</a>
+        <a href="matches.html" class="nav-link">赛程比分</a>
+        <a href="news.html?cat=足球" class="nav-link">资讯</a>
+        <a href="league.html?lg=nba" class="nav-link">NBA</a>
+        <a href="checkup.html" class="nav-link active">接口检查台</a>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换深浅模式">☀️</button>
+    </nav>
+  </header>
+
+  <main>
+    <p class="lead">
+      本页所有数字都来自公网接口的实时返回，没有任何写死在页面里的内容。
+      页面本身不含密钥：读库、写库都在云函数里完成，密钥只存在云函数的环境变量中。
+    </p>
+
+    <!-- ① 健康状态 -->
+    <section class="panel">
+      <header class="panel-head">
+        <h2>① 健康状态</h2>
+        <span id="health-badge" class="badge badge-wait">检查中…</span>
+      </header>
+      <table class="kv">
+        <tbody>
+          <tr><th>接口</th><td><code id="health-url">--</code></td></tr>
+          <tr><th>返回</th><td id="health-body">--</td></tr>
+          <tr><th>耗时</th><td id="health-ms">--</td></tr>
+        </tbody>
+      </table>
+      <p class="hint">健康接口只回答「云函数活着吗」。它不查库，所以它通了不代表下面的数据也能取到。</p>
+    </section>
+
+    <!-- ② 核心表真实数据 · hot_items -->
+    <section class="panel">
+      <header class="panel-head">
+        <h2>② 核心表真实数据 · <code>hot_items</code></h2>
+        <span id="hot-badge" class="badge badge-wait">读取中…</span>
+      </header>
+      <p class="kv-line">
+        <span>接口 <code id="hot-url">--</code></span>
+        <span>总条数 <b id="hot-count">--</b></span>
+        <span>真实抓取时间 <b id="hot-fetched">--</b></span>
+      </p>
+      <div class="table-wrap"><div id="hot-table">--</div></div>
+      <p class="hint">「真实抓取时间」是数据库里 <code>fetched_at</code> 的最新值——最后一次从三个平台官网抓取的时刻，不是刷新页面的时刻。</p>
+    </section>
+
+    <!-- ② 核心表真实数据 · news_items -->
+    <section class="panel">
+      <header class="panel-head">
+        <h2>② 核心表真实数据 · <code>news_items</code></h2>
+        <span id="news-badge" class="badge badge-wait">读取中…</span>
+      </header>
+      <p class="kv-line">
+        <span>接口 <code id="news-url">--</code></span>
+        <span>本次返回 <b id="news-count">--</b> 条</span>
+      </p>
+      <div class="table-wrap"><div id="news-table">--</div></div>
+      <p class="hint">这里读的是收藏线写入的核心表，最新写入的排在最前。下面那一步写进去的条目，会立刻出现在这张表里。</p>
+    </section>
+
+    <!-- ③ 一次写入测试 -->
+    <section class="panel">
+      <header class="panel-head">
+        <h2>③ 写入测试（POST /api/favorites）</h2>
+        <span id="write-badge" class="badge badge-wait">待测试</span>
+      </header>
+      <form id="write-form" class="form">
+        <label>标题 title（≤30 字）<input name="title" maxlength="60" value="检查台写入测试"></label>
+        <label>摘要 summary（≤60 字）<input name="summary" maxlength="120" value="这条由接口检查台写入，用于验证写接口与核心表联通。"></label>
+        <label>板块 section
+          <select name="section">
+            <option>头条</option><option>转会伤病</option><option>热议</option><option>明日看点</option>
+          </select>
+        </label>
+        <label>联赛 league<input name="league" value="综合"></label>
+        <label>来源名称 sourceName<input name="sourceName" value="接口检查台"></label>
+        <label>原文链接 sourceUrl（全表唯一，重复写入会被识别为「已存在」）<input name="sourceUrl" class="wide"></label>
+        <label>归属日期 digestDate<input name="digestDate" type="date"></label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">写入一条测试记录</button>
+          <button type="button" id="write-refresh" class="btn">只刷新上面的表</button>
+        </div>
+      </form>
+      <pre id="write-result" class="result" hidden></pre>
+    </section>
+
+    <!-- ④ 跨域是怎么放行的 -->
+    <section class="panel">
+      <header class="panel-head"><h2>④ 跨域（CORS）是怎么放行的</h2></header>
+      <ul class="notes">
+        <li>页面在静态托管域名上，接口在云函数网关域名上，<b>两者不同域</b>，所以调接口天然是跨域。</li>
+        <li>放行由 <b>CloudBase 网关的「跨域安全域名白名单」</b>负责：白名单里只有本项目自己的静态托管域名，<b>没有 <code>*</code> 通配符</b>。</li>
+        <li>白名单外的来源拿不到 <code>access-control-allow-origin</code> 响应头，浏览器就会拦下这次请求——这正是想要的效果。</li>
+        <li>本地开发（<code>127.0.0.1</code>）加不进白名单，改由 <code>serve.mjs</code> 把 <code>/api/*</code> 代理到网关，本地按同源处理、不产生跨域。</li>
+        <li>把本页链接发给别人时，对方打开的是同一个静态托管域名，所以对方也能正常取到数据。</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>每日体坛速览 · 28days 练习项目 · 接口检查台（Day 20 建）</p>
+  </footer>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api-config.js"></script>
+  <script src="js/checkup.js"></script>
+</body>
+</html>

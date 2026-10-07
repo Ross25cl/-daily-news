@@ -98,9 +98,29 @@ body {
   margin-bottom: 10px;
 }
 h1 { font-size: 26px; margin: 0 0 4px; }
+/* 副标题（Day 20）：一句话说清本页聚合了哪三个平台 */
+.brand-sub {
+  margin: 2px 0 8px;
+  font-size: 15px;
+  color: var(--chip-text);
+  letter-spacing: .2px;
+}
 .meta { color: var(--muted); font-size: 14px; margin: 0; }
 .meta span + span { margin-left: 12px; }
 .meta b { color: var(--text); }
+
+/* 数据来源提示条（Day 20）：接口不可用、页面回落本地备用数据时才出现。
+   宁可显式说明「这份不是实时的」，也不让页面默认看起来就是实时的。 */
+.source-note {
+  margin: 0 0 16px;
+  padding: 9px 14px;
+  border: 1px solid var(--heat);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--heat);
+  font-size: 13px;
+  line-height: 1.6;
+}
 
 .site-nav {
   margin-top: 14px;
