@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>《每日体坛速览》第 3 周验收表 · Day 21</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#ffffff; --ink:#1f2937; --ink-2:#4b5563; --ink-3:#6b7280;
+    --line:#e5e7eb; --line-2:#d1d5db;
+    --blue:#2563eb; --blue-bg:#eff6ff;
+    --green:#15803d; --green-bg:#ecfdf5; --green-line:#a7f3d0;
+    --amber:#b45309; --amber-bg:#fffbeb; --amber-line:#fde68a;
+    --mono:"Cascadia Mono","Consolas","SFMono-Regular",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 "PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px}
+
+  header.top{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:20px}
+  header.top h1{margin:0 0 6px;font-size:24px;letter-spacing:.3px}
+  header.top .sub{color:var(--ink-3);font-size:13.5px}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 26px;margin-top:16px;
+    border-top:1px dashed var(--line-2);padding-top:14px}
+  .meta-grid div{font-size:13.5px;color:var(--ink-2)}
+  .meta-grid b{color:var(--ink);font-weight:600}
+
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px;margin-bottom:20px}
+  section > h2{margin:0 0 4px;font-size:19px;display:flex;align-items:center;gap:10px}
+  section > h2 .idx{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--blue-bg);
+    color:var(--blue);font-size:14px;align-items:center;justify-content:center;font-weight:700}
+  section > .lead{color:var(--ink-3);font-size:13.5px;margin:0 0 16px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid var(--line);padding:9px 11px;vertical-align:top;text-align:left}
+  th{background:#f3f5f9;font-weight:600;color:var(--ink);white-space:nowrap}
+  td.num{text-align:center;white-space:nowrap;width:56px}
+  code{font-family:var(--mono);font-size:12.2px;background:#f3f4f6;border:1px solid var(--line);
+    border-radius:4px;padding:1px 5px;color:#374151}
+  .uri{font-family:var(--mono);font-size:11.8px;color:var(--blue);word-break:break-all}
+
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.5px;
+    padding:2px 9px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+  .p-pass{background:var(--green-bg);color:var(--green);border-color:var(--green-line)}
+  .p-none{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-line)}
+  .p-fail{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+
+  .tally{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 4px}
+  .tally .box{flex:1 1 190px;border:1px solid var(--line);border-radius:10px;padding:12px 16px;background:#fbfcfe}
+  .tally .box .n{font-size:22px;font-weight:700;letter-spacing:.5px}
+  .tally .box .l{font-size:12.5px;color:var(--ink-3)}
+  .n-pass{color:var(--green)} .n-none{color:var(--amber)} .n-fail{color:#b91c1c}
+
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow:auto;
+    font-family:var(--mono);font-size:12px;line-height:1.65;margin:12px 0 0}
+  .note{border-left:3px solid var(--blue);background:var(--blue-bg);border-radius:0 8px 8px 0;
+    padding:10px 14px;font-size:13px;color:var(--ink-2);margin:14px 0 0}
+  .note.warn{border-left-color:#d97706;background:var(--amber-bg)}
+
+  .ask{background:#f8fafc;border:1px dashed var(--line-2);border-radius:10px;padding:14px 16px;
+    font-family:var(--mono);font-size:12.3px;line-height:1.75;white-space:pre-wrap;color:#334155}
+  .fill{display:table;width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+  .fill div{display:table-row}
+  .fill span{display:table-cell;border:1px solid var(--line);padding:9px 12px}
+  .fill span:first-child{width:180px;background:#f3f5f9;font-weight:600}
+  .fill span:last-child{color:var(--amber)}
+
+  ol.steps{padding-left:22px;margin:10px 0}
+  ol.steps li{margin:4px 0;font-size:13.5px}
+  .tl{font-family:var(--mono);font-size:12.5px;color:var(--blue);font-weight:700}
+  footer{color:var(--ink-3);font-size:12.5px;text-align:center;padding-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>《每日体坛速览》第 3 周验收表</h1>
+    <div class="sub">Day 21 ｜ 第 3 周 ｜ 验收范围：Day 15–20（数据库落地 → 读接口 → 写接口 → 后端分层 → 前端切公网接口）</div>
+    <div class="meta-grid">
+      <div><b>撰写日期</b>　2026-10-08（北京时间）</div>
+      <div><b>验收时间</b>　2026-10-08 17:34–17:45；同伴复核 20:47</div>
+      <div><b>状态取值</b>　只允许 PASS / FAIL / 未执行</div>
+      <div><b>提交起点</b>　本地 = 远端 = <code>ca1988b</code>（Day 20）</div>
+      <div style="grid-column:1/-1"><b>公网环境</b>　静态托管
+        <span class="uri">https://ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com</span>　｜　接口网关
+        <span class="uri">https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com/api/*</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ ① 验收表 ============ -->
+  <section id="acceptance">
+    <h2><span class="idx">1</span>周验收表</h2>
+    <p class="lead">每项都写明「怎么验证」，状态只取三值；证据列给的是<b>本次实测的数字与原始输出位置</b>，不是「已检查」。</p>
+
+    <table>
+      <thead>
+        <tr><th style="width:34px">#</th><th style="width:172px">验收项</th><th style="width:300px">怎么验证</th>
+            <th style="width:78px">状态</th><th>证据</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td>建表和种子脚本可重复执行（有 select 证据）</td>
+          <td>① 跑 <code>db/schema.sql</code>（DROP IF EXISTS + CREATE）→ 应回 10 张表名；② 跑 <code>db/seed.sql</code>（TRUNCATE + INSERT，40KB 超命令行上限故按 5 段执行）→ 末段自带自检 SELECT 打印每张表行数；③ <b>紧接着把 <code>db/seed.sql</code> 再跑一遍</b> → 行数与第 1 遍逐字相同、无「表已存在 / 主键冲突」</td>
+          <td><span class="pill p-pass">PASS</span></td>
+          <td>两遍行数完全一致：<code>hot_items</code> 24 · <code>news_items</code> 8 · <code>matches</code> 9 · <code>league_schedule</code> 20 · <code>league_standings</code> 20 · <code>league_players</code> 25 · <code>league_brackets</code> 5 · <code>leagues</code> 4 · <code>push_log</code> 5 · <code>subscribers</code> 5。原始输出见 <code>docs/acceptance-week3.md</code> §A-1</td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td>GET 接口公网可访问且返回真实数据库数据</td>
+          <td>curl 打公网网关 <code>GET /api/hot</code>，看条目 <code>url</code> 是否为<b>真实站点</b>（不是 example.com）、<code>meta.updatedAt</code> 是否为<b>抓取时间</b>而非「此刻」</td>
+          <td><span class="pill p-pass">PASS</span></td>
+          <td>公网 <code>/api/hot</code> → <b>HTTP 200</b>；三平台 虎扑 10 / 腾讯体育 7 / 央视体育 7；首条 <span class="uri">https://bbs.hupu.com/642763094.html</span>（真实站点）；<code>meta.updatedAt = 2026-10-05T23:30:58+08:00</code>。库内 <code>hot_items</code> <b>63 行</b>（虎扑 49 · 腾讯 7 · 央视 7）<br><b>演示前刷新</b>：2026-10-08 21:38 手动同步一次 → 现 <code>updatedAt = 2026-10-08T21:38:31+08:00</code>、库内 <b>48 行</b>；上列数字为<b>验收时点</b>（10-08 17:5x）返回值</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td>POST 接口完成真实写入并读回</td>
+          <td><code>POST /api/favorites</code> 写一条 → <b>立刻</b> <code>GET /api/favorites?limit=1</code> 看第 1 行是否就是刚写那条；再把同一个 <code>sourceUrl</code> POST 一次，看防重是否生效</td>
+          <td><span class="pill p-pass">PASS</span></td>
+          <td>POST → <code>200 {ok:true, meta.created:true}</code>，<code>data.id = 20261008-n01</code>；读回 <code>limit=1</code> 第 1 行即该条（sourceUrl 命中）；重复 POST → <code>200 meta.created:false</code>、id 不变（库里只 1 行）</td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td>数据访问层重构完成且接口行为不变</td>
+          <td>跑 <code>node scripts_cloudbase/test-api-local.cjs --with-db</code>，看 Day 18 定下的用例在 Day 19 分层重构后是否仍全过；再核契约（路径 / 字段名 / 状态码 / 包络）是否<b>零改动</b></td>
+          <td><span class="pill p-pass">PASS</span></td>
+          <td><b>18 / 18 全过</b>（含 400/404/405/500 各分支 + 写入 / 重复 / 读回）。分层落地在 <code>cloudfunctions/shared/pg.js</code>、<code>hotItemsRepository.js</code>、<code>newsItemsRepository.js</code>；<code>api-contract.md</code> §1/§2 无改动</td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td>检查台公网可访问</td>
+          <td>浏览器打开 <code>/checkup.html</code>，看「健康状态 / 热搜表真实数据 / 资讯表真实数据」三块是否都是绿标</td>
+          <td><span class="pill p-pass">PASS</span></td>
+          <td>公网 <code>/checkup.html</code> → <b>HTTP 200</b>；真实浏览器打开后三块绿标：health <b>正常 200</b> · hot <b>正常 · 15 条</b> · news <b>正常 · 5 条</b></td>
+        </tr>
+        <tr>
+          <td class="num">6</td>
+          <td>检查台 / 首页<b>同伴从自己设备</b>打开成功</td>
+          <td>把两个公网链接发给同伴，由他<b>用自己的手机或电脑</b>打开，回三行结论（可打开 / 可读写 / 无报错）</td>
+          <td><span class="pill p-pass">PASS</span></td>
+          <td>同伴用自己的设备（<b>iQOO 13</b>）打开两个链接，<b>三行结论全为「是」</b>（可打开 / 可读写 / 无报错），见第 2 节。<b>旁证</b>：库里出现 <code>20261008-n03</code>（「检查台写入测试」，<code>created_at 2026-10-08 20:47:16</code>）—— 写入时间晚于本轮验收（17:38–17:57），即在他方设备上点「写入测试」产生</td>
+        </tr>
+        <tr>
+          <td class="num">7</td>
+          <td>响应形状与 api-contract.md 一致</td>
+          <td>对 4 个已实现接口<b>逐字段</b>比对：字段名是否 camelCase、类型对不对、有无多余字段、该不该带 <code>data</code>、错误包络形状</td>
+          <td><span class="pill p-pass">PASS</span></td>
+          <td><b>23 / 23 逐字段通过</b>（§2.0 health ／ §2.1 hot ／ §2.8 POST favorites ／ §2.9 GET favorites ／ §0.3 错误包络）。条目字段恰为契约那 10 个：<code>id, title, summary, section, league, sourceName, sourceUrl, digestDate, status, createdAt</code>，<b>无 snake_case 泄漏、无多余字段</b></td>
+        </tr>
+        <tr>
+          <td class="num">8</td>
+          <td>演示提纲已写出且四段可执行</td>
+          <td>提纲含「用户问题 → 核心流程 → 提示词改写 → 验证方式」四段；提纲里每一步验证动作都<b>实际跑过</b>（不是写出来好看）</td>
+          <td><span class="pill p-pass">PASS</span></td>
+          <td>提纲见第 3 节。其中「验证方式」一段的三层做法（本地分支 18/18、公网真库读写、形状比对 23/23）本次均已实跑；「真人过一遍」已由同伴复核覆盖（第 6 项）。<b>剩余加练</b>：录 3 分钟演示视频</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="tally">
+      <div class="box"><div class="n n-pass">8</div><div class="l">PASS</div></div>
+      <div class="box"><div class="n n-fail">0</div><div class="l">FAIL</div></div>
+      <div class="box"><div class="n n-none">0</div><div class="l">未执行</div></div>
+      <div class="box"><div class="n" style="font-size:14px;padding-top:5px">无「基本完成」这种状态</div><div class="l">状态取值纪律</div></div>
+    </div>
+
+    <div class="note">
+      <b>结论</b>：<b>8 项 PASS、0 项 FAIL、0 项未执行</b>。第 6 项「同伴换设备打开」原为唯一未执行项，2026-10-08 20:47 由同伴完成复核，三行结论全为「是」。<br>
+      <b>卡住降级</b>：课程给的降级口径是「优先补齐公网可访问 + 真实读写，其余如实标记未执行」。这两项本次都拿到了 PASS，加上同伴复核也过，<b>没有任何一项需要标未执行</b>，所以全程未触发降级。
+    </div>
+  </section>
+
+  <!-- ============ ② 同伴交叉验证 ============ -->
+  <section id="peer">
+    <h2><span class="idx">2</span>同伴交叉验证</h2>
+    <p class="lead">状态：<span class="pill p-pass">PASS</span>　—　2026-10-08 20:47 同伴用 iQOO 13 打开两个链接，三行结论全为「是」。下面是当时发他的话术，以及他回的三行结论。</p>
+
+    <div class="ask">帮我看两个链接，手机或电脑都行，大概 1 分钟：
+
+1）首页：https://ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com/index.html
+2）接口检查台：https://ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com/checkup.html
+
+第一次打开如果出现「风险提醒」页，点页面上的「确定访问」就能进。
+
+麻烦回我三行（就三行）：
+① 可打开：两个页面都打开了，首页能看到虎扑 / 腾讯体育 / 央视体育三块榜单 —— 是 / 否
+② 可读写：检查台点一次「写入测试」，下面列表最上面出现新的一条 —— 是 / 否
+③ 无报错：整个过程没有红字报错、没有白屏 —— 是 / 否
+再补一句你用的设备（手机型号 / 电脑浏览器）。
+
+打不开或显示空白，截图发我，我这边查。</div>
+
+    <div class="fill">
+      <div><span>① 可打开</span><span style="color:var(--green)"><b>是</b>　两个页面都打开，首页三块榜单可见</span></div>
+      <div><span>② 可读写</span><span style="color:var(--green)"><b>是</b>　检查台点「写入测试」后列表顶部出现新条目</span></div>
+      <div><span>③ 无报错</span><span style="color:var(--green)"><b>是</b>　无红字报错、无白屏</span></div>
+      <div><span>设备</span><span style="color:var(--ink-2)">iQOO 13（安卓）</span></div>
+    </div>
+
+    <div class="note"><b>结论</b>：三行全为「是」 → 第 6 项 <b>PASS</b>。<br>
+      <b>可复查旁证</b>：<code>20261008-n03</code>「检查台写入测试」，<code>created_at 2026-10-08 20:47:16</code> —— 晚于本轮验收（17:38–17:57），即同伴在他自己设备上点「写入测试」真实入库的那一行。</div>
+  </section>
+
+  <!-- ============ ③ 演示提纲 ============ -->
+  <section id="demo">
+    <h2><span class="idx">3</span>演示提纲（3–5 分钟）</h2>
+    <p class="lead">四段结构：用户问题 → 核心流程 → 提示词改写 → 验证方式。</p>
+
+    <h3 style="font-size:15px;margin:18px 0 6px"><span class="tl">0:00–0:30</span>　① 用户问题</h3>
+    <ol class="steps">
+      <li><b>谁</b>：每天想看体育、但不愿意装三个 app 的人。</li>
+      <li><b>痛点</b>：虎扑 / 腾讯体育 / 央视体育各是一摊，赛程比分又散在别处；同一条新闻三个平台都推，还有过期的。想「一页看完」得自己来回切。</li>
+      <li><b>产品一句话</b>：《每日体坛速览》——打开就是一个页面：<b>三平台热搜聚合 + 今日速览 + 赛程比分 + 联赛板块</b>，不用注册，点开即看。</li>
+      <li><b>开场口令</b>：「先打开首页 —— 你看到的应该是<b>此刻</b>三个平台的真实热榜，不是写死的示例。」</li>
+    </ol>
+
+    <h3 style="font-size:15px;margin:18px 0 6px"><span class="tl">0:30–2:00</span>　② 核心流程（当场走一遍）</h3>
+    <table>
+      <thead><tr><th style="width:44px">步</th><th style="width:210px">走哪里</th><th>看什么</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>首页</td><td>三块榜单（虎扑 / 腾讯体育 / 央视体育）；标题旁的「最近更新」是<b>抓取时间</b>，证明数据是活的</td></tr>
+        <tr><td class="num">2</td><td>点任一条 → 详情页</td><td>「收藏这条」按钮 → 真的写进数据库</td></tr>
+        <tr><td class="num">3</td><td>速览页</td><td>按大类筛选（足球 / 篮球 / 综合）</td></tr>
+        <tr><td class="num">4</td><td>赛程页</td><td>搜索框 + 6 个联赛筛选按钮</td></tr>
+        <tr><td class="num">5</td><td>联赛板块页 <code>league.html?lg=nba</code></td><td>Tab（赛程 / 排行 / 季后赛 / 晋级图 / 球员）<b>由数据驱动</b>，不是写死的</td></tr>
+        <tr><td class="num">6</td><td>收口：<b>接口检查台</b> <code>checkup.html</code></td><td>一页看 health 状态、看两张核心表真实数据、<b>当场点一次写入测试并读回</b></td></tr>
+      </tbody>
+    </table>
+    <p class="lead" style="margin:10px 0 0">数据链路一句话：浏览器 → CloudBase 网关 → HTTP 云函数 → PostgreSQL。前后端契约写在 <code>api-contract.md</code>。</p>
+
+    <h3 style="font-size:15px;margin:18px 0 6px"><span class="tl">2:00–3:00</span>　③ 提示词改写（AI 怎么从「许愿」变成「派活」）</h3>
+    <table>
+      <thead><tr><th style="width:96px">阶段</th><th style="width:392px">提示词</th><th>结果 / 为什么要改</th></tr></thead>
+      <tbody>
+        <tr><td>反例</td><td>「帮我做个体育资讯网站」</td><td>产出结构随机：字段名一会儿 snake_case 一会儿 camelCase，错误提示五花八门，无法验收</td></tr>
+        <tr><td>改写 1</td><td><b>先立契约再写码</b>：先产出 <code>api-contract.md</code>（路径 / 方法 / 字段名 / 状态码 / 统一响应包络），之后一切实现以契约为准</td><td>有了一份可对照的「唯一权威」，接口形状才能被逐字段验证（就是第 7 项）</td></tr>
+        <tr><td>改写 2</td><td><b>把环境约束写进提示词</b>：把「云函数直连数据库」改成「零依赖，用 Node 原生 <code>https</code> 调 HTTP API（PostgREST），查询条件走参数、不拼 SQL」</td><td>原要求实测跑不通（<b>体验版不支持 PostgreSQL TCP 直连</b> + <b>HTTP 云函数不能云端装依赖</b>）。不提这两个约束，AI 会一直往死路上撞</td></tr>
+        <tr><td>改写 3</td><td><b>加可判定的验收条件</b>：不说「做好看点」，改成「四态齐备（加载 / 成功 / 空 / 错误）」「字段必须 camelCase」「缺字段要<b>一次列全</b>并给中文提示」</td><td>每一条都能当场判真假，避免「基本完成」</td></tr>
+        <tr><td>改写 4</td><td><b>把「验证」也交出去</b>：让 AI 自己写回归脚本与形状比对，改完必须跑绿</td><td>于是有了 18 条分支用例 + 23 项形状断言；重构（第 4 项）才敢说「行为不变」</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size:15px;margin:18px 0 6px"><span class="tl">3:00–4:30</span>　④ 验证方式（三层，每层给数字）</h3>
+    <table>
+      <thead><tr><th style="width:130px">层</th><th>做法</th><th style="width:210px">本次数字</th></tr></thead>
+      <tbody>
+        <tr><td>① 本地分支测试</td><td><code>node scripts_cloudbase/test-api-local.cjs --with-db</code> —— 不连库也能验错误分支，连库则验写入 / 重复 / 读回</td><td><b>18 / 18 PASS</b></td></tr>
+        <tr><td>② 公网 + 真库</td><td>curl 打公网接口拿真实数据；<b>改库里的值 → 接口返回跟着变</b>；看写入前后行数</td><td><code>hot_items</code> 63 行真实数据；POST 后 <code>news_items</code> 行数 9→10 可复现</td></tr>
+        <tr><td>③ 契约形状比对</td><td>逐字段对 <code>api-contract.md</code>；跨域<b>看响应头不看状态码</b>（白名单外域名也回 200，但不带 <code>Access-Control-Allow-Origin</code>）</td><td><b>23 / 23 PASS</b></td></tr>
+        <tr><td>收尾</td><td>所有「完成」都附可复现的数字或链接</td><td>8 项 PASS / 0 项 FAIL / 0 项未执行</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size:15px;margin:18px 0 6px"><span class="tl">4:30–5:00</span>　收束 + 下周</h3>
+    <ol class="steps">
+      <li>一句话收束：「这一周的产出是<b>一条真的链路</b>——公网页面 → 网关 → 云函数 → 真库，写进去能读回来，形状对得上契约。」</li>
+      <li>下周：补齐 <code>/api/news</code>、<code>/api/matches</code>、<code>/api/leagues/:id</code> 三个读接口；<code>PATCH</code> / <code>DELETE</code>；热搜同步做成定时任务（现在要手动跑）。</li>
+    </ol>
+  </section>
+
+  <footer>《每日体坛速览》· 第 3 周验收 ｜ 生成于 2026-10-08（Day 21）｜ 完整文档见 docs/acceptance-week3.md</footer>
+</div>
+</body>
+</html>
