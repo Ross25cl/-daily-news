@@ -45,17 +45,80 @@ function tabLabel(tab, sport) {
   return labels[tab] || tab;
 }
 
+// ---------- 赛季（Day 22 新增） ----------
+
+// 赛季键（"25-26"）→ 展示文案（"25-26 常规赛"）
+function seasonLabel(season) {
+  return season + ' 常规赛';
+}
+
+// 各子标签独立记住所选赛季（赛程/排行/季后赛/球员 各一套，互不影响）
+const LG_SEASON_STATE = {};
+
+// 该 tab 默认选中的赛季：有 defaultSeason 用 defaultSeason，否则取数据里最新有值的一季
+function seasonFor(tab, data) {
+  if (LG_SEASON_STATE[tab]) return LG_SEASON_STATE[tab];
+  if (data.defaultSeason) return data.defaultSeason;
+  return (data.seasons && data.seasons[data.seasons.length - 1]) || '';
+}
+
+// 赛季数据取值：seasoned 既可能是「赛季 → 值」的对象（25-26/26-27），
+// 也可能是旧结构（直接数组/对象）。两种都兼容，老数据不用改。
+function pickSeason(seasoned, season, fallbackKey) {
+  if (!seasoned) return null;
+  if (Array.isArray(seasoned)) return seasoned;   // 旧结构：直接数组
+  if (typeof seasoned === 'object') {
+    if (season && seasoned[season] !== undefined) return seasoned[season];
+    if (fallbackKey && seasoned[fallbackKey] !== undefined) return seasoned[fallbackKey];
+    // 没有 season 键（旧 cba/epl 等结构）→ 原样返回，交给下游渲染器
+    const keys = Object.keys(seasoned);
+    if (!keys.length) return seasoned;
+    if (keys.indexOf('东部') < 0 && keys.indexOf('西部') < 0 && !Array.isArray(seasoned[keys[0]])) {
+      return seasoned;
+    }
+    return seasoned[keys[0]];
+  }
+  return seasoned;
+}
+
+// 赛季下拉（放在子标签最右侧；收起为一个触发按钮，展开为竖向叠加菜单）
+// Day 22 改版：由横向标签条改为竖向下拉 —— 点击触发按钮弹出，
+// 选项从上到下按「新 → 旧」排列（26-27 在上、25-26 在下），选中项高亮。
+function seasonTabs(seasons, current) {
+  if (!seasons || seasons.length < 2) return '';
+  // 竖向菜单按从新到旧：数据里的 seasons 为 ["25-26","26-27"] → 反转为 26-27 在上
+  const ordered = seasons.slice().reverse();
+  const items = ordered.map(s =>
+    '<li role="option" class="lg-season-opt' + (s === current ? ' active' : '') + '" ' +
+    'data-season="' + esc(s) + '" aria-selected="' + (s === current) + '">' +
+    '<span class="lg-season-opt-label">' + esc(seasonLabel(s)) + '</span>' +
+    (s === current ? '<span class="lg-season-opt-check" aria-hidden="true">✓</span>' : '') +
+    '</li>').join('');
+  return (
+    '<div class="lg-season-select" data-open="0">' +
+      '<button type="button" class="lg-season-trigger" ' +
+      'aria-haspopup="listbox" aria-expanded="false" aria-label="选择赛季">' +
+        '<span class="lg-season-trigger-label">' + esc(seasonLabel(current)) + '</span>' +
+        '<span class="lg-season-caret" aria-hidden="true"></span>' +
+      '</button>' +
+      '<ul class="lg-season-menu" role="listbox" aria-label="赛季列表">' + items + '</ul>' +
+    '</div>'
+  );
+}
+
 // ---------- 通用渲染：表格 ----------
 
 // headers: 表头文字数组；fields: 取值字段数组；opts.key 指定高亮列的字段名
 function buildTable(headers, rows, fields, keyField) {
+  const isNameField = f => f === 'playerName' || f === 'teamName' || f === 'team';
   const th = headers.map((h, i) =>
-    '<th class="' + (fields[i] === 'playerName' || fields[i] === 'teamName' ? 'left' : '') + '">' + esc(h) + '</th>'
+    '<th class="' + (isNameField(fields[i]) ? 'left' : '') + '">' + esc(h) + '</th>'
   ).join('');
   const trs = rows.map(r => {
     const tds = fields.map((f, i) => {
-      const align = (f === 'playerName' || f === 'teamName') ? 'left' : '';
-      const cls = [align, f === 'playerName' ? 'name' : '', f === keyField ? 'key' : ''].filter(Boolean).join(' ');
+      const align = isNameField(f) ? 'left' : '';
+      const isPlayer = f === 'playerName';
+      const cls = [align, isPlayer ? 'name' : '', f === keyField ? 'key' : ''].filter(Boolean).join(' ');
       const v = r[f] !== undefined && r[f] !== null ? r[f] : '—';
       return '<td class="' + cls + '">' + esc(v) + '</td>';
     }).join('');
@@ -70,6 +133,7 @@ function buildTable(headers, rows, fields, keyField) {
 // ---------- 各 Tab 渲染器 ----------
 
 // 赛程：按日期分组 → 日期头 + 比赛卡
+// items 可以是数组（旧结构），或已按赛季过滤好的数组
 function renderSchedule(items) {
   if (!items || !items.length) return emptyBlock();
   const groups = {};
@@ -98,17 +162,45 @@ function renderSchedule(items) {
   }).join('');
 }
 
+// 按赛季过滤赛程（每条带 seasonId）；旧数据没有 seasonId 时原样返回
+function filterScheduleBySeason(list, season) {
+  if (!list) return [];
+  if (!list.length || list[0].seasonId === undefined) return list;
+  return list.filter(m => m.seasonId === season);
+}
+
 // 排行 / 积分榜：篮球列（胜/负/净胜/胜率），足球列（赛/胜/平/负/进/失/积分）
+// items 可能是数组（旧），也可能是 { 东部:[...], 西部:[...] }（NBA 25-26 起分东西部）
 function renderStandings(items, sport) {
-  if (!items || !items.length) return emptyBlock();
+  if (!items || (!items.length && typeof items.length === 'number')) return emptyBlock();
   const isBasket = sport === 'basketball';
+
+  // 分区结构：东部/西部（固定顺序展示）
+  const zones = ['东部', '西部'].filter(z => items && items[z]);
+  if (zones.length) {
+    const anyData = zones.some(z => items[z] && items[z].length);
+    if (!anyData) return emptyBlock();   // 该赛季分区都还没数据 → 统一「暂无相关数据」
+    return zones.map(z => {
+      const rows = items[z];
+      const body = (rows && rows.length)
+        ? buildTable(['#', '球队', '胜', '负', '净胜', '胜率'], rows,
+            ['rank', 'team', 'wins', 'losses', 'pointsDiff', 'winRate'])
+        : '<p class="empty-hint">该分区暂无数据</p>';
+      return '<section class="lg-zone"><h3 class="lg-zone-head">' + esc(z) + '</h3>' + body + '</section>';
+    }).join('');
+  }
+
+  // 普通列表
+  const rows = Array.isArray(items) ? items : [];
+  if (!rows.length) return emptyBlock();
   const headers = isBasket
     ? ['#', '球队', '胜', '负', '净胜', '胜率']
     : ['#', '球队', '赛', '胜', '平', '负', '进', '失', '积分'];
+  const nameField = isBasket ? 'team' : 'teamName';
   const fields = isBasket
-    ? ['rank', 'teamName', 'wins', 'losses', 'pointsDiff', 'winRate']
-    : ['rank', 'teamName', 'played', 'wins', 'draws', 'losses', 'goalsFor', 'goalsAgainst', 'points'];
-  return buildTable(headers, items, fields, isBasket ? null : 'points');
+    ? ['rank', nameField, 'wins', 'losses', 'pointsDiff', 'winRate']
+    : ['rank', nameField, 'played', 'wins', 'draws', 'losses', 'goalsFor', 'goalsAgainst', 'points'];
+  return buildTable(headers, rows, fields, isBasket ? null : 'points');
 }
 
 // 季后赛 / 淘汰赛：对阵卡（篮球比分=系列赛胜场，数据 note 里已注明）
@@ -138,13 +230,16 @@ function renderTies(items) {
 // 球员数据：篮球（得分/篮板/助攻）与足球（出场/进球/助攻/评分）字段不同
 // 射手榜：进球/助攻
 function renderPlayers(items, sport) {
-  if (!items || !items.length) return emptyBlock();
+  if (!items || (!Array.isArray(items) && typeof items !== 'object')) return emptyBlock();
+  const rows = Array.isArray(items) ? items : [];
+  if (!rows.length) return emptyBlock();
   if (sport === 'basketball') {
+    const nameField = rows[0].team !== undefined ? 'team' : 'teamName';
     return buildTable(['#', '球员', '球队', '得分', '篮板', '助攻'],
-      items, ['rank', 'playerName', 'teamName', 'points', 'rebounds', 'assists'], 'points');
+      rows, ['rank', 'playerName', nameField, 'points', 'rebounds', 'assists'], 'points');
   }
   return buildTable(['#', '球员', '球队', '出场', '进球', '助攻', '评分'],
-    items, ['rank', 'playerName', 'teamName', 'apps', 'goals', 'assists', 'rating'], 'goals');
+    rows, ['rank', 'playerName', 'teamName', 'apps', 'goals', 'assists', 'rating'], 'goals');
 }
 
 // ============================================================
@@ -375,7 +470,22 @@ if (window.ResizeObserver) {
 }
 
 function renderBracket(bk) {
-  if (!bk || !bk.halves || bk.halves.length < 2) return emptyBlock();
+  // 26-27 赛季季后赛/晋级图尚未开打 → 暂无相关数据
+  if (!bk || !bk.halves || bk.halves.length < 2) {
+    return emptyBlock('该赛季晋级图暂无相关数据（季后赛开打后更新）');
+  }
+  // 赛季键不在本图数据里（如切到 26-27）→ 暂无。
+  // 注意：仍要渲染工具栏（含赛季下拉），否则用户切到空赛季后无法切回来。
+  const cur = LG_SEASON_STATE.bracket;
+  if (cur && bk.season && cur !== bk.season) {
+    return (
+      '<div class="bk-root">' +
+        bkToolbar(bkShowSeasons(bk), bkCurrentSeason(bk)) +
+        emptyBlock('该赛季晋级图暂无相关数据（季后赛开打后更新）') +
+      '</div>'
+    );
+  }
+
   const matchMap = {};
   bk.halves.forEach(h => h.rounds.forEach(r =>
     r.matches.forEach(m => { matchMap[m.id] = m; })));
@@ -397,7 +507,7 @@ function renderBracket(bk) {
 
   return (
     '<div class="bk-root">' +
-      bkToolbar(bk.seasons, bk.season) + stage +
+      bkToolbar(bkShowSeasons(bk), bkCurrentSeason(bk)) + stage +
       '<div class="bk-wrap"><div class="bracket">' +
         '<svg id="bk-lines" class="bk-lines" aria-hidden="true"></svg>' +
         bkHalfHTML(bk.halves[0], 0, matchMap) +
@@ -457,6 +567,19 @@ function renderRace(race) {
   );
 }
 
+// 晋级图赛季下拉：优先用数据文件顶层 seasons（NBA 为 25-26/26-27），
+// 这样即便本图只有 25-26，也能切到 26-27 看到「暂无」。
+function bkShowSeasons(bk) {
+  const top = (LEAGUE_DATA && LEAGUE_DATA.seasons) || [];
+  if (top.length) return top;
+  return bk.seasons || [bk.season];
+}
+function bkCurrentSeason(bk) {
+  const cur = LG_SEASON_STATE.bracket;
+  const list = bkShowSeasons(bk);
+  return (cur && list.indexOf(cur) >= 0) ? cur : bk.season;
+}
+
 // ---------- 晋级图/争冠形势共用：顶部控件与轻提示 ----------
 
 function bkToolbar(seasons, current) {
@@ -500,10 +623,10 @@ function attachLgPanelEvents(panel) {
   });
   const sel = panel.querySelector('.bk-season');
   if (sel) sel.addEventListener('change', () => {
-    const cur = LEAGUE_DATA.bracket ? LEAGUE_DATA.bracket.season : LEAGUE_DATA.race.season;
-    panel.innerHTML = '<p class="empty-hint">「' + esc(sel.value) +
-      '」赛季的历史对阵将在接入后端 API 后提供；当前原型仅内置 ' + esc(cur) +
-      ' 赛季示例数据。点上方子标签可切回。</p>';
+    // 记录所选赛季并按当前 tab 重画（26-27 无季后赛数据 → 显示暂无）
+    LG_SEASON_STATE.bracket = sel.value;
+    const tab = currentTab();
+    draw(tab);
   });
   panel.querySelectorAll('.bk-team:not(.tbd), .bk-fteam, .race-name').forEach(el => {
     const go = () => bkToast('「' + (el.dataset.team || '') + '」球队详情页规划于第 3 周（数据源接入后上线）');
@@ -518,20 +641,36 @@ function renderScorers(items) {
     items, ['rank', 'playerName', 'teamName', 'goals', 'assists'], 'goals');
 }
 
-function emptyBlock() {
-  return '<p class="empty-hint">该模块暂无数据（接真实数据时在此展示）</p>';
+function emptyBlock(msg) {
+  return '<p class="empty-hint">' + esc(msg || '暂无相关数据') + '</p>';
 }
 
 // 根据 tab 类型选择渲染器
+// 支持赛季切换的 tab（schedule/standings/playoffs/players）：
+//   取当前赛季的数据；26-27 未开打 → 各子标签显示「暂无相关数据」
 function renderTab(tab, data) {
+  const seasoned = { schedule: true, standings: true, playoffs: true, knockout: true, players: true };
+  const season = seasoned[tab] ? seasonFor(tab, data) : '';
   switch (tab) {
-    case 'schedule':  return renderSchedule(data.schedule);
-    case 'standings': return renderStandings(data.standings, data.sport);
+    case 'schedule':
+      return renderSchedule(filterScheduleBySeason(data.schedule, season));
+    case 'standings': {
+      const picked = pickSeason(data.standings, season, (data.seasons || [])[0]);
+      return renderStandings(picked, data.sport);
+    }
     case 'playoffs':
-    case 'knockout':  return renderTies(data[tab]);
+    case 'knockout': {
+      const picked = pickSeason(data[tab], season, (data.seasons || [])[0]);
+      return renderTies(picked);
+    }
     case 'bracket':   return renderBracket(data.bracket);
     case 'race':      return renderRace(data.race);
-    case 'players':   return renderPlayers(data.players, data.sport);
+    case 'players': {
+      const picked = pickSeason(data.players, season, (data.seasons || [])[0]);
+      const rows = Array.isArray(picked) ? picked : [];
+      if (!rows.length) return emptyBlock(data.playerNote || '球员赛季数据待赛季常规赛开打后提供');
+      return renderPlayers(picked, data.sport);
+    }
     case 'scorers':   return renderScorers(data.scorers);
     default:          return emptyBlock();
   }
@@ -547,20 +686,39 @@ function currentTab() {
   return tabs.indexOf(fromHash) >= 0 ? fromHash : tabs[0];
 }
 
+// 需要「顶部赛季下拉」的子标签（Day 22）
+// 注意：bracket（晋级图）不在其中 —— 晋级图面板内自带赛季下拉（.bk-season），
+//       顶部不再重复出下拉，避免两个赛季控件并排。
+const SEASONED_TABS = ['schedule', 'standings', 'playoffs', 'knockout', 'players'];
+
+// 切换赛季：记下该 tab 的所选赛季 → 重画下半部分（赛程/排行/季后赛/晋级图/球员数据）
+// 各 tab 的赛季状态互相独立（LG_SEASON_STATE[tab]），切换只影响当前 tab，不动 hash。
+function changeSeason(tab, season) {
+  if (!season || season === LG_SEASON_STATE[tab]) return;
+  LG_SEASON_STATE[tab] = season;
+  draw(tab);
+}
+
 function draw(tab) {
   const main = document.getElementById('league-main');
+  const showSeason = SEASONED_TABS.indexOf(tab) >= 0 && (LEAGUE_DATA.seasons || []).length > 1;
+  const seasons = LEAGUE_DATA.seasons || [];
+
   main.innerHTML =
     '<div class="lg-head">' +
       '<span class="lg-emoji">' + esc(LEAGUE_DATA.emoji || '🏟️') + '</span>' +
       '<h2>' + esc(LEAGUE_DATA.leagueName) + '</h2>' +
       '<p class="lg-desc">' + esc(LEAGUE_DATA.desc || '') + '</p>' +
     '</div>' +
-    '<div class="lg-tabs" role="tablist" aria-label="联赛子标签">' +
-      LEAGUE_DATA.tabs.map(t =>
-        '<button type="button" role="tab" class="lg-tab' + (t === tab ? ' active' : '') + '" ' +
-        'data-tab="' + esc(t) + '" aria-selected="' + (t === tab) + '">' +
-        esc(tabLabel(t, LEAGUE_DATA.sport)) + '</button>'
-      ).join('') +
+    '<div class="lg-tabs-bar">' +
+      '<div class="lg-tabs" role="tablist" aria-label="联赛子标签">' +
+        LEAGUE_DATA.tabs.map(t =>
+          '<button type="button" role="tab" class="lg-tab' + (t === tab ? ' active' : '') + '" ' +
+          'data-tab="' + esc(t) + '" aria-selected="' + (t === tab) + '">' +
+          esc(tabLabel(t, LEAGUE_DATA.sport)) + '</button>'
+        ).join('') +
+      '</div>' +
+      (showSeason ? seasonTabs(seasons, seasonFor(tab, LEAGUE_DATA)) : '') +
     '</div>' +
     '<div id="lg-panel">' + renderTab(tab, LEAGUE_DATA) + '</div>';
 
@@ -573,6 +731,35 @@ function draw(tab) {
   main.querySelectorAll('.lg-tab').forEach(btn => {
     btn.addEventListener('click', () => { location.hash = btn.dataset.tab; });
   });
+
+  // 赛季下拉（子标签最右侧）：点击触发按钮开合，选中项触发 changeSeason 重画
+  const seasonSelect = main.querySelector('.lg-season-select');
+  if (seasonSelect) {
+    const trigger = seasonSelect.querySelector('.lg-season-trigger');
+    const closeMenu = () => {
+      seasonSelect.dataset.open = '0';
+      trigger.setAttribute('aria-expanded', 'false');
+    };
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = seasonSelect.dataset.open === '1';
+      seasonSelect.dataset.open = open ? '0' : '1';
+      trigger.setAttribute('aria-expanded', String(!open));
+    });
+    seasonSelect.querySelectorAll('.lg-season-opt').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const season = opt.dataset.season;
+        if (season === LG_SEASON_STATE[tab]) { closeMenu(); return; }
+        changeSeason(tab, season);
+      });
+    });
+    // 点击外部/按 Esc 关闭
+    document.addEventListener('click', closeMenu, { once: true });
+    seasonSelect.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMenu();
+    });
+  }
 }
 
 function paint(data) {

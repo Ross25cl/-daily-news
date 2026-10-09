@@ -1,15 +1,75 @@
 [
   {
-    "id": "20260929-n01",
-    "title": "【示例】湖人客场112比108击败凯尔特人",
-    "summary": "【示例】湖人带走客场胜利稳住西部前六席位，后续将回到主场迎战勇士。",
+    "id": "20261009-nba-hl01",
+    "title": "詹姆斯首秀10+4+5！76人遭篮网逆转 恩比德8失误布朗18分",
+    "summary": "北京时间10月9日，NBA季前赛76人客场对阵篮网，詹姆斯迎来加盟76人首秀。詹姆斯前两节1投贡献10+4+5提前打卡下班，76人上半场58-56领先，下半场篮网借助团队攻势反超两位数优势，76人反扑功亏一篑，最终76人108-114输给篮网遭遇季前赛2连败，篮网收获季前赛2连胜。 数据统计 76人：布朗18分2板2助、马克西14分2板2助、埃奇库姆11分5",
     "section": "头条",
     "league": "NBA",
-    "source_name": "示例来源·NBA官网",
-    "source_url": "https://example.com/nba-lakers-celtics",
-    "digest_date": "2026-09-29",
+    "source_name": "腾讯体育",
+    "source_url": "https://sports.qq.com/nba/",
+    "digest_date": "2026-10-09",
     "status": "published",
-    "created_at": "2026-09-29T09:30:00+08:00"
+    "created_at": "2026-10-09T10:00:00+08:00"
+  },
+  {
+    "id": "20261009-nba-g1481",
+    "title": "凯尔特人 124-113 击败 骑士（季前赛）",
+    "summary": "北京时间2026-10-09，NBA季前赛 凯尔特人 对阵 骑士，凯尔特人 以 124-113 取胜。",
+    "section": "赛果",
+    "league": "NBA",
+    "source_name": "腾讯体育",
+    "source_url": "https://sports.qq.com/kbsweb/index.htm",
+    "digest_date": "2026-10-09",
+    "status": "published",
+    "created_at": "2026-10-09T07:00:00+08:00"
+  },
+  {
+    "id": "20261009-nba-g1482",
+    "title": "热火 128-118 击败 鹈鹕（季前赛）",
+    "summary": "北京时间2026-10-09，NBA季前赛 鹈鹕 对阵 热火，热火 以 128-118 取胜。",
+    "section": "赛果",
+    "league": "NBA",
+    "source_name": "腾讯体育",
+    "source_url": "https://sports.qq.com/kbsweb/index.htm",
+    "digest_date": "2026-10-09",
+    "status": "published",
+    "created_at": "2026-10-09T07:30:00+08:00"
+  },
+  {
+    "id": "20261009-nba-g1483",
+    "title": "篮网 114-108 击败 76人（季前赛）",
+    "summary": "北京时间2026-10-09，NBA季前赛 76人 对阵 篮网，篮网 以 114-108 取胜。",
+    "section": "赛果",
+    "league": "NBA",
+    "source_name": "腾讯体育",
+    "source_url": "https://sports.qq.com/kbsweb/index.htm",
+    "digest_date": "2026-10-09",
+    "status": "published",
+    "created_at": "2026-10-09T07:30:00+08:00"
+  },
+  {
+    "id": "20261009-nba-g1484",
+    "title": "奇才 111-109 击败 尼克斯（季前赛）",
+    "summary": "北京时间2026-10-09，NBA季前赛 奇才 对阵 尼克斯，奇才 以 111-109 取胜。",
+    "section": "赛果",
+    "league": "NBA",
+    "source_name": "腾讯体育",
+    "source_url": "https://sports.qq.com/kbsweb/index.htm",
+    "digest_date": "2026-10-09",
+    "status": "published",
+    "created_at": "2026-10-09T07:30:00+08:00"
+  },
+  {
+    "id": "20261009-nba-g1485",
+    "title": "老鹰 123-116 击败 马刺（季前赛）",
+    "summary": "北京时间2026-10-09，NBA季前赛 老鹰 对阵 马刺，老鹰 以 123-116 取胜。",
+    "section": "赛果",
+    "league": "NBA",
+    "source_name": "腾讯体育",
+    "source_url": "https://sports.qq.com/kbsweb/index.htm",
+    "digest_date": "2026-10-09",
+    "status": "published",
+    "created_at": "2026-10-09T08:00:00+08:00"
   },
   {
     "id": "20260929-n02",
@@ -22,18 +82,6 @@
     "digest_date": "2026-09-29",
     "status": "published",
     "created_at": "2026-09-29T09:35:00+08:00"
-  },
-  {
-    "id": "20260929-n03",
-    "title": "【示例】湖人确认新援因伤缺阵两周",
-    "summary": "【示例】主力前锋腿筋拉伤缺阵两周，影响轮换深度，两周后复查评估。",
-    "section": "转会伤病",
-    "league": "NBA",
-    "source_name": "示例来源·NBA官网",
-    "source_url": "https://example.com/nba-lakers-injury",
-    "digest_date": "2026-09-29",
-    "status": "published",
-    "created_at": "2026-09-29T09:40:00+08:00"
   },
   {
     "id": "20260929-n04",
