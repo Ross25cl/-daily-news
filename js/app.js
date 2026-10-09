@@ -20,7 +20,7 @@ const LEAGUE_CATEGORY = {
 };
 
 // 每条速览的必填字段（缺任一则跳过该条，TECH_DESIGN 第 7 节）
-const REQUIRED_FIELDS = ['title', 'summary', 'section', 'league', 'source_name', 'source_url'];
+const REQUIRED_FIELDS = ['title', 'summary', 'section', 'league', 'sourceName', 'sourceUrl'];
 
 // 处理态窗口时长：防连点 + 让骨架屏人眼可见（前端过滤本身几毫秒就完成）
 const FILTER_DELAY = 300;
@@ -59,9 +59,9 @@ function itemHTML(it, i) {
     '<article class="item enter" style="animation-delay:' + (i * 60) + 'ms">' +
       '<div class="item-meta">' +
         '<span class="tag">' + esc(it.league) + '</span>' +
-        '<span class="tag gray">来源：' + esc(it.source_name) + '</span>' +
+        '<span class="tag gray">来源：' + esc(it.sourceName) + '</span>' +
       '</div>' +
-      '<h3><a href="' + esc(it.source_url) + '" target="_blank" rel="noopener">' + esc(it.title) + '</a></h3>' +
+      '<h3><a href="' + esc(it.sourceUrl) + '" target="_blank" rel="noopener">' + esc(it.title) + '</a></h3>' +
       '<p>' + esc(it.summary) + '</p>' +
     '</article>'
   );
@@ -130,10 +130,10 @@ function bindFilterButtons() {
   });
 }
 
-// 「最近更新时间」= 今天已发布条目中最新的 created_at（PRD A1）
+// 「最近更新时间」= 今天已发布条目中最新的 createdAt（PRD A1）
 function showUpdatedAt() {
   const el = document.getElementById('updated-at');
-  const times = allItems.map(it => it.created_at).filter(Boolean).sort();
+  const times = allItems.map(it => it.createdAt).filter(Boolean).sort();
   if (!times.length) { el.textContent = '暂无'; return; }
   el.textContent = times[times.length - 1].substring(11, 16); // ISO 字符串直接取 HH:mm
 }
@@ -142,7 +142,7 @@ function showUpdatedAt() {
 
 // Day 18：接入接口层（与 js/home.js / js/news.js 同一套做法）。
 // 绝对网关地址的原因见 js/news.js 顶部注释：静态托管域名与函数网关域名不同域。
-// 字段名本日保持 snake_case，camelCase 改名留到 /api/news 上线那天统一做。
+// Day 22：字段名已统一为 camelCase（接口侧本来就是 camelCase，本日把本地 data/news.json 也改齐）。
 const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
 
 // 通用接口取数：解包 { ok, data, meta }
@@ -177,10 +177,10 @@ function loadNews() {
   fetchNewsList()
     .then(list => {
       const today = todayStr();
-      // 前端过滤（TECH_DESIGN 5.1-1）：digest_date = 今天 且 status = published；
+      // 前端过滤（TECH_DESIGN 5.1-1）：digestDate = 今天 且 status = published；
       // 缺必填字段的条目跳过，console.warn 指明 id（TECH_DESIGN 第 7 节）
       allItems = (list || []).filter(it => {
-        if (it.digest_date !== today || it.status !== 'published') return false;
+        if (it.digestDate !== today || it.status !== 'published') return false;
         const missing = REQUIRED_FIELDS.filter(k => !it[k]);
         if (missing.length) {
           console.warn('[app.js] 跳过缺字段条目:', it.id || '(无 id)', '缺:', missing.join('/'));

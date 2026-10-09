@@ -4,72 +4,416 @@
   "sport": "basketball",
   "emoji": "🏀",
   "desc": "中国男子篮球职业联赛 · 假数据示例（MVP 结构预览，接真实数据时字段名不变）",
-  "updated_at": "2026-09-28T21:30:00+08:00",
-  "tabs": ["schedule", "standings", "playoffs", "bracket", "players"],
+  "updatedAt": "2026-09-28T21:30:00+08:00",
+  "tabs": [
+    "schedule",
+    "standings",
+    "playoffs",
+    "bracket",
+    "players"
+  ],
   "schedule": [
-    { "id": "cba-20260928-01", "date": "2026-09-28", "time": "19:35", "status": "已结束", "homeTeam": "辽宁", "awayTeam": "广东", "homeScore": 105, "awayScore": 98, "round": "常规赛第 4 轮", "venue": "辽宁体育馆" },
-    { "id": "cba-20260928-02", "date": "2026-09-28", "time": "20:00", "status": "进行中", "homeTeam": "浙江", "awayTeam": "北京", "homeScore": 72, "awayScore": 68, "round": "常规赛第 4 轮", "venue": "杭州奥体中心" },
-    { "id": "cba-20260929-01", "date": "2026-09-29", "time": "19:35", "status": "未开始", "homeTeam": "新疆", "awayTeam": "广厦", "round": "常规赛第 4 轮", "venue": "乌鲁木齐奥体中心" },
-    { "id": "cba-20260929-02", "date": "2026-09-29", "time": "19:35", "status": "未开始", "homeTeam": "上海", "awayTeam": "深圳", "round": "常规赛第 4 轮", "venue": "上海体育馆" },
-    { "id": "cba-20260929-03", "date": "2026-09-29", "time": "20:00", "status": "未开始", "homeTeam": "山西", "awayTeam": "青岛", "round": "常规赛第 4 轮", "venue": "山西体育中心" }
+    {
+      "id": "cba-20260928-01",
+      "date": "2026-09-28",
+      "time": "19:35",
+      "status": "已结束",
+      "homeTeam": "辽宁",
+      "awayTeam": "广东",
+      "homeScore": 105,
+      "awayScore": 98,
+      "round": "常规赛第 4 轮",
+      "venue": "辽宁体育馆"
+    },
+    {
+      "id": "cba-20260928-02",
+      "date": "2026-09-28",
+      "time": "20:00",
+      "status": "进行中",
+      "homeTeam": "浙江",
+      "awayTeam": "北京",
+      "homeScore": 72,
+      "awayScore": 68,
+      "round": "常规赛第 4 轮",
+      "venue": "杭州奥体中心"
+    },
+    {
+      "id": "cba-20260929-01",
+      "date": "2026-09-29",
+      "time": "19:35",
+      "status": "未开始",
+      "homeTeam": "新疆",
+      "awayTeam": "广厦",
+      "round": "常规赛第 4 轮",
+      "venue": "乌鲁木齐奥体中心"
+    },
+    {
+      "id": "cba-20260929-02",
+      "date": "2026-09-29",
+      "time": "19:35",
+      "status": "未开始",
+      "homeTeam": "上海",
+      "awayTeam": "深圳",
+      "round": "常规赛第 4 轮",
+      "venue": "上海体育馆"
+    },
+    {
+      "id": "cba-20260929-03",
+      "date": "2026-09-29",
+      "time": "20:00",
+      "status": "未开始",
+      "homeTeam": "山西",
+      "awayTeam": "青岛",
+      "round": "常规赛第 4 轮",
+      "venue": "山西体育中心"
+    }
   ],
   "standings": [
-    { "rank": 1, "teamName": "辽宁", "wins": 4, "losses": 0, "pointsDiff": "+38", "winRate": "100%" },
-    { "rank": 2, "teamName": "广厦", "wins": 3, "losses": 1, "pointsDiff": "+21", "winRate": "75%" },
-    { "rank": 3, "teamName": "广东", "wins": 3, "losses": 1, "pointsDiff": "+12", "winRate": "75%" },
-    { "rank": 4, "teamName": "浙江", "wins": 2, "losses": 2, "pointsDiff": "-3", "winRate": "50%" },
-    { "rank": 5, "teamName": "北京", "wins": 1, "losses": 3, "pointsDiff": "-15", "winRate": "25%" }
+    {
+      "rank": 1,
+      "teamName": "辽宁",
+      "wins": 4,
+      "losses": 0,
+      "pointsDiff": "+38",
+      "winRate": "100%"
+    },
+    {
+      "rank": 2,
+      "teamName": "广厦",
+      "wins": 3,
+      "losses": 1,
+      "pointsDiff": "+21",
+      "winRate": "75%"
+    },
+    {
+      "rank": 3,
+      "teamName": "广东",
+      "wins": 3,
+      "losses": 1,
+      "pointsDiff": "+12",
+      "winRate": "75%"
+    },
+    {
+      "rank": 4,
+      "teamName": "浙江",
+      "wins": 2,
+      "losses": 2,
+      "pointsDiff": "-3",
+      "winRate": "50%"
+    },
+    {
+      "rank": 5,
+      "teamName": "北京",
+      "wins": 1,
+      "losses": 3,
+      "pointsDiff": "-15",
+      "winRate": "25%"
+    }
   ],
   "playoffs": [
-    { "round": "1/4 决赛 G5", "homeTeam": "山西", "awayTeam": "上海", "homeScore": 2, "awayScore": 2, "status": "进行中", "date": "2026-09-30 19:35", "note": "五战三胜制（BO5），抢五大战争夺最后一个半决赛席位" },
-    { "round": "半决赛 G1", "homeTeam": "广厦", "awayTeam": "待定", "status": "未开始", "date": "2026-10-06 19:35", "note": "等待山西/上海胜者晋级" },
-    { "round": "总决赛 G1", "homeTeam": "辽宁", "awayTeam": "待定", "status": "未开始", "date": "2026-10-13 19:35", "note": "辽宁已横扫晋级锁定总决赛席位，等待下半区决出" }
+    {
+      "round": "1/4 决赛 G5",
+      "homeTeam": "山西",
+      "awayTeam": "上海",
+      "homeScore": 2,
+      "awayScore": 2,
+      "status": "进行中",
+      "date": "2026-09-30 19:35",
+      "note": "五战三胜制（BO5），抢五大战争夺最后一个半决赛席位"
+    },
+    {
+      "round": "半决赛 G1",
+      "homeTeam": "广厦",
+      "awayTeam": "待定",
+      "status": "未开始",
+      "date": "2026-10-06 19:35",
+      "note": "等待山西/上海胜者晋级"
+    },
+    {
+      "round": "总决赛 G1",
+      "homeTeam": "辽宁",
+      "awayTeam": "待定",
+      "status": "未开始",
+      "date": "2026-10-13 19:35",
+      "note": "辽宁已横扫晋级锁定总决赛席位，等待下半区决出"
+    }
   ],
   "players": [
-    { "rank": 1, "playerName": "胡明轩", "teamName": "广东", "points": 26.8, "rebounds": 4.2, "assists": 6.5 },
-    { "rank": 2, "playerName": "赵继伟", "teamName": "辽宁", "points": 18.4, "rebounds": 3.8, "assists": 9.2 },
-    { "rank": 3, "playerName": "孙铭徽", "teamName": "广厦", "points": 21.6, "rebounds": 4.6, "assists": 8.1 },
-    { "rank": 4, "playerName": "周琦", "teamName": "北京", "points": 19.2, "rebounds": 11.4, "assists": 2.3 },
-    { "rank": 5, "playerName": "张镇麟", "teamName": "辽宁", "points": 20.5, "rebounds": 6.8, "assists": 3.9 }
+    {
+      "rank": 1,
+      "playerName": "胡明轩",
+      "teamName": "广东",
+      "points": 26.8,
+      "rebounds": 4.2,
+      "assists": 6.5
+    },
+    {
+      "rank": 2,
+      "playerName": "赵继伟",
+      "teamName": "辽宁",
+      "points": 18.4,
+      "rebounds": 3.8,
+      "assists": 9.2
+    },
+    {
+      "rank": 3,
+      "playerName": "孙铭徽",
+      "teamName": "广厦",
+      "points": 21.6,
+      "rebounds": 4.6,
+      "assists": 8.1
+    },
+    {
+      "rank": 4,
+      "playerName": "周琦",
+      "teamName": "北京",
+      "points": 19.2,
+      "rebounds": 11.4,
+      "assists": 2.3
+    },
+    {
+      "rank": 5,
+      "playerName": "张镇麟",
+      "teamName": "辽宁",
+      "points": 20.5,
+      "rebounds": 6.8,
+      "assists": 3.9
+    }
   ],
   "bracket": {
     "season": "25-26",
-    "seasons": ["25-26", "24-25"],
+    "seasons": [
+      "25-26",
+      "24-25"
+    ],
     "note": "CBA 近季赛制为 12 队季后赛：首轮（12 进 8，BO3）→ 1/4 决赛（BO5）→ 半决赛（BO7）→ 总决赛（BO7）；前 4 名种子在 1/4 决赛登场。结构与 NBA 同构（halves[].rounds[].matches[]），轮次数不限、赛制变化只改数据",
     "halves": [
       {
         "name": "上半区",
         "rounds": [
-          { "name": "首轮", "format": "BO3", "matches": [
-            { "id": "cba-u1", "a": { "seed": 5, "name": "浙江", "abbr": "ZHE", "color": "#d97706" }, "b": { "seed": 12, "name": "同曦", "abbr": "TXK", "color": "#7c3aed" }, "scoreA": 2, "scoreB": 1, "winner": "a", "status": "已结束" },
-            { "id": "cba-u2", "a": { "seed": 8, "name": "广东", "abbr": "GDB", "color": "#d0202f" }, "b": { "seed": 9, "name": "青岛", "abbr": "QDG", "color": "#005bac" }, "scoreA": 2, "scoreB": 0, "winner": "a", "status": "已结束" }
-          ]},
-          { "name": "1/4 决赛", "format": "BO5", "matches": [
-            { "id": "cba-u3", "a": { "seed": 1, "name": "辽宁", "abbr": "LNB", "color": "#1b4a9b" }, "b": { "winnerOf": "cba-u2" }, "scoreA": 3, "scoreB": 1, "winner": "a", "status": "已结束" },
-            { "id": "cba-u4", "a": { "seed": 4, "name": "北京", "abbr": "BJG", "color": "#00639d" }, "b": { "winnerOf": "cba-u1" }, "scoreA": 2, "scoreB": 3, "winner": "b", "status": "已结束" }
-          ]},
-          { "name": "半决赛", "format": "BO7", "matches": [
-            { "id": "cba-u5", "a": { "winnerOf": "cba-u3" }, "b": { "winnerOf": "cba-u4" }, "scoreA": 4, "scoreB": 2, "winner": "a", "status": "已结束" }
-          ]}
+          {
+            "name": "首轮",
+            "format": "BO3",
+            "matches": [
+              {
+                "id": "cba-u1",
+                "a": {
+                  "seed": 5,
+                  "name": "浙江",
+                  "abbr": "ZHE",
+                  "color": "#d97706"
+                },
+                "b": {
+                  "seed": 12,
+                  "name": "同曦",
+                  "abbr": "TXK",
+                  "color": "#7c3aed"
+                },
+                "scoreA": 2,
+                "scoreB": 1,
+                "winner": "a",
+                "status": "已结束"
+              },
+              {
+                "id": "cba-u2",
+                "a": {
+                  "seed": 8,
+                  "name": "广东",
+                  "abbr": "GDB",
+                  "color": "#d0202f"
+                },
+                "b": {
+                  "seed": 9,
+                  "name": "青岛",
+                  "abbr": "QDG",
+                  "color": "#005bac"
+                },
+                "scoreA": 2,
+                "scoreB": 0,
+                "winner": "a",
+                "status": "已结束"
+              }
+            ]
+          },
+          {
+            "name": "1/4 决赛",
+            "format": "BO5",
+            "matches": [
+              {
+                "id": "cba-u3",
+                "a": {
+                  "seed": 1,
+                  "name": "辽宁",
+                  "abbr": "LNB",
+                  "color": "#1b4a9b"
+                },
+                "b": {
+                  "winnerOf": "cba-u2"
+                },
+                "scoreA": 3,
+                "scoreB": 1,
+                "winner": "a",
+                "status": "已结束"
+              },
+              {
+                "id": "cba-u4",
+                "a": {
+                  "seed": 4,
+                  "name": "北京",
+                  "abbr": "BJG",
+                  "color": "#00639d"
+                },
+                "b": {
+                  "winnerOf": "cba-u1"
+                },
+                "scoreA": 2,
+                "scoreB": 3,
+                "winner": "b",
+                "status": "已结束"
+              }
+            ]
+          },
+          {
+            "name": "半决赛",
+            "format": "BO7",
+            "matches": [
+              {
+                "id": "cba-u5",
+                "a": {
+                  "winnerOf": "cba-u3"
+                },
+                "b": {
+                  "winnerOf": "cba-u4"
+                },
+                "scoreA": 4,
+                "scoreB": 2,
+                "winner": "a",
+                "status": "已结束"
+              }
+            ]
+          }
         ]
       },
       {
         "name": "下半区",
         "rounds": [
-          { "name": "首轮", "format": "BO3", "matches": [
-            { "id": "cba-d1", "a": { "seed": 6, "name": "上海", "abbr": "SHG", "color": "#1e50a2" }, "b": { "seed": 11, "name": "深圳", "abbr": "SZL", "color": "#0e7c3a" }, "scoreA": 2, "scoreB": 0, "winner": "a", "status": "已结束" },
-            { "id": "cba-d2", "a": { "seed": 7, "name": "新疆", "abbr": "XJG", "color": "#c41230" }, "b": { "seed": 10, "name": "南京", "abbr": "NJJ", "color": "#4338ca" }, "scoreA": 1, "scoreB": 2, "winner": "b", "status": "已结束" }
-          ]},
-          { "name": "1/4 决赛", "format": "BO5", "matches": [
-            { "id": "cba-d3", "a": { "seed": 2, "name": "广厦", "abbr": "ZJS", "color": "#e60012" }, "b": { "winnerOf": "cba-d2" }, "scoreA": 3, "scoreB": 0, "winner": "a", "status": "已结束" },
-            { "id": "cba-d4", "a": { "seed": 3, "name": "山西", "abbr": "SHX", "color": "#b91c1c" }, "b": { "winnerOf": "cba-d1" }, "scoreA": 2, "scoreB": 2, "winner": null, "status": "进行中" }
-          ]},
-          { "name": "半决赛", "format": "BO7", "matches": [
-            { "id": "cba-d5", "a": { "winnerOf": "cba-d3" }, "b": { "winnerOf": "cba-d4" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" }
-          ]}
+          {
+            "name": "首轮",
+            "format": "BO3",
+            "matches": [
+              {
+                "id": "cba-d1",
+                "a": {
+                  "seed": 6,
+                  "name": "上海",
+                  "abbr": "SHG",
+                  "color": "#1e50a2"
+                },
+                "b": {
+                  "seed": 11,
+                  "name": "深圳",
+                  "abbr": "SZL",
+                  "color": "#0e7c3a"
+                },
+                "scoreA": 2,
+                "scoreB": 0,
+                "winner": "a",
+                "status": "已结束"
+              },
+              {
+                "id": "cba-d2",
+                "a": {
+                  "seed": 7,
+                  "name": "新疆",
+                  "abbr": "XJG",
+                  "color": "#c41230"
+                },
+                "b": {
+                  "seed": 10,
+                  "name": "南京",
+                  "abbr": "NJJ",
+                  "color": "#4338ca"
+                },
+                "scoreA": 1,
+                "scoreB": 2,
+                "winner": "b",
+                "status": "已结束"
+              }
+            ]
+          },
+          {
+            "name": "1/4 决赛",
+            "format": "BO5",
+            "matches": [
+              {
+                "id": "cba-d3",
+                "a": {
+                  "seed": 2,
+                  "name": "广厦",
+                  "abbr": "ZJS",
+                  "color": "#e60012"
+                },
+                "b": {
+                  "winnerOf": "cba-d2"
+                },
+                "scoreA": 3,
+                "scoreB": 0,
+                "winner": "a",
+                "status": "已结束"
+              },
+              {
+                "id": "cba-d4",
+                "a": {
+                  "seed": 3,
+                  "name": "山西",
+                  "abbr": "SHX",
+                  "color": "#b91c1c"
+                },
+                "b": {
+                  "winnerOf": "cba-d1"
+                },
+                "scoreA": 2,
+                "scoreB": 2,
+                "winner": null,
+                "status": "进行中"
+              }
+            ]
+          },
+          {
+            "name": "半决赛",
+            "format": "BO7",
+            "matches": [
+              {
+                "id": "cba-d5",
+                "a": {
+                  "winnerOf": "cba-d3"
+                },
+                "b": {
+                  "winnerOf": "cba-d4"
+                },
+                "scoreA": null,
+                "scoreB": null,
+                "winner": null,
+                "status": "未开始"
+              }
+            ]
+          }
         ]
       }
     ],
-    "final": { "name": "总决赛", "format": "BO7", "a": { "winnerOf": "cba-u5" }, "b": { "winnerOf": "cba-d5" }, "scoreA": null, "scoreB": null, "winner": null, "status": "未开始" }
+    "final": {
+      "name": "总决赛",
+      "format": "BO7",
+      "a": {
+        "winnerOf": "cba-u5"
+      },
+      "b": {
+        "winnerOf": "cba-d5"
+      },
+      "scoreA": null,
+      "scoreB": null,
+      "winner": null,
+      "status": "未开始"
+    }
   }
 }

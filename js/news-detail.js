@@ -28,7 +28,7 @@ const LEAGUE_CATEGORY = {
 };
 
 const CATS = ['足球', '篮球', '综合'];
-const REQUIRED_FIELDS = ['title', 'summary', 'section', 'league', 'source_name', 'source_url'];
+const REQUIRED_FIELDS = ['title', 'summary', 'section', 'league', 'sourceName', 'sourceUrl'];
 
 let allItems = [];
 let currentItem = null;
@@ -87,9 +87,9 @@ function detailHTML(it) {
   const rows = [
     ['所属板块', it.section],
     ['联赛 / 项目', it.league],
-    ['来源名称', it.source_name],
-    ['速览日期', it.digest_date],
-    ['入库时间', it.created_at ? formatDateTime(it.created_at) : '—'],
+    ['来源名称', it.sourceName],
+    ['速览日期', it.digestDate],
+    ['入库时间', it.createdAt ? formatDateTime(it.createdAt) : '—'],
     ['条目编号', it.id]
   ].map(r =>
     '<div class="field-row"><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1] || '—') + '</dd></div>'
@@ -106,7 +106,7 @@ function detailHTML(it) {
     // Day 18：动作区 —— 收藏（写接口）与查看原文（外链）并排
     '<div class="detail-actions">' +
       '<button type="button" class="fav-btn" id="fav-btn">☆ 收藏这条</button>' +
-      '<a class="detail-source-btn" href="' + esc(it.source_url) + '" ' +
+      '<a class="detail-source-btn" href="' + esc(it.sourceUrl) + '" ' +
          'target="_blank" rel="noopener">查看原文 ↗</a>' +
     '</div>' +
     // 收藏结果的就地提示（aria-live 让读屏也能听到）
@@ -142,7 +142,7 @@ function paint(it) {
   const related = allItems
     .filter(x => x.id !== it.id && x.league === it.league)
     .sort((a, b) =>
-      (b.digest_date + ' ' + b.created_at).localeCompare(a.digest_date + ' ' + a.created_at)
+      (b.digestDate + ' ' + b.createdAt).localeCompare(a.digestDate + ' ' + a.createdAt)
     )
     .slice(0, 3);
 
@@ -161,7 +161,7 @@ function paint(it) {
 
 // Day 18：接入接口层。绝对网关地址的原因见 js/news.js 顶部注释：
 // 前端在静态托管域名、接口在云函数网关域名，两者不同域，相对路径拿不到接口。
-// 字段名本日保持 snake_case，camelCase 改名留到 /api/news 上线那天统一做。
+// Day 22：字段名已统一为 camelCase（接口侧本来就是 camelCase，本日把本地 data/news.json 也改齐）。
 const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
 
 async function fetchFromAPI(path) {
@@ -249,17 +249,17 @@ function setFavMsg(text, kind) {
   el.classList.toggle('fav-msg-err', kind === 'err');
 }
 
-// 把当前条目按契约字段名（camelCase）提交；
-// 注意接口侧要的是 camelCase，而本页数据仍是 snake_case，故在此显式映射。
+// 把当前条目按契约字段名提交。Day 22 起本页数据与接口字段名已统一为 camelCase，
+// 这里不再做 snake→camel 转换，只作为「提交字段白名单」保留（不让多余字段流进接口）。
 function favoritePayload(it) {
   return {
     title: it.title,
     summary: it.summary,
     section: it.section,
     league: it.league,
-    sourceName: it.source_name,
-    sourceUrl: it.source_url,
-    digestDate: it.digest_date
+    sourceName: it.sourceName,
+    sourceUrl: it.sourceUrl,
+    digestDate: it.digestDate
   };
 }
 

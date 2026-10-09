@@ -20,7 +20,7 @@ const LEAGUE_CATEGORY = {
 };
 
 // 每场比赛的必填字段（TECH_DESIGN 4.2；比分仅已结束/进行中需要）
-const REQUIRED_FIELDS = ['league', 'home_team', 'away_team', 'match_time', 'status', 'data_source', 'updated_at'];
+const REQUIRED_FIELDS = ['league', 'homeTeam', 'awayTeam', 'matchTime', 'status', 'dataSource', 'updatedAt'];
 
 let allMatches = [];        // 过滤后的合法比赛数据
 let currentOffset = 0;      // 日期偏移：-1 昨天 / 0 今天 / 1 明天
@@ -69,25 +69,25 @@ function statusTag(status) {
 // 单场比赛卡片的 HTML（PRD B1 四要素；B3/B4 比分；B5 详情默认收起）
 function matchHTML(m) {
   const hasScore = (m.status === '已结束' || m.status === '进行中') &&
-    m.home_score != null && m.away_score != null;
+    m.homeScore != null && m.awayScore != null;
   const score = hasScore
-    ? '<span class="score">' + esc(m.home_score) + ' : ' + esc(m.away_score) + '</span>'
+    ? '<span class="score">' + esc(m.homeScore) + ' : ' + esc(m.awayScore) + '</span>'
     : '';
   return (
     '<article class="match-card" data-id="' + esc(m.id) + '">' +
       '<div class="match-top">' +
         '<span class="tag">' + esc(m.league) + '</span>' +
-        '<span class="teams">' + esc(m.home_team) + ' vs ' + esc(m.away_team) + '</span>' +
+        '<span class="teams">' + esc(m.homeTeam) + ' vs ' + esc(m.awayTeam) + '</span>' +
         score +
         statusTag(m.status) +
       '</div>' +
-      '<div class="match-sub">开赛时间 ' + hm(m.match_time) + '（北京时间） · 点击卡片展开详情</div>' +
+      '<div class="match-sub">开赛时间 ' + hm(m.matchTime) + '（北京时间） · 点击卡片展开详情</div>' +
       '<div class="detail">' +
         '轮次/阶段：' + esc(m.round || '未标注') + ' · ' +
-        '开赛时间：' + esc(m.match_time) + ' · ' +
+        '开赛时间：' + esc(m.matchTime) + ' · ' +
         '场地：' + esc(m.venue || '未标注') + '<br>' +
-        '比分来源：' + esc(m.data_source) + ' · ' +
-        '数据更新时间：' + hm(m.updated_at) +
+        '比分来源：' + esc(m.dataSource) + ' · ' +
+        '数据更新时间：' + hm(m.updatedAt) +
       '</div>' +
     '</article>'
   );
@@ -97,7 +97,7 @@ function matchHTML(m) {
 // 命中范围：主队 / 客队 / 联赛 / 轮次 / 场地 —— 都是用户会输入的字段
 function matchKeyword(m) {
   if (!keyword) return true;
-  const hay = [m.home_team, m.away_team, m.league, m.round, m.venue]
+  const hay = [m.homeTeam, m.awayTeam, m.league, m.round, m.venue]
     .filter(Boolean).join(' ').toLowerCase();
   return hay.indexOf(keyword) >= 0;
 }
@@ -107,7 +107,7 @@ function matchKeyword(m) {
 function renderList() {
   const list = document.getElementById('match-list');
   const target = dateStr(currentOffset);
-  const dateShown = allMatches.filter(m => m.match_time.substring(0, 10) === target);
+  const dateShown = allMatches.filter(m => m.matchTime.substring(0, 10) === target);
   const shown = dateShown
     .filter(m => !currentCategory || leagueCategory(m.league) === currentCategory)
     .filter(m => !currentLeague || m.league === currentLeague)
@@ -140,8 +140,8 @@ function renderList() {
     list.innerHTML = '<p class="empty-hint">当日无重点赛事</p>';
   }
 
-  // 「数据最近更新时间」= 当前列表里最新的 updated_at（PRD 6.2：页面对用户展示）
-  const times = shown.map(m => m.updated_at).filter(Boolean).sort();
+  // 「数据最近更新时间」= 当前列表里最新的 updatedAt（PRD 6.2：页面对用户展示）
+  const times = shown.map(m => m.updatedAt).filter(Boolean).sort();
   document.getElementById('updated-at').textContent =
     times.length ? hm(times[times.length - 1]) : '暂无';
 }
@@ -231,7 +231,7 @@ function bindSearch() {
 
 // Day 18：接入接口层（与 js/home.js / js/news.js 同一套做法）。
 // 绝对网关地址的原因见 js/news.js 顶部注释。
-// 字段名本日保持 snake_case，camelCase 改名留到 /api/matches 上线那天统一做。
+// Day 22：字段名已统一为 camelCase（接口侧本来就是 camelCase，本日把本地 data/matches.json 也改齐）。
 const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.tcloudbase.com';
 
 async function fetchFromAPI(path) {

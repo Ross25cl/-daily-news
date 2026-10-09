@@ -8,15 +8,16 @@
 // 职责：读 URL 分类参数 → fetch → 按大类过滤 → 渲染列表 → 点击进入详情页
 //
 // 与首页速览的关键区别：
-//   首页回答「今天有什么」（按 digest_date = 今天过滤）；
+//   首页回答「今天有什么」（按 digestDate = 今天过滤）；
 //   列表页回答「某大类都有哪些资讯」（不限当天，展示全部已发布）。
 //   所以这里**不按日期过滤**，否则今天（示例数据停在 09-29）会全空。
 //
 // 状态：加载中（骨架屏）/ 成功 / 空 / 错误 —— 四种，与其它页同一套做法。
 // 演示入口：?demo=loading|empty|error（板块③补齐，见 docs/views.md 第 3.4 节）
 //
-// Day 18 命名口径：本次只接包络（{ok,data,meta}），字段名暂时保留 snake_case，
-//   camelCase 改名留到 /api/news 真正上线那天统一做（见 api-contract.md §3.1）。
+// Day 22 命名口径：只接包络（{ok,data,meta}）；**字段名已统一为 camelCase**——
+//   接口侧本来就是 camelCase，本日把本地 data/news.json 一并改齐，两条路径不再分叉
+//   （呼应 Day 18 留的那句「camelCase 改名留到 /api/news 上线那天统一做」）。
 // ============================================================
 
 // league → 大类映射（与 app.js / matches.js 完全一致，硬编码前端）
@@ -35,7 +36,7 @@ const CATS = ['足球', '篮球', '综合'];
 const DEFAULT_CAT = '足球';
 
 // 必填字段：缺任一则该条跳过（与 app.js 同规则）
-const REQUIRED_FIELDS = ['title', 'summary', 'section', 'league', 'source_name', 'source_url'];
+const REQUIRED_FIELDS = ['title', 'summary', 'section', 'league', 'sourceName', 'sourceUrl'];
 
 let allItems = [];               // 已发布且字段完整的条目
 let currentCat = DEFAULT_CAT;    // 当前分类
@@ -80,11 +81,11 @@ function newsCardHTML(it) {
       '<div class="news-meta">' +
         '<span class="tag">' + esc(it.league) + '</span>' +
         '<span class="tag gray">' + esc(it.section) + '</span>' +
-        '<span class="news-date">' + shortDate(it.digest_date) + '</span>' +
+        '<span class="news-date">' + shortDate(it.digestDate) + '</span>' +
       '</div>' +
       '<h3><a href="' + esc(href) + '">' + esc(it.title) + '</a></h3>' +
       '<p>' + esc(it.summary) + '</p>' +
-      '<p class="news-source">来源：' + esc(it.source_name) + '</p>' +
+      '<p class="news-source">来源：' + esc(it.sourceName) + '</p>' +
     '</article>'
   );
 }
@@ -94,14 +95,14 @@ function renderList() {
   const shown = allItems
     .filter(it => leagueCategory(it.league) === currentCat)
     .sort((a, b) =>
-      (b.digest_date + ' ' + b.created_at).localeCompare(a.digest_date + ' ' + a.created_at)
+      (b.digestDate + ' ' + b.createdAt).localeCompare(a.digestDate + ' ' + a.createdAt)
     );
 
   document.getElementById('news-meta').textContent =
     currentCat + ' · 共 ' + shown.length + ' 条 · 按发布时间倒序';
 
   // 「最近更新」= 当前列表里最新的入库时间（与其它页同一口径）
-  const times = shown.map(it => it.created_at).filter(Boolean).sort();
+  const times = shown.map(it => it.createdAt).filter(Boolean).sort();
   document.getElementById('updated-at').textContent =
     times.length ? times[times.length - 1].substring(11, 16) : '暂无';
 

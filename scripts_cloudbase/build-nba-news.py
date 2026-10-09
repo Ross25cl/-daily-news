@@ -40,21 +40,21 @@ def build_matches(nba):
         item = {
             'id': '%s-nba-%02d' % (m['date'].replace('-', ''), n),
             'league': 'NBA',
-            'home_team': m['homeTeam'],
-            'away_team': m['awayTeam'],
-            'match_time': m['date'] + ' ' + (m.get('time') or '00:00'),
+            'homeTeam': m['homeTeam'],
+            'awayTeam': m['awayTeam'],
+            'matchTime': m['date'] + ' ' + (m.get('time') or '00:00'),
             'status': m['status'],
             'round': m.get('round') or '季前赛',
             'venue': m.get('venue') or '',
-            'data_source': '腾讯体育',
-            'updated_at': iso(m['date'], m.get('time'), '+08:00'),
+            'dataSource': '腾讯体育',
+            'updatedAt': iso(m['date'], m.get('time'), '+08:00'),
         }
         if live:
-            item['home_score'] = m.get('homeScore')
-            item['away_score'] = m.get('awayScore')
-        # 未开始的比赛把 updated_at 统一成当前抓取时点，避免显示成开赛时间
+            item['homeScore'] = m.get('homeScore')
+            item['awayScore'] = m.get('awayScore')
+        # 未开始的比赛把 updatedAt 统一成当前抓取时点，避免显示成开赛时间
         if m['status'] == '未开始':
-            item['updated_at'] = iso(TODAY.isoformat(), '11:50', '+08:00')
+            item['updatedAt'] = iso(TODAY.isoformat(), '11:50', '+08:00')
         out.append(item)
     return out
 
@@ -107,11 +107,11 @@ def build_news(nba, headline):
             'summary': (headline.get('summary') or '')[:180],
             'section': '头条',
             'league': 'NBA',
-            'source_name': '腾讯体育',
-            'source_url': 'https://sports.qq.com/nba/',
-            'digest_date': TODAY.isoformat(),
+            'sourceName': '腾讯体育',
+            'sourceUrl': 'https://sports.qq.com/nba/',
+            'digestDate': TODAY.isoformat(),
             'status': 'published',
-            'created_at': iso(TODAY.isoformat(), '10:00', '+08:00'),
+            'createdAt': iso(TODAY.isoformat(), '10:00', '+08:00'),
         })
     # ② 当天真实赛果（10-09 已结束的 NBA 季前赛；进行中的不写赛果）
     for m in nba['schedule']:
@@ -130,11 +130,11 @@ def build_news(nba, headline):
                        % (m['date'], m['homeTeam'], m['awayTeam'], win, wsc, lsc),
             'section': '赛果',
             'league': 'NBA',
-            'source_name': '腾讯体育',
-            'source_url': 'https://sports.qq.com/kbsweb/index.htm',
-            'digest_date': TODAY.isoformat(),
+            'sourceName': '腾讯体育',
+            'sourceUrl': 'https://sports.qq.com/kbsweb/index.htm',
+            'digestDate': TODAY.isoformat(),
             'status': 'published',
-            'created_at': iso(TODAY.isoformat(), m.get('time') or '11:30', '+08:00'),
+            'createdAt': iso(TODAY.isoformat(), m.get('time') or '11:30', '+08:00'),
         })
     return items
 
@@ -144,7 +144,7 @@ def main():
     nba_matches = build_matches(nba)
     print('matches(NBA 三天):', len(nba_matches))
     for x in nba_matches:
-        print('  ', x['match_time'], x['home_team'], x.get('home_score', ''), x['status'])
+        print('  ', x['matchTime'], x['homeTeam'], x.get('homeScore', ''), x['status'])
 
     headline = fetch_headline()
     print('headline:', (headline or {}).get('title'))

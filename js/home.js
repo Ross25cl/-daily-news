@@ -128,7 +128,7 @@ function renderPlatforms(data) {
         '<p class="state-text">今日暂无任何平台热搜数据</p>' +
         '<p class="state-sub">稍后再来看看，或先浏览下方的赛程比分与体坛资讯。</p>' +
       '</div>';
-  document.getElementById('updated-at').textContent = formatUpdatedAt(data.updated_at);
+  document.getElementById('updated-at').textContent = formatUpdatedAt(data.updatedAt);
   showState('success');
 }
 
@@ -176,7 +176,7 @@ async function fetchHotFromAPI() {
   }
   const d = body.data || {};
   const meta = body.meta || {};
-  return { platforms: d.platforms || [], updated_at: meta.updatedAt || '' };
+  return { platforms: d.platforms || [], updatedAt: meta.updatedAt || '' };
 }
 
 // 本地备用数据：一份随站点发布的快照，只用于「接口挂了页面也不白屏」。
@@ -195,7 +195,7 @@ async function loadHot() {
   //   ?demo=error       错误（加载失败 + 重试按钮）
   //   不加参数          正常（成功）
   if (DEMO === 'error')   { setSourceNote(''); showError(); return; }
-  if (DEMO === 'empty-all') { setSourceNote(''); renderPlatforms({ updated_at: '', platforms: [] }); return; }
+  if (DEMO === 'empty-all') { setSourceNote(''); renderPlatforms({ updatedAt: '', platforms: [] }); return; }
   if (DEMO === 'empty')   { setSourceNote(''); renderPlatforms({ platforms: [{ id: 'hupu', name: '虎扑', desc: '步行街 24 小时榜', items: [] }, { id: 'tencent', name: '腾讯体育', desc: '首页要闻热榜', items: [] }, { id: 'cctv5', name: '央视体育', desc: '官方要闻', items: [] }] }); return; }
   if (DEMO === 'loading') { return; } // 保持骨架屏
 

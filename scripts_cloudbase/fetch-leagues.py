@@ -321,6 +321,7 @@ def build_sql(epl, ucl, cba_rows, updated_at):
     a("-- 数据源：英超/欧冠 = premierleague.com 官方数据接口（26-27 赛季）")
     a("--         CBA      = cbaleague.com 官网 portal-server（26-27 赛程）")
     a("-- 可重复执行：先按联赛清空 league_* 三表与 matches，再插入")
+    a("-- Day 22 追加：本文件依赖 season 列，须先执行 db/migrate-day22-league-season.sql")
     a("-- ============================================================")
     a("")
     a("BEGIN;")
@@ -330,9 +331,11 @@ def build_sql(epl, ucl, cba_rows, updated_at):
     a("-- ---------- 0. 约束对齐：league_players 名次允许并列（Day 21 零拍板）----------")
     a("-- 原约束 UNIQUE (league_id, board, rank) 会把真实射手榜的并列名次直接拒掉")
     a("-- （英超前 10 里 8 人并列第 3）。放宽为四列，仍防「同榜同名次挂同一球员两次」。")
+    a("-- Day 22 追加 season：同一球员在两个赛季都排第 3 名时不再被判重")
+    a("--   （season 列由 db/migrate-day22-league-season.sql 建立，须先跑该迁移）。")
     a("ALTER TABLE public.league_players DROP CONSTRAINT IF EXISTS league_players_rank_uniq;")
     a("ALTER TABLE public.league_players ADD CONSTRAINT league_players_rank_uniq")
-    a("  UNIQUE (league_id, board, rank, player_name);")
+    a("  UNIQUE (league_id, season, board, rank, player_name);")
     a("")
 
     # 1) 联赛维度表
@@ -431,6 +434,15 @@ def build_sql(epl, ucl, cba_rows, updated_at):
               sqlq(r["homeScore"]), sqlq(r["awayScore"]), sqlq(rnd),
               sqlq(r.get("venue")), sqlq(src), sqlq(updated_at)))
     a("")
+    # 9) 赛季回填（Day 22 追加）：上面插入未列 season，统一回填成 26-27（幂等）
+    a("-- ---------- 9. 赛季回填（Day 22 追加）----------")
+    a("-- 上面这批英超/欧冠/CBA 数据全部来自 26-27 赛季（fetch-leagues.py 只抓当前赛季），")
+    a("-- INSERT 未列 season 列 → 走 DEFAULT ''，这里统一回填成 '26-27'。")
+    a("-- 幂等：season 已填的行不受影响。")
+    a("UPDATE public.league_schedule SET season = '26-27' WHERE season = '';")
+    a("UPDATE public.league_standings SET season = '26-27' WHERE season = '';")
+    a("UPDATE public.league_players  SET season = '26-27' WHERE season = '';")
+    a("")
     a("COMMIT;")
     a("")
     a("-- 收尾自检")
@@ -450,7 +462,7 @@ def build_json(lg, data, updated_at):
     name, sport, emoji, desc, tabs = INTRO[lg]
     out = {
         "leagueId": lg, "leagueName": name, "sport": sport, "emoji": emoji,
-        "desc": desc, "updated_at": updated_at, "tabs": tabs,
+        "desc": desc, "updatedAt": updated_at, "tabs": tabs,
     }
     if lg in ("epl", "ucl"):
         out["standings"] = [

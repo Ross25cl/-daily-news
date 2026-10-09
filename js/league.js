@@ -767,7 +767,7 @@ function paint(data) {
   document.title = data.leagueName + ' · 每日体坛速览';
   document.getElementById('league-title').textContent = (data.emoji || '') + ' ' + data.leagueName;
   document.getElementById('league-sub').textContent = data.desc || '';
-  document.getElementById('updated-at').textContent = formatUpdatedAt(data.updated_at);
+  document.getElementById('updated-at').textContent = formatUpdatedAt(data.updatedAt);
   // 导航高亮当前联赛
   const navLink = document.querySelector('.nav-link.lg-' + data.leagueId);
   if (navLink) navLink.classList.add('active');

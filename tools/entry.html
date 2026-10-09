@@ -157,7 +157,7 @@
     <div id="form-news">
       <div class="row">
         <div>
-          <label><b>速览日期</b> digest_date</label>
+          <label><b>速览日期</b> digestDate</label>
           <input type="date" id="n-date">
         </div>
         <div>
@@ -195,7 +195,7 @@
       <div class="count" id="n-summary-count">0 / 60</div>
       <div class="row">
         <div>
-          <label><b>来源名称</b> source_name</label>
+          <label><b>来源名称</b> sourceName</label>
           <input type="text" id="n-source-name" placeholder="如：NBA官网">
         </div>
         <div>
@@ -207,9 +207,9 @@
           <div class="hint">人工终审通过后改为 published 才对用户可见</div>
         </div>
       </div>
-      <label><b>来源链接</b> source_url</label>
+      <label><b>来源链接</b> sourceUrl</label>
       <input type="url" id="n-source-url" placeholder="https://...">
-      <div class="id-preview">id 自动生成：<span id="n-id-preview">—</span>　created_at 自动：<span id="n-created-preview">—</span></div>
+      <div class="id-preview">id 自动生成：<span id="n-id-preview">—</span>　createdAt 自动：<span id="n-created-preview">—</span></div>
       <button type="button" class="primary" onclick="generateNews()">生成 JSON（速览条目）</button>
     </div>
 
@@ -217,7 +217,7 @@
     <div id="form-match" class="hidden">
       <div class="row">
         <div>
-          <label><b>比赛日期</b>（match_time 的日期部分）</label>
+          <label><b>比赛日期</b>（matchTime 的日期部分）</label>
           <input type="date" id="m-date">
         </div>
         <div>
@@ -240,11 +240,11 @@
       </div>
       <div class="row">
         <div>
-          <label><b>主队</b> home_team</label>
+          <label><b>主队</b> homeTeam</label>
           <input type="text" id="m-home" placeholder="如：凯尔特人">
         </div>
         <div>
-          <label><b>客队</b> away_team</label>
+          <label><b>客队</b> awayTeam</label>
           <input type="text" id="m-away" placeholder="如：湖人">
         </div>
       </div>
@@ -260,17 +260,17 @@
           </select>
         </div>
         <div>
-          <label><b>比分来源</b> data_source（核对溯源用）</label>
+          <label><b>比分来源</b> dataSource（核对溯源用）</label>
           <input type="text" id="m-source" placeholder="如：NBA官网">
         </div>
       </div>
       <div class="row">
         <div>
-          <label>主队得分 home_score</label>
+          <label>主队得分 homeScore</label>
           <input type="number" id="m-hscore" min="0" disabled>
         </div>
         <div>
-          <label>客队得分 away_score</label>
+          <label>客队得分 awayScore</label>
           <input type="number" id="m-ascore" min="0" disabled>
         </div>
       </div>
@@ -285,7 +285,7 @@
           <input type="text" id="m-venue" placeholder="如：酋长球场">
         </div>
       </div>
-      <div class="id-preview">id 自动生成：<span id="m-id-preview">—</span>　updated_at 自动：<span id="m-updated-preview">—</span></div>
+      <div class="id-preview">id 自动生成：<span id="m-id-preview">—</span>　updatedAt 自动：<span id="m-updated-preview">—</span></div>
       <button type="button" class="primary" onclick="generateMatch()">生成 JSON（比赛）</button>
     </div>
 
@@ -452,11 +452,11 @@
       summary: summary,
       section: $('n-section').value,
       league: $('n-league').value,
-      source_name: name,
-      source_url: url,
-      digest_date: date,
+      sourceName: name,
+      sourceUrl: url,
+      digestDate: date,
       status: $('n-status').value,
-      created_at: nowIso()
+      createdAt: nowIso()
     };
     arr.push(item);
     output(MODE.news, arr);
@@ -537,18 +537,18 @@
     var item = {
       id: id,
       league: $('m-league').value,
-      home_team: home,
-      away_team: away,
-      match_time: date + ' ' + time,
+      homeTeam: home,
+      awayTeam: away,
+      matchTime: date + ' ' + time,
       status: status
     };
-    if (hs !== '' && as !== '') { item.home_score = parseInt(hs, 10); item.away_score = parseInt(as, 10); }
+    if (hs !== '' && as !== '') { item.homeScore = parseInt(hs, 10); item.awayScore = parseInt(as, 10); }
     var round = $('m-round').value.trim();
     var venue = $('m-venue').value.trim();
     if (round) item.round = round;
     if (venue) item.venue = venue;
-    item.data_source = source;
-    item.updated_at = nowIso();
+    item.dataSource = source;
+    item.updatedAt = nowIso();
     arr.push(item);
     output(MODE.match, arr);
   };

@@ -38,6 +38,13 @@
 
 > 📌 **Day 18 实际执行口径（与原计划有出入，以本节为准）**：Day 18 迁移前端时**只接响应包络，字段名暂不改**。原因是 `/api/news`、`/api/matches`、`/api/leagues/:id` 三个读接口本日仍未实现，前端接上去也只能走本地 JSON 兜底，改名既测不出效果又要动 100+ 处取值。因此**蛇形→驼峰的改名推迟到各读接口真正上线那天（Day 19 起），跟着对应文件一起改**。本日已落地的两个接口（`/api/hot`、`/api/favorites`）本来就用 camelCase，不受影响。
 
+> ✅ **Day 22 补完（改名已落地，口径就此收口）**：Day 18 留的这笔账本日结清——**全部静态 JSON 与读取端统一为 camelCase**。改动 11 个键、共 99 处：
+> - **数据文件（7）**：`data/{matches,news,hot,nba,cba,epl,ucl}.json`
+> - **读取端（6）**：`js/{matches,news,news-detail,app,home,league}.js`
+> - **生成端（3）**：`tools/entry.html`、`scripts_cloudbase/build-nba-news.py`、`scripts_cloudbase/build-nba.py`、`scripts_cloudbase/fetch-leagues.py`（仅其 `build_json` 分支）
+> - **不动的**：`cloudfunctions/shared/*Repository.js` 与所有 SQL 里的蛇形是**数据库列名**（契约 0.1 的另一半），保持 snake_case。**「库存蛇形 / 接口与静态 JSON 出驼峰」现在真正全站一致。**
+> - 顺带修掉一个隐藏问题：此前 `js/matches.js` 对**接口**与**本地 JSON** 用的是同一套蛇形字段名，而接口本来就返回驼峰 → 走接口那条路会因为字段名对不上被判「缺字段」全部过滤掉。统一之后两条路径才真正等价。
+
 ### 0.2 统一响应包络
 
 沿用 `TECH_DESIGN` 第 5.2 节预留的形状：
@@ -818,10 +825,10 @@
 | 2 | `hot_items` | `data/hot.json` | `id` | — |
 | 3 | `news_items` | `data/news.json` | `id` | 靠 `league` 与 `matches` 对齐 |
 | 4 | `matches` | `data/matches.json` | `id` | 靠 `league` 与 `news_items` 对齐 |
-| 5 | `league_schedule` | `→ schedule` | `id` | `league_id → leagues.id` |
-| 6 | `league_standings` | `→ standings` | `id` | `league_id → leagues.id` |
-| 7 | `league_players` | `→ players` / `scorers` | `id` | `league_id → leagues.id` |
-| 8 | `league_brackets` | `→ bracket` / `race` | `id` | `league_id → leagues.id` |
+| 5 | `league_schedule` | `→ schedule` | `id` | `league_id → leagues.id`（**Day 22 起带 `season`**） |
+| 6 | `league_standings` | `→ standings` | `id` | `league_id → leagues.id`（**Day 22 起带 `season` + `zone`**） |
+| 7 | `league_players` | `→ players` / `scorers` | `id` | `league_id → leagues.id`（**Day 22 起带 `season`**） |
+| 8 | `league_brackets` | `→ bracket` / `race` / `playoffs` | `id` | `league_id → leagues.id`（**Day 22 增加 `playoffs`**） |
 | 9 | `push_log` | —（订阅线） | `id` | — |
 | 10 | `subscribers` | —（订阅线） | `id` | — |
 
@@ -854,18 +861,18 @@
 约束：`status='已结束'` 时两个比分必须非空（防「状态说打完、比分为空」）
 
 **5. `league_schedule`**
-`id` TEXT PK · `league_id` TEXT NN **FK→leagues** · `match_date` DATE NN · `match_time` TEXT · `status` TEXT NN `CHECK(五种)` · `home_team` / `away_team` TEXT NN · `home_score` / `away_score` INT · `round` / `venue` TEXT
+`id` TEXT PK · `league_id` TEXT NN **FK→leagues** · **`season` TEXT NN DEFAULT `''`（Day 22 新增）** · `match_date` DATE NN · `match_time` TEXT · `status` TEXT NN `CHECK(五种)` · `home_team` / `away_team` TEXT NN · `home_score` / `away_score` INT · `round` / `venue` TEXT
 
 **6. `league_standings`**
-`id` TEXT PK · `league_id` TEXT NN **FK** · `rank` INT NN · `team_name` TEXT NN · `played` INT · `wins` INT NN · `draws` INT · `losses` INT NN · `goals_for` / `goals_against` INT · `points` INT · `points_diff` TEXT · `win_rate` TEXT
-`UNIQUE(league_id, rank)`
+`id` TEXT PK · `league_id` TEXT NN **FK** · **`season` TEXT NN DEFAULT `''`（Day 22 新增）** · **`zone` TEXT（Day 22 新增：篮球「东部/西部」，足球留空）** · `rank` INT NN · `team_name` TEXT NN · `played` INT · `wins` INT NN · `draws` INT · `losses` INT NN · `goals_for` / `goals_against` INT · `points` INT · `points_diff` TEXT · `win_rate` TEXT
+`UNIQUE(league_id, season, zone, rank)`（**Day 22 放宽**：原为 `(league_id, rank)`，会把 NBA 东部第 1 与西部第 1 判为冲突）
 
 **7. `league_players`**
-`id` TEXT PK · `league_id` TEXT NN **FK** · `board` TEXT NN `CHECK(players/scorers)` · `rank` INT NN · `player_name` / `team_name` TEXT NN · `points` / `rebounds` / `assists` NUMERIC(5,1) · `apps` INT · `goals` INT · `rating` NUMERIC(3,1)
-`UNIQUE(league_id, board, rank)`
+`id` TEXT PK · `league_id` TEXT NN **FK** · **`season` TEXT NN DEFAULT `''`（Day 22 新增）** · `board` TEXT NN `CHECK(players/scorers)` · `rank` INT NN · `player_name` / `team_name` TEXT NN · `points` / `rebounds` / `assists` NUMERIC(5,1) · `apps` INT · `goals` INT · `rating` NUMERIC(3,1)
+`UNIQUE(league_id, season, board, rank, player_name)`（Day 21 放宽加 `player_name`——真实射手榜名次大量并列；**Day 22 再并入 `season`**）
 
 **8. `league_brackets`**
-`id` TEXT PK · `league_id` TEXT NN **FK** · `season` TEXT NN · `kind` TEXT NN `CHECK(bracket/race)` · `payload_json` JSONB NN · `updated_at` TIMESTAMPTZ NN
+`id` TEXT PK · `league_id` TEXT NN **FK** · `season` TEXT NN · `kind` TEXT NN `CHECK(bracket/race/playoffs)`（**Day 22 增加 `playoffs`**：NBA 季后赛对阵既非晋级树也非争冠形势） · `payload_json` JSONB NN · `updated_at` TIMESTAMPTZ NN
 `UNIQUE(league_id, season, kind)`
 
 **9. `push_log`**
@@ -1074,6 +1081,56 @@ tcb db execute -e ross-d2gimwy406e0d6812 \
 
 > 三张图都是**页面自证**：在公网 `checkup.html` 上用真实浏览器操作新加的「④ 修改与删除」面板完成，不是手工造的图。
 
+### 3.8 Day 22 追加：联赛四表补「赛季 / 分区」维度 + 四个联赛真数据全量入库
+
+**背景（两件事撞到一起）**
+
+1. 联赛页（`league.html`）的 Tab 是**按赛季切换**的——NBA 有 `25-26`（已完整）与 `26-27`（进行中）两季，排行还分东部/西部。但 Day 16 建表时按「单赛季 + 单一榜单」设计，`league_schedule` / `league_standings` / `league_players` **都没有 `season` 列**，`league_standings` 的 `UNIQUE(league_id, rank)` 还会把「东部第 1 与西部第 1」判成冲突。
+2. NBA 真数据只在静态 `data/nba.json`（1826 场赛程 / 东西部排行 / 晋级图 / 季后赛），**没进库**；同时核查发现英超/欧冠/CBA 的真数据（`db/league_data.sql`）**也不在库里**——线上 `league_*` 一直是 Day 16 的种子示例（每联赛 5 行），Day 21 的库重置（`seed.sql` 会 `TRUNCATE`）把先前导入冲掉了。
+
+**A. 结构变更** — [`db/migrate-day22-league-season.sql`](db/migrate-day22-league-season.sql)（幂等，已在线上执行）
+
+```sql
+ALTER TABLE league_schedule  ADD COLUMN IF NOT EXISTS season TEXT NOT NULL DEFAULT '';
+ALTER TABLE league_standings ADD COLUMN IF NOT EXISTS season TEXT NOT NULL DEFAULT '';
+ALTER TABLE league_standings ADD COLUMN IF NOT EXISTS zone   TEXT;   -- 东部 / 西部，足球留空
+ALTER TABLE league_players   ADD COLUMN IF NOT EXISTS season TEXT NOT NULL DEFAULT '';
+-- 唯一键放宽（原键会把真实数据拒掉）
+ALTER TABLE league_standings DROP CONSTRAINT IF EXISTS league_standings_rank_uniq;
+ALTER TABLE league_standings ADD  CONSTRAINT league_standings_rank_uniq
+  UNIQUE (league_id, season, zone, rank);
+ALTER TABLE league_players   DROP CONSTRAINT IF EXISTS league_players_rank_uniq;
+ALTER TABLE league_players   ADD  CONSTRAINT league_players_rank_uniq
+  UNIQUE (league_id, season, board, rank, player_name);
+-- kind 增加 playoffs
+ALTER TABLE league_brackets  DROP CONSTRAINT IF EXISTS league_brackets_kind_check;
+ALTER TABLE league_brackets  ADD  CONSTRAINT league_brackets_kind_check
+  CHECK (kind IN ('bracket', 'race', 'playoffs'));
+-- 存量行回填赛季
+UPDATE league_schedule  SET season = '26-27' WHERE season = '';
+UPDATE league_standings SET season = '26-27' WHERE season = '';
+UPDATE league_players   SET season = '26-27' WHERE season = '';
+```
+
+> `season` 用 `''`（而非 `NULL`）当「未知」哨兵，是为了让它能进 `UNIQUE` 约束——PG 里 `NULL` 在唯一键中互不相等，会让约束失去意义。
+
+**B. 四个联赛真数据入库**（执行顺序不能颠倒）
+
+| 步骤 | 脚本 | 内容 |
+| -- | ---- | ---- |
+| 1 | `db/migrate-day22-league-season.sql` | 加 season/zone 列、放宽唯一键、回填存量（必须先跑，后面两个脚本都依赖 `season` 列） |
+| 2 | `db/league_data.sql` | 恢复英超（40 场）/ 欧冠（36 场）/ CBA（30 场）真数据；末尾「§9 赛季回填」把其 `26-27` 赛季补上 |
+| 3 | `db/league_data_nba.sql` | NBA 真数据：赛程 **1826** 场（25-26 = 1463 / 26-27 = 363）、排行 **30** 行（25-26 东西部各 15）、晋级图 + 季后赛对阵 **2** 行、`matches` 的 NBA 段 **13** 条 |
+
+- 两个 `*_data*.sql` 都**先按联赛清空再插入**，可重复执行。
+- 生成器：`scripts_cloudbase/fetch-leagues.py`（英超/欧冠/CBA）与 **`scripts_cloudbase/build-nba-db.py`（NBA，Day 22 新建）**；后者读 `data/nba.json` + `data/matches.json` 产出 `db/league_data_nba.sql`。
+- ⚠️ **执行方式**：`league_data_nba.sql` 约 530KB，超过 `tcb db execute --sql` 单次 argv 上限（~32KB，Windows 报 `Argument list too long`）→ 必须**按语句边界切段执行**（本次用 `_day22_tmp/run-sql-chunked.cjs`，28 段）。
+- ⚠️ **`seed.sql` 会 `TRUNCATE` 这四张表** → 重跑 seed 后必须重跑本表 B 的三个脚本，否则四个联赛又退回 5 行示例。这是**当前已知的脆弱点**（seed 不是「可叠加」的）。
+
+**C. 顺手修掉的一处不一致**
+
+`db/league_data.sql` 由 `fetch-leagues.py` 生成，而生成器此前**不产出 `season`**——加列后它插入的行会走 `DEFAULT ''`，赛季信息静默丢失。本次把生成器（`build_sql`）与已生成的快照一起补上赛季回填，避免「重跑生成器 → 赛季丢失」。
+
 ---
 
 ## 4. 前端改造对照（Day 18 已执行）
@@ -1217,13 +1274,17 @@ async function fetchFromAPI(path) {
 | 前端二次确认弹窗 | ✅ `checkup.html` 原生 `<dialog>`，改前/改后对比表一并加上 |
 | 网关路由 | ✅ `/api/matches`→`function:matches`、`/api/news`→`function:news`（均 `enableAuth:false`） |
 | 公网部署 | ✅ 两个云函数已部署，5 条路由均 `WEB_SCF` |
-| 本地全分支回归 | ✅ 37 PASS / 0 FAIL |
-| 公网四类操作闭环 | ✅ 24 PASS / 0 FAIL（POST→GET→PATCH→GET→DELETE→GET 404） |
+| 本地全分支回归 | ✅ 42 PASS / 0 FAIL（含软删除 5 条） |
+| 公网四类操作闭环 | ✅ 28 PASS / 0 FAIL（POST→GET→PATCH→GET→DELETE→GET 404 + 软删除 4 条） |
 | 改删真实生效（SELECT 复核） | ✅ 见 §3.7 C |
-| 数据无残留 | ✅ `matches` 9 行、`news_items` 16 行 |
 | **软删除（`is_deleted`）** | ✅ 已补做（余力加练）：标记 + 查询跳过 + `restoreById` 找回 + `favorites` 复活配套（§2.11） |
+| **联赛四表补 `season` / `zone`** | ✅ §3.8 A（`db/migrate-day22-league-season.sql`，线上已执行；唯一键同步放宽） |
+| **四个联赛真数据全量入库** | ✅ §3.8 B（NBA 赛程 1826 + 排行 30 + 晋级图/季后赛 2 + matches 13；英超/欧冠/CBA 106 场恢复） |
+| **静态 JSON 字段统一为 camelCase** | ✅ §0.1：7 个 `data/*.json` + 6 个读取端 JS + 3 个生成端脚本（共 99 处） |
 | 批量操作 | ❌ 清单明确「今日不做」 |
 | 用户系统 | ❌ 清单明确「今日不做」 |
-| 提交 | ⏳ 本地，**未推送**（按约定：先交零检查，确认后再推） |
+| 提交 | ✅ 已推送（两个提交，均归 Day 22）：`b0993c2` 改删接口 + 软删除；`1e16da5` 联赛板块接入 NBA 真实数据。**追加改动待零确认后再推** |
 
 **仍待办（不阻塞完成标准）**：Day 15 的同伴手机验证与三张截图归档；Day 16 的控制台「表数据页」截图；Day 19 与 Day 20 的推送。
+
+> ⚠️ **运维提醒（Day 22 追加）**：`db/seed.sql` 会对四张 `league_*` 表 `TRUNCATE`。重跑 seed 之后，必须按 §3.8 B 的顺序重跑三个脚本，否则四个联赛会退回各 5 行示例数据。

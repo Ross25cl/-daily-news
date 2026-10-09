@@ -53,6 +53,7 @@ node serve.mjs 8001
 ├── js/                 # 分页逻辑：home / matches / news / news-detail / league / theme / app / checkup
 │   └── api-config.js   # 【Day 20】接口地址唯一出处（本地走相对路径、线上走网关绝对地址）
 ├── data/               # 备用数据（接口不可用时的降级）：hot / news / matches / {nba,cba,ucl,epl}.json
+│                       #   【Day 22】字段已全站统一为 camelCase（此前 matches/news/hot 是蛇形）
 ├── serve.mjs           # 本地预览服务（【Day 20】新增 /api/* 同源代理）
 │
 ├── cloudfunctions/     # 【Day 15】CloudBase 云函数
@@ -72,15 +73,21 @@ node serve.mjs 8001
 │   ├── test-api-local.cjs  # 【Day 17】接口分支本地验证
 │   ├── build-publish.mjs   # 【Day 20】组装静态托管发布目录
 │   ├── build-functions.mjs # 【Day 20】组装云函数自包含部署目录（修 ../shared 打包坑）
-│   └── ...
+│   ├── fetch-leagues.py    # 【Day 21】英超/欧冠/CBA 真数据抓取 → db/league_data.sql
+│   ├── build-nba.py        # 【Day 22】NBA 真数据抓取 → data/nba.json
+│   ├── build-nba-news.py   # 【Day 22】NBA 真数据 → data/matches.json / data/news.json
+│   └── build-nba-db.py     # 【Day 22】NBA 真数据 → db/league_data_nba.sql（入库用）
 ├── db/                 # 【Day 16】数据库脚本
 │   ├── schema.sql          #   建表（10 张表）
-│   ├── seed.sql            #   种子数据
+│   ├── seed.sql            #   种子数据（⚠️ 会 TRUNCATE 四张 league_* 表，见 api-contract §3.8）
 │   ├── hot_sync.sql        # 【Day 17】热搜同步产物（脚本生成，可重复执行）
+│   ├── league_data.sql     # 【Day 21】英超/欧冠/CBA 真数据（【Day 22】末尾补赛季回填）
+│   ├── league_data_nba.sql # 【Day 22】NBA 真数据入库（脚本生成；约 530KB，需切段执行）
 │   ├── migrate-day22.sql   # 【Day 22】给 matches / news_items 各加 note 列（幂等）
-│   └── migrate-day22-soft-delete.sql  # 【Day 22 余力加练】两表各加 is_deleted 软删除标记（幂等）
+│   ├── migrate-day22-soft-delete.sql   # 【Day 22 余力加练】两表各加 is_deleted 软删除标记（幂等）
+│   └── migrate-day22-league-season.sql # 【Day 22】league_* 四表补 season / zone 并放宽唯一键（幂等）
 ├── cloudbaserc.json    # 【Day 15】CloudBase CLI 部署配置
-├── api-contract.md     # 【Day 15 建，Day 16 表结构定稿，Day 20 补跨域，Day 22 补改删接口 + 软删除】接口契约
+├── api-contract.md     # 【Day 15 建，Day 16 表结构定稿，Day 20 补跨域，Day 22 补改删 + 软删除 + §3.8 联赛赛季维度】接口契约
 ├── docs/
 │   ├── cloudbase-deploy-day15.md  # 【Day 15】部署手册
 │   ├── cloudbase-deploy-day17.md  # 【Day 17】读接口部署与真库验证
