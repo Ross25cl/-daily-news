@@ -27,6 +27,14 @@
  *   浏览器 → 网关 /api/favorites → 本云函数 → newsItemsRepository → pg.js
  *                                 → CloudBase PG 的 HTTP API（PostgREST）
  *
+ * 【Day 22 配套改动：软删除之后的「复活」】
+ *   news_items 自 Day 22 起支持软删除（删除只打 is_deleted 标记，查询跳过）。
+ *   本接口是同一张表的另一条写入口，所以必须跟着想一步：
+ *   被软删过的文章再次被收藏时，只回一句「已在收藏中」会让用户困惑
+ *   ——「说有，可我把列表翻遍了也没看见它」。
+ *   → 本层把命中的软删除行**复活**（见 resolveExisting 的注释）。
+ *   这不是新功能，是软删除引入后必须补上的一致性。
+ *
  * 安全（清单要求 3：SQL 必须参数化，禁止拼接）：
  *   本层不拼 SQL —— 读走 PostgREST 查询参数、写走 POST 的 JSON body
  *   （由平台侧编译成参数化 SQL）。表名/列名来自 repository 的白名单常量，
@@ -178,6 +186,33 @@ function validateFavoriteInput(body) {
   };
 }
 
+// ---------- 软删除的配套：命中「已删除」的资讯时把它复活（Day 22 余力加练） ----------
+
+/**
+ * 按 sourceUrl 命中一行之后的统一处置。
+ *
+ * 为什么需要它（这是软删除带来的一个真实边角，不处理就会留下说不通的状态）：
+ *   news_items 支持软删除后，「按 source_url 查得到」≠「用户看得见」——
+ *   列表与按 id 查询都跳过已删除的行。如果 POST /api/favorites 只回一句
+ *   「这篇文章已在收藏中」，用户会陷入矛盾：说有，可列表里翻不到。
+ *   所以命中的行若是软删除态，就把它**复活**（is_deleted 改回 false），
+ *   语义变成「它回来了」——这也正好呼应软删除的初衷：删错了能回来。
+ *
+ * 并发上的小坑：查出来是删除态、真去恢复时它可能已经被别人恢复了（或又被删了），
+ *   restoreById 命中 0 行会返回 null —— 此时**不报错**，按普通「已存在」处理。
+ *   收藏是幂等操作，没必要为这种竞态给用户一个红色提示。
+ *
+ * @returns {Promise<{row: object, restored: boolean}>}
+ */
+async function resolveExisting(row, sourceUrl) {
+  if (row.is_deleted) {
+    const revived = await newsRepo.restoreById(row.id);
+    if (revived) return { row: revived, restored: true };
+    log('favorites.create.revive_miss', { sourceUrl: sourceUrl, id: row.id });
+  }
+  return { row: row, restored: false };
+}
+
 // ---------- 业务：POST /api/favorites ----------
 
 async function handleCreateFavorite(req, res) {
@@ -215,10 +250,19 @@ async function handleCreateFavorite(req, res) {
   //   「怎么按 source_url 查一条」由 repository 负责。
   const existing = await newsRepo.findBySourceUrl(input.sourceUrl);
   if (existing) {
+    // 命中的是软删除行 → 先复活（理由见 resolveExisting 的注释）
+    const resolved = await resolveExisting(existing, input.sourceUrl);
     log('favorites.create.duplicate', {
-      sourceUrl: input.sourceUrl, existingId: existing.id, ms: elapsed()
+      sourceUrl: input.sourceUrl, existingId: resolved.row.id,
+      restored: resolved.restored, ms: elapsed()
     });
-    return ok(res, newsRepo.toJSON(existing), { created: false, message: '这篇文章已在收藏中' });
+    return ok(res, newsRepo.toJSON(resolved.row), {
+      created: false,
+      restored: resolved.restored,
+      message: resolved.restored
+        ? '这条资讯之前被删除过（软删除），本次收藏已把它恢复显示'
+        : '这篇文章已在收藏中'
+    });
   }
 
   // ---- 生成 id（当天第 N 条）----
@@ -259,8 +303,13 @@ async function handleCreateFavorite(req, res) {
         sourceUrl: input.sourceUrl, found: !!again, ms: elapsed()
       });
       if (again) {
-        return ok(res, newsRepo.toJSON(again), {
-          created: false, message: '这篇文章已在收藏中（并发重复提交）'
+        const resolved = await resolveExisting(again, input.sourceUrl);
+        return ok(res, newsRepo.toJSON(resolved.row), {
+          created: false,
+          restored: resolved.restored,
+          message: resolved.restored
+            ? '这条资讯之前被删除过（软删除），本次提交已把它恢复显示'
+            : '这篇文章已在收藏中（并发重复提交）'
         });
       }
       return fail(res, 409, 'CONFLICT', '该文章已存在或被同时提交，请刷新后查看收藏列表。');

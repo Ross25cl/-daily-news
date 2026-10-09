@@ -1,0 +1,15 @@
+#!/bin/bash
+# ============================================================
+# scf_bootstrap — HTTP 云函数启动脚本（news / Day 22）
+# ------------------------------------------------------------
+# 与 health / api / favorites 的 scf_bootstrap 同款，三条硬性约束（缺一不可）：
+#   1. 本文件必须可执行（Linux 下 chmod +x）
+#   2. 服务必须监听 9000 端口（CloudBase 约定的转发端口）
+#   3. 必须以 LF 换行结尾（不能是 Windows 的 CRLF）
+#
+# 若在 Windows 上编辑后出现「启动失败 / 端口未监听」，
+# 先跑 scripts_cloudbase/normalize-eol.mjs 把换行改回 LF。
+# ============================================================
+
+export PORT=9000
+exec node index.js

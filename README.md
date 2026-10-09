@@ -46,7 +46,7 @@ node serve.mjs 8001
 ├── news.html           # P3 资讯列表页（?cat=足球|篮球|综合）
 ├── news-detail.html    # P4 资讯详情页（?id=...）
 ├── league.html         # P5 联赛板块页（?lg=nba|cba|ucl|epl）
-├── checkup.html        # 【Day 20】接口检查台（health / 核心表数据 / 写入测试）
+├── checkup.html        # 【Day 20】接口检查台（health / 核心表数据 / 写入测试 / 【Day 22】改与删）
 ├── digest.html         # 旧四板块速览页（Day 8 版迁出，暂无导航入口）
 ├── tools/entry.html    # 本地 JSON 录入表单
 ├── css/                # 分页样式：style / home / news / league / checkup
@@ -58,8 +58,14 @@ node serve.mjs 8001
 ├── cloudfunctions/     # 【Day 15】CloudBase 云函数
 │   ├── health/         #   健康检查函数（GET /api/health）
 │   ├── api/            #   【Day 17】业务读接口（GET /api/hot）
-│   ├── favorites/      #   【Day 18】收藏写入 / 读回（POST·GET /api/favorites）
+│   ├── favorites/      #   【Day 18】收藏写入 / 读回（POST·GET /api/favorites；【Day 22】加软删除复活）
+│   ├── matches/        #   【Day 22】赛程表改删（GET·PATCH·DELETE /api/matches；删除为**软删除**）
+│   ├── news/           #   【Day 22】资讯表改删（GET·PATCH·DELETE /api/news；删除为**软删除**）
 │   └── shared/         #   【Day 19】跨函数共用数据访问层（零依赖，调 PG 的 HTTP API）
+│       ├── pg.js               # 连接底座 + 【Day 22】安全阀（拒绝无过滤条件改删）
+│       ├── httpKit.js          # 【Day 22】接口层共用零件（包络/日志/body/id 校验/405/500）
+│       ├── matchesRepository.js    # 【Day 22】赛程表读写（【Day 22】加 softDeleteById / restoreById）
+│       └── newsItemsRepository.js  # 【Day 19】资讯表读写（【Day 22】加改删 + 软删除）
 ├── scripts_cloudbase/  # 【Day 15】部署脚本
 │   ├── fetch-hot.ps1       # 【Day 17】三平台热搜同步抓取
 │   ├── run-fetch-hot.ps1   # 【Day 17】ASCII 启动器（绕开 PS 5.1 中文编码坑）
@@ -70,14 +76,17 @@ node serve.mjs 8001
 ├── db/                 # 【Day 16】数据库脚本
 │   ├── schema.sql          #   建表（10 张表）
 │   ├── seed.sql            #   种子数据
-│   └── hot_sync.sql        # 【Day 17】热搜同步产物（脚本生成，可重复执行）
+│   ├── hot_sync.sql        # 【Day 17】热搜同步产物（脚本生成，可重复执行）
+│   ├── migrate-day22.sql   # 【Day 22】给 matches / news_items 各加 note 列（幂等）
+│   └── migrate-day22-soft-delete.sql  # 【Day 22 余力加练】两表各加 is_deleted 软删除标记（幂等）
 ├── cloudbaserc.json    # 【Day 15】CloudBase CLI 部署配置
-├── api-contract.md     # 【Day 15 建，Day 16 表结构定稿，Day 20 补跨域】接口契约
+├── api-contract.md     # 【Day 15 建，Day 16 表结构定稿，Day 20 补跨域，Day 22 补改删接口 + 软删除】接口契约
 ├── docs/
 │   ├── cloudbase-deploy-day15.md  # 【Day 15】部署手册
 │   ├── cloudbase-deploy-day17.md  # 【Day 17】读接口部署与真库验证
 │   ├── cloudbase-deploy-day18.md  # 【Day 18】写接口部署
 │   ├── cloudbase-deploy-day20.md  # 【Day 20】切公网接口 + 跨域确认 + 检查台
+│   ├── cloudbase-deploy-day22.md  # 【Day 22】PATCH / DELETE 上线 + 四类操作闭环 + 软删除（§8）
 │   ├── dataflow.svg / structure.svg / views.md / usability-test-day14.md
 ├── skills/tiyu-daily/  # 录入用 Skill
 ├── research.md / PRD.md / TECH_DESIGN.md / AGENTS.md  # 项目文档
@@ -88,19 +97,25 @@ node serve.mjs 8001
 
 第 2 周前的页面是本地预览（`node serve.mjs`）。从 **Day 15** 起接入腾讯云开发，公网可访问：
 
-- 云函数：`/api/health`（健康检查，Day 15）· `/api/hot`（三平台热搜，Day 17）· `/api/favorites`（收藏写入/读回，Day 18）
+- 云函数：`/api/health`（健康检查，Day 15）· `/api/hot`（三平台热搜，Day 17）· `/api/favorites`（收藏写入/读回，Day 18）· `/api/matches`（赛程读 + **改/删**，Day 22）· `/api/news`（资讯读 + **改/删**，Day 22）
 - 静态托管：上面那些 `.html` + `css/` + `js/` + `data/`
+
+> **Day 22 起数据操作闭环**：读（GET）· 增（POST `/api/favorites`）· 改（PATCH）· 删（DELETE）四类全部可用，在接口检查台的「④ 修改与删除」面板可自助操作。
 
 | 页面 | 公网地址 |
 | ---- | ---- |
 | 首页 | https://ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com/index.html |
 | 接口检查台 | https://ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com/checkup.html |
 
-完整步骤见 [day15](docs/cloudbase-deploy-day15.md) · [day17](docs/cloudbase-deploy-day17.md) · [day18](docs/cloudbase-deploy-day18.md) · **[day20](docs/cloudbase-deploy-day20.md)**，接口约定见 [api-contract.md](api-contract.md)。
+完整步骤见 [day15](docs/cloudbase-deploy-day15.md) · [day17](docs/cloudbase-deploy-day17.md) · [day18](docs/cloudbase-deploy-day18.md) · [day20](docs/cloudbase-deploy-day20.md) · **[day22](docs/cloudbase-deploy-day22.md)**，接口约定见 [api-contract.md](api-contract.md)。
 
 ### 重新部署（Day 20 起的标准流程）
 
 ```bash
+# 0) 结构变更（只加列、幂等；两个脚本都跑，顺序无关）
+tcb db execute -e ross-d2gimwy406e0d6812 --sql "$(cat db/migrate-day22.sql)"
+tcb db execute -e ross-d2gimwy406e0d6812 --sql "$(cat db/migrate-day22-soft-delete.sql)"
+
 # 1) 静态托管：先组装发布目录（只含 html/css/js/data），再上传
 node scripts_cloudbase/build-publish.mjs
 tcb hosting deploy .cloudbase-publish -e ross-d2gimwy406e0d6812 --safe
@@ -109,8 +124,18 @@ tcb hosting deploy .cloudbase-publish -e ross-d2gimwy406e0d6812 --safe
 node scripts_cloudbase/build-functions.mjs
 tcb fn deploy api       --httpFn --dir .cloudbase-build/api       -e ross-d2gimwy406e0d6812 --force
 tcb fn deploy favorites --httpFn --dir .cloudbase-build/favorites -e ross-d2gimwy406e0d6812 --force
+# 【Day 22】新增两个函数（build-functions.mjs 的 FUNCTIONS 已含）
+tcb fn deploy matches   --httpFn --dir .cloudbase-build/matches   -e ross-d2gimwy406e0d6812 --force
+tcb fn deploy news      --httpFn --dir .cloudbase-build/news      -e ross-d2gimwy406e0d6812 --force
 tcb deploy --only gateway -e ross-d2gimwy406e0d6812
 ```
+
+> ⚠️ `"$(cat ...)"` 这种写法只在 Git Bash 里稳；**PowerShell / cmd 会把含括号的 SQL 截断**（踩过 `Argument list too long`）。
+> 那种环境下改用 node 直传 argv，或把每条 `ALTER` 单独粘进 SQL 编辑器。
+
+> ⚠️ **新增路由必须同时改两处**：`cloudbaserc.json` 的 `functions[]`（函数清单）与 `gateway.routes[]`（路由→函数），
+> 然后 `tcb deploy --only gateway`。只部署函数不配路由 → 请求在网关层就 404（Day 18 结论：一个路由一个函数）。
+> 反过来，**只改函数代码（路由不变）就不需要重跑 gateway**。
 
 > ⚠️ **不要直接 `tcb fn deploy api`**：CloudBase CLI 打包时压缩包根目录 = 函数目录本身，
 > `cloudfunctions/shared/` 会落在包外 → 函数启动报 `Cannot find module '../shared/pg'` → 公网返回 443 空响应。

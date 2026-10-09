@@ -54,18 +54,38 @@ function connectionInfo() {
  * 发一个到 PostgREST 的请求，返回解析后的 JSON。
  * 所有查询/写入都收敛到这里，上层只关心「拿哪张表、什么条件」。
  *
- * @param {string} method  HTTP 方法（GET / POST）
+ * @param {string} method  HTTP 方法（GET / POST / PATCH / DELETE）
  * @param {string} table   表名（只允许字面量，不来自用户输入）
  * @param {object} [opts]
  * @param {object} [opts.query]  GET 查询参数，如 {platform:'eq.hupu', order:'rank.asc', limit:10}
- * @param {object} [opts.row]    POST 要写入的行（键为数据库列名 snake_case）
+ * @param {object} [opts.row]    POST / PATCH 要写入的行（键为数据库列名 snake_case）
  * @returns {Promise<Array>} 行数组（写入时由 PostgREST 回传写入的那一行，故也是数组）
+ *
+ * 【Day 22 扩展】新增 PATCH / DELETE 两种方法。三条实现要点：
+ *   1. **必须带过滤条件**：PostgREST 默认禁止无条件批量改/删（会拒绝请求）。
+ *      本层强制要求 query 里至少有一个 `eq.` 过滤 —— 这不是装饰，是安全阀：
+ *      少了它，写错一行代码就可能清空整张表。
+ *   2. 两个方法都带 `Prefer: return=representation` → 回传被改/被删的行，
+ *      接口层据此判断「到底命中了几行」。命中 0 行 = id 不存在 → 404。
+ *   3. DELETE 不带 Content-Type、不发 body（没有内容要送）。
  */
 function pgRequest(method, table, opts) {
   const options = opts || {};
   return new Promise((resolve, reject) => {
     if (!API_KEY) {
       return reject(new Error('服务端未配置 API Key（环境变量 CB_API_KEY 缺失）'));
+    }
+
+    // ---- 改/删的安全阀：必须有过滤条件（Day 22） ----
+    // 无条件 PATCH/DELETE 会命中整张表；少写一个 id 条件就是线上事故。
+    // 这里直接拦下，让错误暴露在开发期，而不是等数据没了才发现。
+    if (method === 'PATCH' || method === 'DELETE') {
+      const q = options.query || {};
+      const hasFilter = Object.keys(q).some(k => String(q[k]).indexOf('eq.') === 0);
+      if (!hasFilter) {
+        return reject(new Error('拒绝执行无过滤条件的 ' + method +
+          '（必须至少给一个 eq. 条件，防止误改/误删整张表）'));
+      }
     }
 
     // ---- 拼 URL（查询参数编码；不含任何 SQL 拼接）----
@@ -83,7 +103,7 @@ function pgRequest(method, table, opts) {
     };
 
     let payload = null;
-    if (method === 'POST') {
+    if (method === 'POST' || method === 'PATCH') {
       payload = JSON.stringify(options.row || {});
       headers['Content-Type'] = 'application/json';
       // return=representation：写入后回传整行 ——
@@ -91,6 +111,10 @@ function pgRequest(method, table, opts) {
       // 不开 resolution=merge-duplicates —— 要的就是「撞唯一键就报错」。
       headers['Prefer'] = 'return=representation';
       headers['Content-Length'] = Buffer.byteLength(payload);
+    } else if (method === 'DELETE') {
+      // 删除后回传被删掉的行：接口层要拿它的长度判断「命中了几行」。
+      // 不带 body，故不设 Content-Type / Content-Length。
+      headers['Prefer'] = 'return=representation';
     }
 
     const req = https.request({
@@ -149,8 +173,31 @@ function insertRow(table, row) {
   return pgRequest('POST', table, { row: row }).then(rows => rows[0]);
 }
 
+/**
+ * 【Day 22】按条件改一张表，返回被改后的行数组。
+ * @param {string} table
+ * @param {object} patch  要改的列（键为数据库列名 snake_case）
+ * @param {object} query  过滤条件，**必须含至少一个 eq.**（本层会拦无条件的改）
+ * @returns {Promise<Array>} 被改的行数组；长度 0 = 没有行命中（id 不存在）
+ */
+function updateRows(table, patch, query) {
+  return pgRequest('PATCH', table, { row: patch, query: query });
+}
+
+/**
+ * 【Day 22】按条件删一张表，返回被删掉的行数组。
+ * @param {string} table
+ * @param {object} query  过滤条件，**必须含至少一个 eq.**（本层会拦无条件的删）
+ * @returns {Promise<Array>} 被删掉的行数组；长度 0 = 没有行命中（id 不存在）
+ */
+function deleteRows(table, query) {
+  return pgRequest('DELETE', table, { query: query });
+}
+
 module.exports = {
   connectionInfo: connectionInfo,
   selectRows: selectRows,
-  insertRow: insertRow
+  insertRow: insertRow,
+  updateRows: updateRows,
+  deleteRows: deleteRows
 };

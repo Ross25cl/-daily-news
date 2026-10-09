@@ -95,6 +95,8 @@ CREATE TABLE public.news_items (
   source_url  TEXT        NOT NULL,                    -- 可访问 URL
   digest_date DATE        NOT NULL,                    -- 归属日期 YYYY-MM-DD
   status      TEXT        NOT NULL DEFAULT 'published',-- draft / published，接口只返回 published
+  note        TEXT,                                    -- 备注（Day 22 加：PATCH /api/news 可改）
+  is_deleted  BOOLEAN     NOT NULL DEFAULT false,      -- 软删除标记（Day 22 余力加练）
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),      -- ISO 8601
   CONSTRAINT news_items_section_check CHECK (section IN ('头条', '转会伤病', '热议', '明日看点')),
   CONSTRAINT news_items_status_check  CHECK (status IN ('draft', 'published')),
@@ -112,6 +114,8 @@ COMMENT ON COLUMN public.news_items.section     IS '四板块归属，CHECK 限�
 COMMENT ON COLUMN public.news_items.digest_date IS '归属日期，首页「今日速览」按它过滤；用 DATE 便于按天比较';
 COMMENT ON COLUMN public.news_items.status      IS 'draft 草稿不入接口，published 才对外';
 COMMENT ON COLUMN public.news_items.source_url  IS '原文链接，Day 18 起唯一：同一篇文章重复收藏由它挡下';
+COMMENT ON COLUMN public.news_items.note        IS '备注：运营补充说明，Day 22 新增（PATCH /api/news 可改）';
+COMMENT ON COLUMN public.news_items.is_deleted  IS '软删除标记，Day 22 余力加练：true=已删除，查询跳过；改回 false 即恢复';
 
 
 -- ============================================================
@@ -130,6 +134,8 @@ CREATE TABLE public.matches (
   round       TEXT,                                    -- 轮次，如「季前赛」
   venue       TEXT,                                    -- 场地
   data_source TEXT        NOT NULL,                    -- 比分来源（核对溯源用）
+  note        TEXT,                                    -- 备注（Day 22 加：PATCH /api/matches 可改）
+  is_deleted  BOOLEAN     NOT NULL DEFAULT false,      -- 软删除标记（Day 22 余力加练）
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),      -- 比分更正须同步更新
   CONSTRAINT matches_status_check CHECK (status IN ('未开始', '进行中', '已结束', '延期', '取消')),
   CONSTRAINT matches_score_check  CHECK (
@@ -145,6 +151,8 @@ COMMENT ON TABLE  public.matches             IS '赛程比分页的比赛记录�
 COMMENT ON COLUMN public.matches.match_time  IS '用 TIMESTAMP 而非 TIMESTAMPTZ：契约 0.1 约定统一北京时间，不带时区';
 COMMENT ON COLUMN public.matches.status      IS 'CHECK 锁定五种状态，与前端展示文案一一对应';
 COMMENT ON COLUMN public.matches.data_source IS '比分来源，PRD 要求可溯源，故设为非空';
+COMMENT ON COLUMN public.matches.note        IS '备注：比分更正缘由、延期/取消原因等留痕说明，Day 22 新增（PATCH /api/matches 可改）';
+COMMENT ON COLUMN public.matches.is_deleted  IS '软删除标记，Day 22 余力加练：true=已删除，查询跳过；改回 false 即恢复';
 
 
 -- ============================================================

@@ -23,6 +23,8 @@
 //     node scripts_cloudbase/build-functions.mjs
 //     tcb fn deploy api       --httpFn --dir .cloudbase-build/api       -e <envId> --force
 //     tcb fn deploy favorites --httpFn --dir .cloudbase-build/favorites -e <envId> --force
+//     tcb fn deploy matches   --httpFn --dir .cloudbase-build/matches   -e <envId> --force
+//     tcb fn deploy news      --httpFn --dir .cloudbase-build/news      -e <envId> --force
 //     tcb fn deploy health    --httpFn --dir .cloudbase-build/health    -e <envId> --force
 //     tcb deploy --only gateway -e <envId>
 // ============================================================
@@ -36,7 +38,7 @@ const SRC = join(ROOT, 'cloudfunctions');
 const OUT = join(ROOT, '.cloudbase-build');
 
 // 需要 shared/ 的函数写在前面；health 不连库，拉进来只为「一条命令造齐」
-const FUNCTIONS = ['api', 'favorites', 'health'];
+const FUNCTIONS = ['api', 'favorites', 'matches', 'news', 'health'];
 
 // 只改拷贝件：../shared/x → ./shared/x
 const REQUIRE_FIX = /require\((['"])\.\.\/shared\//g;

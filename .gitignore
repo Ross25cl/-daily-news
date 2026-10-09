@@ -23,3 +23,7 @@ Thumbs.db
 .cloudbase-publish/
 .cloudbase-backup/
 .cloudbase-build/
+
+# ===== 每日本地临时工作区（Day 22 起，不入库）=====
+# _dayNN_tmp/ 存放当日验证脚本与截图中间产物；正式截图归档到 docs/，此目录不入库
+_day*_tmp/

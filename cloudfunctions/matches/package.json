@@ -1,0 +1,10 @@
+{
+  "name": "matches",
+  "version": "0.1.0",
+  "private": true,
+  "description": "每日体坛速览 · 赛程比分写接口云函数（Day 22｜GET + PATCH + DELETE /api/matches）",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  }
+}

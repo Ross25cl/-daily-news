@@ -180,6 +180,49 @@ table.data td.title { min-width: 240px; }
 .notes { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13px; line-height: 1.9; }
 .notes b, .notes code { color: var(--text); }
 
+/* ---------- 修改与删除（Day 22） ---------- */
+/* 危险操作按钮：走全站同一套语义色（--bad 在深浅两套主题下都测过对比度） */
+.btn-danger { background: transparent; border-color: var(--bad); color: var(--bad); font-weight: 600; }
+.btn-danger:hover { background: var(--bad); border-color: var(--bad); color: #fff; }
+
+.diff-title { margin: 14px 0 8px; font-size: 13px; color: var(--muted); line-height: 1.7; }
+.diff-title code { color: var(--text); }
+.mark-changed { color: var(--wait); font-weight: 600; }
+
+table.data.mutate th, table.data.diff th { white-space: nowrap; }
+table.data.mutate .cur-value { color: var(--muted); font-size: 12px; }
+table.data.mutate input, table.data.mutate select {
+  font: inherit; font-size: 13px; color: var(--text); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; min-width: 160px;
+}
+table.data.diff td.before { color: var(--muted); }
+table.data.diff td.arrow { color: var(--border); text-align: center; width: 24px; padding: 7px 2px; }
+table.data.diff td.after { color: var(--text); }
+table.data.diff td.after.changed {
+  color: var(--wait); font-weight: 600;
+  background: color-mix(in srgb, var(--wait) 12%, transparent);
+}
+.deleted-note { color: var(--bad); }
+
+/* ---------- 二次确认弹窗（Day 22） ---------- */
+.confirm-dialog {
+  border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px;
+  background: var(--card); color: var(--text); max-width: 460px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .38);
+}
+.confirm-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+.confirm-dialog h3 { margin: 0 0 10px; font-size: 17px; }
+.confirm-body {
+  margin: 0 0 10px; padding: 10px 12px; border-radius: 9px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 13px; line-height: 1.75; word-break: break-all;
+}
+.confirm-body code { color: var(--text); }
+.confirm-warn { margin: 0 0 16px; font-size: 13px; color: var(--bad); line-height: 1.7; }
+.confirm-warn b { font-weight: 700; }
+.confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.confirm-actions .btn { min-width: 96px; }
+
 /* ---------- 页脚 ---------- */
 .site-footer {
   margin-top: 32px; color: var(--muted); font-size: 13px;

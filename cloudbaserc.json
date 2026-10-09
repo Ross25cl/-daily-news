@@ -54,6 +54,42 @@
         ".git/**",
         "*.md"
       ]
+    },
+    {
+      "name": "matches",
+      "type": "HTTP",
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "timeout": 15,
+      "memorySize": 256,
+      "description": "每日体坛速览 · 赛程比分写接口（Day 22：GET + PATCH + DELETE /api/matches）",
+      "envVariables": {
+        "CB_ENV_ID": "{{env.TCB_ENV_ID}}",
+        "CB_API_KEY": "{{env.CB_API_KEY}}"
+      },
+      "ignore": [
+        "node_modules/**",
+        ".git/**",
+        "*.md"
+      ]
+    },
+    {
+      "name": "news",
+      "type": "HTTP",
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "timeout": 15,
+      "memorySize": 256,
+      "description": "每日体坛速览 · 资讯写接口（Day 22：GET + PATCH + DELETE /api/news）",
+      "envVariables": {
+        "CB_ENV_ID": "{{env.TCB_ENV_ID}}",
+        "CB_API_KEY": "{{env.CB_API_KEY}}"
+      },
+      "ignore": [
+        "node_modules/**",
+        ".git/**",
+        "*.md"
+      ]
     }
   ],
   "gateway": {
@@ -71,6 +107,16 @@
       {
         "path": "/api/favorites",
         "target": "function:favorites",
+        "enableAuth": false
+      },
+      {
+        "path": "/api/matches",
+        "target": "function:matches",
+        "enableAuth": false
+      },
+      {
+        "path": "/api/news",
+        "target": "function:news",
         "enableAuth": false
       }
     ]

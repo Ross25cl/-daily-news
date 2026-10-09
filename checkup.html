@@ -110,9 +110,48 @@
       <pre id="write-result" class="result" hidden></pre>
     </section>
 
-    <!-- ④ 跨域是怎么放行的 -->
+    <!-- ④ 修改与删除（Day 22）-->
     <section class="panel">
-      <header class="panel-head"><h2>④ 跨域（CORS）是怎么放行的</h2></header>
+      <header class="panel-head">
+        <h2>④ 修改与删除（PATCH / DELETE · 软删除）</h2>
+        <span id="mutate-badge" class="badge badge-wait">待操作</span>
+      </header>
+
+      <p class="hint">
+        先按 id 取一条（GET），再对它做修改或删除。<b>删除会弹二次确认</b>——
+        这是本日的关键：新增写错了最坏是多一条脏数据、看得见删得掉；
+        删除写错了一个条件就是一片数据没了。<b>所以删之前必须停一下。</b>
+      </p>
+
+      <p class="hint">
+        这里的删除是<b>软删除</b>：只把记录标记为已删除（<code>is_deleted = true</code>），
+        <b>数据本身仍留在库里</b>，查询时被跳过。
+        所以下面你会同时看到两件事：<b>GET 查不到它了</b>，而<b>它并没有真的消失</b>。
+        删错了由服务端把标记改回 <code>false</code> 即可找回。
+      </p>
+
+      <div class="form">
+        <label>记录类型（决定打哪个接口）
+          <select id="mutate-table">
+            <option value="matches">比赛记录 matches → /api/matches</option>
+            <option value="news">资讯记录 news_items → /api/news</option>
+          </select>
+        </label>
+        <label>记录 id<input id="mutate-id" class="wide" placeholder="例如 20260924-nba-01"></label>
+        <div class="form-actions">
+          <button type="button" id="mutate-load" class="btn">① 取出该条（GET）</button>
+          <button type="button" id="mutate-patch" class="btn btn-primary" disabled>② 提交修改（PATCH）</button>
+          <button type="button" id="mutate-delete" class="btn btn-danger" disabled>③ 删除这条（DELETE）</button>
+        </div>
+      </div>
+
+      <div id="mutate-diff"></div>
+      <pre id="mutate-result" class="result" hidden></pre>
+    </section>
+
+    <!-- ⑤ 跨域是怎么放行的 -->
+    <section class="panel">
+      <header class="panel-head"><h2>⑤ 跨域（CORS）是怎么放行的</h2></header>
       <ul class="notes">
         <li>页面在静态托管域名上，接口在云函数网关域名上，<b>两者不同域</b>，所以调接口天然是跨域。</li>
         <li>放行由 <b>CloudBase 网关的「跨域安全域名白名单」</b>负责：白名单里只有本项目自己的静态托管域名，<b>没有 <code>*</code> 通配符</b>。</li>
@@ -124,8 +163,20 @@
   </main>
 
   <footer class="site-footer">
-    <p>每日体坛速览 · 28days 练习项目 · 接口检查台（Day 20 建）</p>
+    <p>每日体坛速览 · 28days 练习项目 · 接口检查台（Day 20 建；Day 22 增加「修改与删除」，删除为软删除）</p>
   </footer>
+
+  <!-- 二次确认弹窗（Day 22）：用原生 <dialog>，不引任何依赖 -->
+  <dialog id="confirm-dialog" class="confirm-dialog">
+    <h3 id="confirm-title">确定要删除这条记录吗？</h3>
+    <p id="confirm-body" class="confirm-body"></p>
+    <p class="confirm-warn">确认后这条记录会从列表与查询里消失（<b>软删除</b>）：
+      数据本身仍保留在库中，只是被打上了删除标记；要让它重新出现，需要服务端人工恢复。</p>
+    <div class="confirm-actions">
+      <button type="button" id="confirm-cancel" class="btn">取消</button>
+      <button type="button" id="confirm-ok" class="btn btn-danger">确定删除</button>
+    </div>
+  </dialog>
 
   <script src="js/theme.js"></script>
   <script src="js/api-config.js"></script>

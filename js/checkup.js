@@ -1,14 +1,22 @@
 // ============================================================
-// checkup.js — 接口检查台（Day 20 建）
+// checkup.js — 接口检查台（Day 20 建；Day 22 增「修改与删除」）
 // ------------------------------------------------------------
-// 三件事，都是「点一下就知道通不通」：
+// 四件事，都是「点一下就知道通不通」：
 //   ① GET /api/health            云函数活着吗
 //   ② GET /api/hot               核心表 hot_items 的真实数据（含真实抓取时间）
 //      GET /api/favorites        核心表 news_items 的真实数据
 //   ③ POST /api/favorites        真写一行进去，再读回来
+//   ④ PATCH / DELETE             （Day 22 新增）改一条、删一条，
+//                                **删除带二次确认弹窗**
 //
 // 所有数字都来自公网接口的实时返回；页面里不含密钥（密钥只在云函数环境变量）。
 // 接口地址统一由 js/api-config.js 给出（线上绝对域名 / 本地走 serve.mjs 同源代理）。
+//
+// 【Day 22 掌握项：删除为什么比新增更容易出事？】
+//   新增出错 → 多一条脏数据，看得见、能改能删，损失可逆；
+//   删除出错 → 数据**直接没了**，没有回收站，损失不可逆。
+//   所以删除这条路上放了三道确认：后端「先查再删 + 无过滤条件拒绝」，
+//   前端这一层就是下面那个 <dialog> 二次确认 —— 人手点下去的那一下。
 // ============================================================
 
 // ---------- 工具 ----------
@@ -220,6 +228,361 @@ function initWriteForm() {
   $('write-refresh').addEventListener('click', () => loadNews());
 }
 
+// ---------- ④ 修改与删除（Day 22） ----------
+
+/**
+ * 面板状态：当前取到的记录（GET 的结果）。
+ * 不做任何本地缓存到 localStorage —— 检查台要看的永远是「库里此刻的值」。
+ */
+const mutateState = {
+  table: 'matches',
+  id: '',
+  row: null
+};
+
+/**
+ * 记录类型 → 接口路径 + 该类型下「允许修改哪些字段」+ 字段标签。
+ * 这张表是前端唯一知道「哪个接口改什么」的地方，
+ * 与后端 repository 的 PATCHABLE 白名单一一对应（后端才是权威，前端只是少让用户白填）。
+ */
+const MUTATE_SCHEMA = {
+  matches: {
+    path: '/api/matches',
+    label: '比赛记录',
+    fields: [
+      { key: 'status', label: '赛事状态', type: 'select', options: ['未开始', '进行中', '已结束', '延期', '取消'] },
+      { key: 'homeScore', label: '主队最终比分', type: 'number' },
+      { key: 'awayScore', label: '客队最终比分', type: 'number' },
+      { key: 'homeTeam', label: '主队名（标题的一部分）', type: 'text' },
+      { key: 'awayTeam', label: '客队名（标题的一部分）', type: 'text' },
+      { key: 'round', label: '轮次', type: 'text' },
+      { key: 'venue', label: '场地', type: 'text' },
+      { key: 'note', label: '备注', type: 'text' }
+    ]
+  },
+  news: {
+    path: '/api/news',
+    label: '资讯记录',
+    fields: [
+      { key: 'title', label: '新闻标题（≤30 字）', type: 'text' },
+      { key: 'summary', label: '内容摘要（≤60 字）', type: 'text' },
+      { key: 'note', label: '备注', type: 'text' },
+      { key: 'status', label: '发布状态', type: 'select', options: ['draft', 'published'] }
+    ]
+  }
+};
+
+function currentSchema() {
+  return MUTATE_SCHEMA[mutateState.table];
+}
+
+function setMutateBadge(kind, text) {
+  setBadge('mutate-badge', kind, text);
+}
+
+/**
+ * 把一条记录渲染成「可编辑表单 + 改前值提示」。
+ * 输入框预填当前值 → 用户改哪格、PATCH 就只提交哪格（其余不动）。
+ */
+function renderMutateForm(row) {
+  const schema = currentSchema();
+  const box = $('mutate-diff');
+
+  const rows = schema.fields.map(f => {
+    const cur = row[f.key];
+    const curText = (cur === null || cur === undefined || cur === '') ? '（空）' : String(cur);
+    let input;
+    if (f.type === 'select') {
+      input = '<select data-k="' + esc(f.key) + '">' +
+        f.options.map(o => '<option value="' + esc(o) + '"' +
+          (String(cur) === o ? ' selected' : '') + '>' + esc(o) + '</option>').join('') +
+        '</select>';
+    } else if (f.type === 'number') {
+      input = '<input data-k="' + esc(f.key) + '" type="number" value="' +
+        (cur === null || cur === undefined ? '' : esc(cur)) + '">';
+    } else {
+      input = '<input data-k="' + esc(f.key) + '" value="' +
+        (cur === null || cur === undefined ? '' : esc(cur)) + '">';
+    }
+    return '<tr>' +
+      '<th>' + esc(f.label) + '</th>' +
+      '<td><span class="cur-value">当前：' + esc(curText) + '</span></td>' +
+      '<td>' + input + '</td>' +
+      '</tr>';
+  }).join('');
+
+  box.innerHTML =
+    '<p class="diff-title">已取到 <code>' + esc(row.id) + '</code>' +
+    '（' + esc(schema.label) + '）。下面左格是库里当前值，右格是你要改成的值——只提交你动过的格。</p>' +
+    '<div class="table-wrap"><table class="data mutate"><thead><tr>' +
+    '<th>字段</th><th>改之前</th><th>改之后（可编辑）</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+/**
+ * 收集用户真正改动过的字段（与「当前值」比对，没动的就不提交）。
+ * 这一步很重要：PATCH 只发变化字段，接口 meta.changed 才能如实反映动了什么。
+ */
+function collectChanged() {
+  const schema = currentSchema();
+  const row = mutateState.row;
+  const patch = {};
+  const inputs = document.querySelectorAll('#mutate-diff input[data-k], #mutate-diff select[data-k]');
+
+  inputs.forEach(el => {
+    const k = el.dataset.k;
+    const before = row[k];
+    const beforeStr = (before === null || before === undefined) ? '' : String(before);
+    const nowStr = el.value.trim();
+
+    if (nowStr === beforeStr) return;              // 没动，跳过
+    if (el.type === 'number') {
+      patch[k] = nowStr === '' ? null : Number(nowStr);
+    } else {
+      patch[k] = nowStr;
+    }
+  });
+
+  return patch;
+}
+
+/** 把「改之前 → 改之后」逐字段列出来，供页面直接当证据看（也是今日截图的内容）。 */
+function renderDiff(before, after, changedKeys) {
+  const keys = (changedKeys && changedKeys.length) ? changedKeys : Object.keys(before || {});
+  const fmt = v => (v === null || v === undefined || v === '') ? '（空）' : String(v);
+
+  const rows = keys.filter(k => k !== 'updatedAt' && k !== 'createdAt').map(k => {
+    const b = fmt(before ? before[k] : undefined);
+    const a = fmt(after ? after[k] : undefined);
+    const same = b === a;
+    return '<tr>' +
+      '<th>' + esc(k) + '</th>' +
+      '<td class="before">' + esc(b) + '</td>' +
+      '<td class="arrow">' + (same ? '＝' : '→') + '</td>' +
+      '<td class="after' + (same ? '' : ' changed') + '">' + esc(a) + '</td>' +
+      '</tr>';
+  }).join('');
+
+  return '<p class="diff-title">改动对比（<span class="mark-changed">高亮</span>的是真的变了的字段）：</p>' +
+    '<div class="table-wrap"><table class="data diff"><thead><tr>' +
+    '<th>字段</th><th>改之前</th><th></th><th>改之后</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function initMutatePanel() {
+  const tableSel = $('mutate-table');
+  const idInput = $('mutate-id');
+  const loadBtn = $('mutate-load');
+  const patchBtn = $('mutate-patch');
+  const deleteBtn = $('mutate-delete');
+  const out = $('mutate-result');
+  const diffBox = $('mutate-diff');
+
+  // 切换记录类型时清空状态，避免拿着 matches 的一条去打 news
+  tableSel.addEventListener('change', () => {
+    mutateState.table = tableSel.value;
+    mutateState.row = null;
+    mutateState.id = '';
+    idInput.value = '';
+    diffBox.innerHTML = '';
+    out.hidden = true;
+    patchBtn.disabled = true;
+    deleteBtn.disabled = true;
+    setMutateBadge('wait', '待操作');
+  });
+
+  // ---- ① GET 取一条 ----
+  loadBtn.addEventListener('click', async () => {
+    const schema = currentSchema();
+    mutateState.table = tableSel.value;
+    const id = idInput.value.trim();
+    if (!id) {
+      setMutateBadge('bad', '缺 id');
+      out.hidden = false;
+      out.textContent = '请先填一个记录 id。';
+      return;
+    }
+
+    loadBtn.disabled = true;
+    setMutateBadge('wait', '读取中…');
+    const t0 = Date.now();
+    try {
+      const body = await callAPI(schema.path + '?id=' + encodeURIComponent(id));
+      mutateState.id = id;
+      mutateState.row = body.data;
+      renderMutateForm(body.data);
+      patchBtn.disabled = false;
+      deleteBtn.disabled = false;
+      out.hidden = false;
+      out.textContent = 'GET ' + apiUrl(schema.path) + '?id=' + id + '\n' +
+        '耗时 ' + (Date.now() - t0) + ' ms（HTTP 200）\n\n' + JSON.stringify(body.data, null, 2);
+      setMutateBadge('ok', '已取到 · ' + id);
+    } catch (err) {
+      mutateState.row = null;
+      diffBox.innerHTML = '';
+      patchBtn.disabled = true;
+      deleteBtn.disabled = true;
+      out.hidden = false;
+      out.textContent = '取不到这一条：' + err.message + '\n\n' +
+        JSON.stringify(err.body || {}, null, 2);
+      setMutateBadge('bad', err.body && err.body.error ? err.body.error.code : '失败');
+    } finally {
+      loadBtn.disabled = false;
+    }
+  });
+
+  // ---- ② PATCH 提交修改 ----
+  patchBtn.addEventListener('click', async () => {
+    const schema = currentSchema();
+    const patch = collectChanged();
+    if (Object.keys(patch).length === 0) {
+      setMutateBadge('wait', '没有改动');
+      out.hidden = false;
+      out.textContent = '你还没有改动任何字段 —— 先把右格里的值改掉再提交。';
+      return;
+    }
+
+    patchBtn.disabled = true;
+    setMutateBadge('wait', '提交中…');
+    const t0 = Date.now();
+    try {
+      const body = await callAPI(schema.path, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({ id: mutateState.id }, patch))
+      });
+      mutateState.row = body.data.after;
+      diffBox.innerHTML = renderMutateForm(body.data.after) +
+        renderDiff(body.data.before, body.data.after, body.meta.changed);
+      out.hidden = false;
+      out.textContent = 'PATCH ' + apiUrl(schema.path) + '\n' +
+        '耗时 ' + (Date.now() - t0) + ' ms（HTTP 200）\n\n' + JSON.stringify(body, null, 2);
+      setMutateBadge('ok', '已改 ' + body.meta.changed.length + ' 个字段');
+      // 改完刷新上面的核心表，让「库里真的变了」一眼可见
+      if (mutateState.table === 'news') loadNews();
+    } catch (err) {
+      out.hidden = false;
+      out.textContent = '修改失败：' + err.message + '\n\n' + JSON.stringify(err.body || {}, null, 2);
+      setMutateBadge('bad', err.body && err.body.error ? err.body.error.code : '失败');
+    } finally {
+      patchBtn.disabled = false;
+    }
+  });
+
+  // ---- ③ DELETE（★ 二次确认在这里）----
+  deleteBtn.addEventListener('click', async () => {
+    const row = mutateState.row;
+    if (!row) return;
+
+    // ★★ 二次确认：不直接发删除请求，先弹窗。
+    //    弹窗里把「要删的是哪一条」原样摆出来（标题/主客队），
+    //    让人确认的是「这一条」，不是盲点一个「确定」。
+    const ok = await confirmDelete(row);
+    if (!ok) {
+      setMutateBadge('wait', '已取消删除');
+      out.hidden = false;
+      out.textContent = '删除已取消 —— 这条记录没有被改动。\n' +
+        '（这就是二次确认的意义：误点一下不会让记录从查询里消失。）';
+      return;
+    }
+
+    const schema = currentSchema();
+    deleteBtn.disabled = true;
+    patchBtn.disabled = true;
+    setMutateBadge('wait', '删除中…');
+    const t0 = Date.now();
+    try {
+      const body = await callAPI(schema.path, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: mutateState.id })
+      });
+      out.hidden = false;
+      out.textContent = 'DELETE ' + apiUrl(schema.path) + '\n' +
+        '耗时 ' + (Date.now() - t0) + ' ms（HTTP 200）\n\n' + JSON.stringify(body, null, 2);
+
+      // ---- 删完立刻 GET 一次，把「查不到了」当场证出来 ----
+      let goneText = '';
+      try {
+        await callAPI(schema.path + '?id=' + encodeURIComponent(mutateState.id));
+        goneText = '⚠ 复查仍能 GET 到，删除可能没生效，请重试。';
+      } catch (err) {
+        goneText = '复查 GET 该 id → HTTP ' +
+          ((err.body && err.body.error) ? (err.body.error.code + '：' + err.body.error.message) : err.message) +
+          '\n（这就是「删掉之后 GET 不再返回」的证据）';
+      }
+
+      // ---- 软删除回执（Day 22 余力加练）----
+      // 页面要把「查不到」和「数据还在」这两件看似矛盾的事同时说清楚：
+      // 接口回执里 mode=soft / recoverable=true 就是它的凭据（不是我们替接口编的话）。
+      const soft = body.data.mode === 'soft';
+      const softText = soft
+        ? '<p class="diff-title">软删除回执：<code>mode=' + esc(String(body.data.mode)) +
+        '</code>、<code>recoverable=' + esc(String(body.data.recoverable)) + '</code>' +
+        '<br>这一行<b>没有被真删</b> —— 只是 <code>is_deleted</code> 被置为 <code>true</code>，' +
+        '查询把它跳过了。所以「GET 查不到」与「数据还在库里」同时成立。' +
+        (body.data.restoreHint ? '<br>找回方式：' + esc(body.data.restoreHint) + '。' : '') +
+        '</p>'
+        : '';
+
+      diffBox.innerHTML =
+        '<p class="diff-title deleted-note">已' + (soft ? '软' : '') + '删除 <code>' +
+        esc(mutateState.id) + '</code>。下面是被删掉的那一行原文（留档对照）。</p>' +
+        '<pre class="result">' + esc(JSON.stringify(body.data.deleted, null, 2)) + '</pre>' +
+        softText +
+        '<pre class="result">' + esc(goneText) + '</pre>';
+
+      mutateState.row = null;
+      mutateState.id = '';
+      idInput.value = '';
+      setMutateBadge('ok', soft ? '已软删除并复查' : '已删除并复查');
+      loadNews();
+    } catch (err) {
+      out.hidden = false;
+      out.textContent = '删除失败：' + err.message + '\n\n' + JSON.stringify(err.body || {}, null, 2);
+      setMutateBadge('bad', err.body && err.body.error ? err.body.error.code : '失败');
+      deleteBtn.disabled = false;
+      patchBtn.disabled = false;
+    }
+  });
+}
+
+/**
+ * 删除二次确认弹窗。
+ * 用原生 <dialog>：自带模态、焦点陷阱、Esc 关闭，零依赖。
+ *
+ * @returns {Promise<boolean>} true = 用户确认删除
+ */
+function confirmDelete(row) {
+  return new Promise(resolve => {
+    const dlg = $('confirm-dialog');
+    const body = $('confirm-body');
+
+    // 把「要删的到底是哪一条」写清楚 —— 这是确认框能起作用的前提
+    const desc = row.homeTeam
+      ? (row.homeTeam + ' vs ' + row.awayTeam + '（' + (row.league || '') + '，' + (row.status || '') + '）')
+      : (row.title || '（无标题）');
+    body.innerHTML = '记录 id：<code>' + esc(row.id) + '</code><br>内容：' + esc(desc);
+
+    function cleanup(result) {
+      $('confirm-ok').removeEventListener('click', onOk);
+      $('confirm-cancel').removeEventListener('click', onCancel);
+      dlg.removeEventListener('cancel', onCancel);
+      try { dlg.close(); } catch (e) { /* 已关闭 */ }
+      resolve(result);
+    }
+    const onOk = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+
+    $('confirm-ok').addEventListener('click', onOk);
+    $('confirm-cancel').addEventListener('click', onCancel);
+    dlg.addEventListener('cancel', onCancel);   // Esc / 点遮罩关掉 = 取消
+
+    if (typeof dlg.showModal === 'function') dlg.showModal();
+    else resolve(window.confirm('确定要删除这条记录吗？'));   // 极老浏览器兜底
+  });
+}
+
 // ---------- 启动 ----------
 
 function init() {
@@ -229,6 +592,7 @@ function init() {
   $('page-origin').textContent = location.origin;
 
   initWriteForm();
+  initMutatePanel();
   checkHealth();
   loadHot();
   loadNews();
