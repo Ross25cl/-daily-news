@@ -4,6 +4,7 @@
 -- 数据源：英超/欧冠 = premierleague.com 官方数据接口（26-27 赛季）
 --         CBA      = cbaleague.com 官网 portal-server（26-27 赛程）
 -- 可重复执行：先按联赛清空 league_* 三表与 matches，再插入
+-- Day 22 追加：本文件依赖 season 列，须先执行 db/migrate-day22-league-season.sql
 -- ============================================================
 
 BEGIN;
@@ -11,9 +12,11 @@ BEGIN;
 -- ---------- 0. 约束对齐：league_players 名次允许并列（Day 21 零拍板）----------
 -- 原约束 UNIQUE (league_id, board, rank) 会把真实射手榜的并列名次直接拒掉
 -- （英超前 10 里 8 人并列第 3）。放宽为四列，仍防「同榜同名次挂同一球员两次」。
+-- Day 22 追加 season：同一球员在两个赛季都排第 3 名时不再被判重
+--   （season 列由 db/migrate-day22-league-season.sql 建立，须先跑该迁移）。
 ALTER TABLE public.league_players DROP CONSTRAINT IF EXISTS league_players_rank_uniq;
 ALTER TABLE public.league_players ADD CONSTRAINT league_players_rank_uniq
-  UNIQUE (league_id, board, rank, player_name);
+  UNIQUE (league_id, season, board, rank, player_name);
 
 -- ---------- 1. 联赛维度表 ----------
 INSERT INTO public.leagues (id, name, sport, emoji, description, tabs, updated_at)
@@ -333,6 +336,14 @@ INSERT INTO public.matches (id, league, home_team, away_team, match_time, status
 INSERT INTO public.matches (id, league, home_team, away_team, match_time, status, home_score, away_score, round, venue, data_source, updated_at) VALUES ('20261023-cba-03', 'CBA', '南京同曦宙光', '山东高速', '2026-10-23 19:35', '未开始', NULL, NULL, 3, NULL, 'cbaleague.com 官网', '2026-10-08T22:58:36+08:00');
 INSERT INTO public.matches (id, league, home_team, away_team, match_time, status, home_score, away_score, round, venue, data_source, updated_at) VALUES ('20261023-cba-04', 'CBA', '天津先行者', '广州智都集团', '2026-10-23 19:35', '未开始', NULL, NULL, 3, NULL, 'cbaleague.com 官网', '2026-10-08T22:58:36+08:00');
 INSERT INTO public.matches (id, league, home_team, away_team, match_time, status, home_score, away_score, round, venue, data_source, updated_at) VALUES ('20261023-cba-05', 'CBA', '浙江稠州金租', '青岛崂山啤酒', '2026-10-23 19:35', '未开始', NULL, NULL, 3, NULL, 'cbaleague.com 官网', '2026-10-08T22:58:36+08:00');
+
+-- ---------- 9. 赛季回填（Day 22 追加）----------
+-- 上面这批英超/欧冠/CBA 数据全部来自 26-27 赛季（fetch-leagues.py 只抓当前赛季），
+-- INSERT 未列 season 列 → 走 DEFAULT ''，这里统一回填成 '26-27'。
+-- 幂等：season 已填的行不受影响。
+UPDATE public.league_schedule SET season = '26-27' WHERE season = '';
+UPDATE public.league_standings SET season = '26-27' WHERE season = '';
+UPDATE public.league_players  SET season = '26-27' WHERE season = '';
 
 COMMIT;
 

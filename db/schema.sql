@@ -163,6 +163,7 @@ CREATE TABLE public.league_schedule (
   id         TEXT        PRIMARY KEY,                  -- 如 nba-20260928-01
   league_id  TEXT        NOT NULL
              REFERENCES public.leagues(id) ON DELETE CASCADE,
+  season     TEXT        NOT NULL DEFAULT '',           -- 赛季，如 25-26 / 26-27（Day 22 新增）
   match_date DATE        NOT NULL,                     -- 比赛日期
   match_time TEXT,                                     -- 开赛时刻字符串，如 07:30
   status     TEXT        NOT NULL,                     -- 五种状态，同 matches
@@ -177,6 +178,7 @@ CREATE TABLE public.league_schedule (
 
 COMMENT ON TABLE  public.league_schedule            IS '联赛板块页的赛程 Tab 数据，按 league_id 归属';
 COMMENT ON COLUMN public.league_schedule.league_id  IS '外键指向 leagues.id，删联赛自动清赛程';
+COMMENT ON COLUMN public.league_schedule.season     IS '赛季标识，如 25-26 / 26-27；Day 22 新增，前端按赛季切换赛程';
 COMMENT ON COLUMN public.league_schedule.match_time IS '源头数据是 "07:30" 这种时刻串，与日期分列存，故用 TEXT';
 
 
@@ -189,6 +191,8 @@ CREATE TABLE public.league_standings (
   id            TEXT        PRIMARY KEY,               -- 如 nba-standings-1
   league_id     TEXT        NOT NULL
                 REFERENCES public.leagues(id) ON DELETE CASCADE,
+  season        TEXT        NOT NULL DEFAULT '',        -- 赛季，如 25-26（Day 22 新增）
+  zone          TEXT,                                   -- 分区：篮球「东部/西部」，足球留空（Day 22 新增）
   rank          INTEGER     NOT NULL,                  -- 名次，从 1 开始
   team_name     TEXT        NOT NULL,
   played        INTEGER,                               -- 场次（足球）
@@ -201,10 +205,13 @@ CREATE TABLE public.league_standings (
   points_diff   TEXT,                                  -- 净胜分（篮球），带符号字符串如 +24
   win_rate      TEXT,                                  -- 胜率（篮球），如 100%
   CONSTRAINT league_standings_rank_check CHECK (rank >= 1),
-  CONSTRAINT league_standings_rank_uniq  UNIQUE (league_id, rank)
+  -- Day 22：并入 season + zone——NBA 东西部名次各自从 1 起，只按 (league_id, rank) 判重会误伤
+  CONSTRAINT league_standings_rank_uniq  UNIQUE (league_id, season, zone, rank)
 );
 
 COMMENT ON TABLE  public.league_standings             IS '联赛排行/积分榜，篮球与足球共用一张表、各取所需列';
+COMMENT ON COLUMN public.league_standings.season      IS '赛季标识，如 25-26；Day 22 新增';
+COMMENT ON COLUMN public.league_standings.zone        IS '分区：篮球「东部/西部」，足球留空（NULL）；Day 22 新增';
 COMMENT ON COLUMN public.league_standings.points_diff IS '篮球净胜分是带正负号的展示串（+24），故用 TEXT 而非数值';
 COMMENT ON COLUMN public.league_standings.win_rate    IS '胜率含百分号，同样按展示串存 TEXT';
 COMMENT ON COLUMN public.league_standings.points      IS '足球积分；篮球此列为空，靠 sport 区分读哪几列';
@@ -220,6 +227,7 @@ CREATE TABLE public.league_players (
   id          TEXT        PRIMARY KEY,                 -- 如 nba-player-1
   league_id   TEXT        NOT NULL
               REFERENCES public.leagues(id) ON DELETE CASCADE,
+  season      TEXT        NOT NULL DEFAULT '',          -- 赛季，如 25-26（Day 22 新增）
   board       TEXT        NOT NULL DEFAULT 'players',  -- players=球员数据榜 / scorers=射手榜
   rank        INTEGER     NOT NULL,
   player_name TEXT        NOT NULL,
@@ -232,10 +240,12 @@ CREATE TABLE public.league_players (
   rating      NUMERIC(3,1),                            -- 评分（足球）
   CONSTRAINT league_players_board_check CHECK (board IN ('players', 'scorers')),
   CONSTRAINT league_players_rank_check  CHECK (rank >= 1),
-  CONSTRAINT league_players_rank_uniq   UNIQUE (league_id, board, rank)
+  -- Day 22：并入 season；player_name 由 Day 21 放宽时加（真实射手榜名次并列，如前 10 里 8 人并列第 3）
+  CONSTRAINT league_players_rank_uniq   UNIQUE (league_id, season, board, rank, player_name)
 );
 
 COMMENT ON TABLE  public.league_players            IS '联赛球员数据与射手榜，board 列区分两套榜单';
+COMMENT ON COLUMN public.league_players.season     IS '赛季标识，如 25-26；Day 22 新增';
 COMMENT ON COLUMN public.league_players.board      IS '同一联赛有两套榜单（英超既有球员数据也有射手榜），必须区分';
 COMMENT ON COLUMN public.league_players.points     IS '场均数据带一位小数，NUMERIC(5,1) 精确存储不用浮点';
 COMMENT ON COLUMN public.league_players.rating     IS '评分范围 0-10，NUMERIC(3,1) 足够且不丢精度';
@@ -254,7 +264,8 @@ CREATE TABLE public.league_brackets (
   kind         TEXT        NOT NULL DEFAULT 'bracket',
   payload_json JSONB       NOT NULL,                   -- 整棵结构树原样存
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT league_brackets_kind_check CHECK (kind IN ('bracket', 'race')),
+  -- Day 22：kind 增加 playoffs（NBA 季后赛对阵是独立一套数据，既非晋级树也非争冠形势）
+  CONSTRAINT league_brackets_kind_check CHECK (kind IN ('bracket', 'race', 'playoffs')),
   CONSTRAINT league_brackets_uniq       UNIQUE (league_id, season, kind)
 );
 
