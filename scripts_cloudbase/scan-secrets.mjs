@@ -106,13 +106,18 @@ const RULES = [
   }
 ];
 
-// 只看文本文件（按扩展名白名单，比嗅探内容更可预测）
-const TEXT_EXT = new Set([
-  '.js', '.mjs', '.cjs', '.ts', '.json', '.html', '.css', '.md', '.txt',
-  '.sql', '.yml', '.yaml', '.toml', '.ini', '.cfg', '.ps1', '.sh', '.cmd',
-  '.svg', '.example', ''
+// 只跳过**已知的二进制**扩展名（黑名单），其余一律当文本扫。
+//
+// ⚠️ 这里原本是「文本扩展名白名单」，Day 23 复查时发现它会**静默漏文件**：
+//    仓库里的 4 个 .py 不在白名单内，被当成非文本跳过 —— 而 .py 里完全可能
+//    写死连接串或密钥。会漏文件的密钥扫描器比没有还危险（它给你一个假的 0）。
+//    现在的规则是：只有明确知道是二进制的才跳过，认不出来的一律扫，宁可多扫。
+const BINARY_EXT = new Set([
+  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.bmp', '.tif', '.tiff',
+  '.woff', '.woff2', '.ttf', '.otf', '.eot', '.zip', '.gz', '.tgz', '.7z',
+  '.rar', '.pdf', '.mp3', '.mp4', '.mov', '.webm', '.wasm', '.exe', '.dll',
+  '.so', '.dylib', '.class', '.jar', '.psd', '.ai'
 ]);
-const TEXT_NAME = ['.gitignore', '.gitattributes', '.env.example', 'scf_bootstrap'];
 
 // 掩码：命中内容不原样打印（免得日志本身变成第二份泄漏）
 function mask(s) {
@@ -121,11 +126,12 @@ function mask(s) {
   return v.slice(0, 6) + '…' + v.slice(-4) + '（共 ' + v.length + ' 字符，已掩码）';
 }
 
-function isText(file) {
-  const name = file.split('/').pop();
-  if (TEXT_NAME.indexOf(name) >= 0) return true;
-  return TEXT_EXT.has(extname(file).toLowerCase());
+// 只有「已知二进制扩展名」才跳过；其余（含无扩展名、含没见过的扩展名）都要扫。
+// 这样新增一种文本文件时不会悄悄漏掉 —— 漏掉是沉默的，多扫只是多花几毫秒。
+function isBinary(file) {
+  return BINARY_EXT.has(extname(file).toLowerCase());
 }
+const binarySkipped = [];
 
 // ============================================================
 // 第 0 步：规则自检 —— 一条规则如果连自己的样例都命不中，它就是废的
@@ -149,11 +155,13 @@ const files = gitOk(['ls-files', '--cached', '--others', '--exclude-standard'])
 const hits = [];
 const skipped = [];
 for (const f of files) {
-  if (!isText(f)) { skipped.push(f); continue; }
+  if (isBinary(f)) { binarySkipped.push(f); continue; }
   let st;
   try { st = statSync(resolve(ROOT, f)); } catch (e) { continue; }
   if (!st.isFile() || st.size > 4 * 1024 * 1024) { skipped.push(f); continue; }
-  const text = readFileSync(resolve(ROOT, f), 'utf8');
+  // 按 latin1 读字节：即使文件不是 UTF-8 文本，正则也能在字节上跑，
+  // 不会因为解码失败把整篇内容吞掉（规则全是 ASCII 形态，不受影响）。
+  const text = readFileSync(resolve(ROOT, f), 'latin1');
   for (const rule of RULES) {
     rule.re.lastIndex = 0;
     let m;
@@ -202,7 +210,9 @@ console.log(' 扫描范围');
 console.log('   · 工作区文件（受控 + 未忽略待提交）：' + files.length + ' 个');
 console.log('   · Git 全历史：' + revs.length + ' 个提交的每个版本');
 console.log('   · 已排除（.gitignore 生效）：.env / node_modules / .cloudbase-* / _day*_tmp');
-console.log('   · 跳过的非文本文件：' + skipped.length + ' 个（本次全是 docs/*.png 证据图）');
+console.log('   · 已知二进制跳过：' + binarySkipped.length + ' 个' +
+  (binarySkipped.length ? '（' + [...new Set(binarySkipped.map(f => extname(f).toLowerCase()))].join(' ') + '）' : ''));
+if (skipped.length) console.log('   · ⚠️ 因体积/读取问题跳过：' + skipped.length + ' 个 → ' + skipped.slice(0, 5).join(' '));
 console.log('');
 console.log(' 自检');
 console.log('   · 规则自检：' + RULES.length + '/' + RULES.length + ' 条规则能命中自己的样例');

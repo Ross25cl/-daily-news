@@ -1,7 +1,8 @@
 // ============================================================
 // league.js — 联赛板块页渲染逻辑（Day 10 建）
-// 数据来源：data/nba.json | cba.json | ucl.json | epl.json（本地假数据）
-// 结构预览阶段：Tab 由各数据文件的 tabs 数组驱动，字段名已统一规范
+// 数据来源：data/nba.json | cba.json —— 腾讯体育真实数据（Day 22 / Day 23 加练接入）
+//           data/ucl.json | epl.json —— 假数据示例，MVP 结构预览
+// Tab 由各数据文件的 tabs 数组驱动，字段名已统一规范
 //（teamName / wins / points 等），接真实数据时只换数据不改代码。
 // URL 约定：league.html?lg=nba|cba|ucl|epl ，Tab 状态写在 hash（#schedule）
 // ============================================================
