@@ -64,11 +64,14 @@ function proxyApi(req, res) {
   });
 
   upstream.on('error', err => {
+    // 【Day 23】对外只说中文，内部原因只打在启动这个窗口的日志里 ——
+    // 与线上云函数同一套规矩（分类见 cloudfunctions/shared/httpKit.js）。
+    // code 也用线上「网络错」那一个，前端可以把两种来源当成同一件事处理。
     console.log('502  ' + req.url + ' → 代理失败：' + err.message);
     res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       ok: false,
-      error: { code: 'PROXY_ERROR', message: '本地代理到云函数失败：' + err.message }
+      error: { code: 'UPSTREAM_UNREACHABLE', message: '暂时连不上数据服务，请稍后重试。' }
     }));
   });
 
@@ -155,8 +158,9 @@ const server = createServer(async (req, res) => {
     res.end(data);
     console.log('200  ' + urlPath);
   } catch (err) {
+    // 【Day 23】对外只说中文；内部原文（err.message）只进这个窗口的日志。
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('500 服务器内部错误：' + err.message);
+    res.end('500 服务端开小差了，请稍后重试。');
     console.log('500  ' + req.url + ' → ' + err.message);
   }
 });

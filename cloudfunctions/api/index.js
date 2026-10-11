@@ -4,6 +4,14 @@
  * ------------------------------------------------------------
  * 今日实现：GET /api/hot —— 首页三平台热搜榜
  *
+ * 【Day 23 改动】错误提示统一 —— 本文件不再自己写 sendJSON / ok / fail / log /
+ *   自己起 http 服务，改用 cloudfunctions/shared/httpKit.js 这一份公共零件
+ *   （matches / news / favorites 早在 Day 22 就接上了，今天把 api 与 health 补齐，
+ *   至此 5 个云函数对外的错误话术、响应包络、405 文案全部同源）。
+ *   路由、字段、状态码、包络形状一律未动。
+ *   另：500 兜底不再把 err.message 拼给客户端 —— 那是内部原文
+ *   （Node 英文 / PostgREST 返回体），只进日志。
+ *
  * 【Day 20 改动】只有一处：meta.updatedAt 由 new Date()（接口被调用的时刻）
  *   改为 hot_items.fetched_at 的最新值（三平台官网最后一次被抓取的时间）。
  *   原因：前端要在页面上显示「真实抓取时间」，拿请求时刻顶替是假的新鲜。
@@ -48,10 +56,7 @@
 
 const hotRepo = require('../shared/hotItemsRepository');
 const pg = require('../shared/pg');
-
-// CloudBase HTTP 云函数固定监听 9000 端口（不可改）
-// 允许环境变量覆盖，仅为本地测试；云端由 scf_bootstrap 注入 PORT=9000
-const PORT = Number(process.env.PORT || 9000);
+const kit = require('../shared/httpKit');
 
 // 平台白名单（契约 2.1：hupu / tencent / cctv5）
 const PLATFORMS = {
@@ -59,44 +64,6 @@ const PLATFORMS = {
   tencent: { name: '腾讯体育', desc: '首页要闻热榜', order: 2 },
   cctv5: { name: '央视体育', desc: '官方要闻', order: 3 }
 };
-
-// ---------- 统一响应（契约 0.2） ----------
-
-function sendJSON(res, statusCode, body) {
-  const payload = JSON.stringify(body, null, 2);
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Length': Buffer.byteLength(payload),
-    'Cache-Control': 'no-store'
-  });
-  res.end(payload);
-}
-
-function ok(res, data, meta) {
-  sendJSON(res, 200, { ok: true, data: data, meta: meta || {} });
-}
-
-function fail(res, statusCode, code, message) {
-  sendJSON(res, statusCode, { ok: false, error: { code: code, message: message } });
-}
-
-// ---------- 服务端日志（Day 18 余力加练） ----------
-
-/**
- * 统一日志：一行 JSON，云函数控制台按「[api]」过滤即可回溯。
- * 记什么：事件名 + 关键字段 + 耗时 + 结果；**不记 API Key**。
- */
-function log(event, fields) {
-  console.log('[api] ' + JSON.stringify(Object.assign({
-    ts: new Date().toISOString(),
-    event: event
-  }, fields || {})));
-}
-
-function timer() {
-  const t0 = Date.now();
-  return () => Date.now() - t0;
-}
 
 // ---------- 业务：GET /api/hot ----------
 
@@ -108,16 +75,17 @@ function timer() {
  * 不出现任何表名、列名或 HTTPS 调用。
  */
 async function handleHot(res, params) {
-  const elapsed = timer();
+  const elapsed = kit.timer();
 
   // ---- 参数校验（契约 2.1 错误表：platform 不在白名单 → 400） ----
   const platformParam = params.get('platform');
   let targets;
   if (platformParam) {
     if (!PLATFORMS[platformParam]) {
-      log('hot.reject', { reason: 'platform 非白名单', platform: platformParam, ms: elapsed() });
-      return fail(res, 400, 'BAD_REQUEST',
-        'platform 取值无效，只支持 hupu / tencent / cctv5');
+      kit.log('hot.reject', { reason: 'platform 非白名单', platform: platformParam, ms: elapsed() });
+      // 走三类错误里的「输入错」唯一出口（Day 23）：状态码 400 + 固定前缀 + 说清允许值
+      return kit.inputError(res,
+        '参数 platform 取值无效，只支持 hupu / tencent / cctv5，收到的是「' + platformParam + '」。');
     }
     targets = [platformParam];
   } else {
@@ -144,8 +112,8 @@ async function handleHot(res, params) {
   // ---- 空态（契约 2.1：当天无数据 → 404，前端显示整页空态） ----
   const total = platforms.reduce((n, p) => n + p.items.length, 0);
   if (total === 0) {
-    log('hot.empty', { targets: targets.join('/'), ms: elapsed() });
-    return fail(res, 404, 'NOT_FOUND', '今日暂无热搜数据');
+    kit.log('hot.empty', { targets: targets.join('/'), ms: elapsed() });
+    return kit.fail(res, 404, 'NOT_FOUND', '今日暂无热搜数据');
   }
 
   // ---- meta.updatedAt = 真实抓取时间（Day 20 修正） ----
@@ -158,16 +126,18 @@ async function handleHot(res, params) {
   try {
     updatedAt = await hotRepo.latestFetchedAt();
   } catch (e) {
-    log('hot.fetched_at_failed', { message: e && e.message });
+    // 这里吞掉异常是刻意的：拿不到「真实抓取时间」不该让整页数据失败。
+    // 但要注意，吞掉的是**这条附加信息**，不是数据本身（数据在上面已经取到了）。
+    kit.log('hot.fetched_at_failed', { reason: (e && e.message) || '' });
   }
   if (!updatedAt) updatedAt = new Date().toISOString();
 
-  log('hot.ok', {
+  kit.log('hot.ok', {
     targets: targets.join('/'), limit: limit, count: total,
     updatedAt: updatedAt, ms: elapsed()
   });
 
-  ok(res, { platforms: platforms }, {
+  kit.ok(res, { platforms: platforms }, {
     count: total,
     updatedAt: updatedAt
   });
@@ -181,54 +151,26 @@ async function handleHot(res, params) {
 // （2026-10-06 更正：此前注释写「恒为 /」，实为前缀剥净后的特例，
 //   带后缀的请求会把后缀留在 req.url，见 docs/data-source-status.md §5.1。）
 
-const server = http_createServer();
+const server = kit.createServer(async (req, res, u) => {
+  const path = u.pathname;
 
-function http_createServer() {
-  const http = require('node:http');
-  return http.createServer(async (req, res) => {
-    const u = new URL(req.url || '/', 'http://localhost');
-    const path = u.pathname;
-    const started = Date.now();
+  // ---- 路径兼容（重要，实测坑）----
+  // CloudBase 网关是**前缀匹配**：转发时剥掉路由前缀（/api/hot），
+  // 剩余部分原样留在 req.url —— 本路由无后缀，故线上收到 "/"。
+  // 为兼容本地直连测试（此时收到的是完整 /api/hot），两种形态都认。
+  const isHot = path === '/api/hot' || path === '/' || path === '/hot';
 
-    // ---- 路径兼容（重要，实测坑）----
-    // CloudBase 网关是**前缀匹配**：转发时剥掉路由前缀（/api/hot），
-    // 剩余部分原样留在 req.url —— 本路由无后缀，故线上收到 "/"。
-    // 为兼容本地直连测试（此时收到的是完整 /api/hot），两种形态都认。
-    const isHot = path === '/api/hot' || path === '/' || path === '/hot';
+  if (isHot) {
+    return await handleHot(res, u.searchParams);
+  }
 
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      log('method_not_allowed', { method: req.method, path: path });
-      return fail(res, 405, 'METHOD_NOT_ALLOWED', '仅支持 GET');
-    }
+  // ---- 兜底 404 ----
+  kit.log('not_found', { method: req.method, path: path });
+  return kit.fail(res, 404, 'NOT_FOUND', '接口不存在：' + path);
+}, { allowedMethods: ['GET', 'HEAD'] });
 
-    try {
-      // ---- GET /api/hot ----
-      if (isHot) {
-        return await handleHot(res, u.searchParams);
-      }
-
-      // ---- 兜底 404 ----
-      log('not_found', { method: req.method, path: path, ms: Date.now() - started });
-      return fail(res, 404, 'NOT_FOUND', '接口不存在：' + path);
-    } catch (err) {
-      // 错误信息给中文可读说明（契约 0.3：500 INTERNAL_ERROR）
-      log('error', {
-        method: req.method, path: path,
-        message: err && err.message, ms: Date.now() - started
-      });
-      return fail(res, 500, 'INTERNAL_ERROR',
-        '服务端开小差了，请稍后重试。' + (err && err.message ? '（' + err.message + '）' : ''));
-    }
-  });
-}
-
-server.listen(PORT, () => {
-  const conn = pg.connectionInfo();
-  console.log('[每日体坛速览] api 云函数已启动，监听端口 ' + PORT +
-    '（env=' + conn.envId + '，API Key ' + (conn.apiKey === 'injected' ? '已注入' : '缺失！') + '）');
-  log('boot', { port: PORT, env: conn.envId, apiKey: conn.apiKey });
-});
+kit.start(server, 'api', pg.connectionInfo());
 
 process.on('uncaughtException', err => {
-  log('uncaught_exception', { message: err && err.message, stack: err && err.stack });
+  kit.log('uncaught_exception', { message: err && err.message, stack: err && err.stack });
 });

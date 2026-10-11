@@ -196,10 +196,11 @@ const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.t
 // （抛出的错由调用方决定是降级还是进错误态）
 async function fetchFromAPI(path) {
   const res = await fetch(FUNC_ORIGIN + path, { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const body = await res.json();
-  if (!body || body.ok !== true) {
-    throw new Error((body && body.error && body.error.message) || '接口返回异常');
+  // Day 23：三类错误统一中文 —— 后端给的中文说明优先用它；
+  // 后端没给也不能把「HTTP 500」这种原文甩给用户（见 js/api-error.js）。
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.ok !== true) {
+    throw new Error(window.ApiError.fromResponse(res.status, body));
   }
   return body.data;
 }
@@ -207,7 +208,7 @@ async function fetchFromAPI(path) {
 // 本地示例数据兜底（接口不可用时页面不白屏）
 async function fetchNewsFromLocal() {
   const res = await fetch('data/news.json', { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
+  if (!res.ok) throw new Error('本地备用数据也读不到（HTTP ' + res.status + '）。');
   return res.json();
 }
 

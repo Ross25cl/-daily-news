@@ -50,6 +50,33 @@ function connectionInfo() {
   return { envId: ENV_ID, apiKey: API_KEY ? 'injected' : 'missing' };
 }
 
+// ---------- 错误的「责任归属」（Day 23） ----------
+//
+// 本层扔出去的 Error，message 是**给运维看的内部原文**，不是给用户的。
+// 「这条错该算网络错还是服务端错」只有这一层分得清（它才知道请求发没发出去），
+// 所以由这里贴上标记 err.kind，接口层照它选话术：
+//
+//   markNetwork(err)  —— 连接层面就失败了（DNS/超时/连接被重置/上游 5xx/429）
+//                        → 接口层回 503「暂时连不上数据服务，请稍后重试。」
+//   不打标           —— 其余（我们配置错、查询写错、约束冲突没接住）
+//                        → 接口层回 500「服务端开小差了，请稍后重试。」
+//
+// ⚠️ 无论哪种，**响应体里都不会出现 message**（见 shared/httpKit.js 的 failUnexpected）。
+function markNetwork(err) {
+  if (err) err.kind = 'NETWORK';
+  return err;
+}
+
+/**
+ * 配置类错误：不是用户的问题，也算「服务端错」（500），
+ * 但内部 message 要说清原因，方便运维一眼看到。
+ */
+function serverError(message) {
+  const err = new Error(message);
+  err.kind = 'SERVER';
+  return err;
+}
+
 /**
  * 发一个到 PostgREST 的请求，返回解析后的 JSON。
  * 所有查询/写入都收敛到这里，上层只关心「拿哪张表、什么条件」。
@@ -73,17 +100,20 @@ function pgRequest(method, table, opts) {
   const options = opts || {};
   return new Promise((resolve, reject) => {
     if (!API_KEY) {
-      return reject(new Error('服务端未配置 API Key（环境变量 CB_API_KEY 缺失）'));
+      // 我们自己没配好 → 服务端错（500），不是网络错。
+      // message 里点名环境变量是给运维看的；客户端只会收到统一的中文兜底。
+      return reject(serverError('服务端未配置 API Key（环境变量 CB_API_KEY 缺失）'));
     }
 
     // ---- 改/删的安全阀：必须有过滤条件（Day 22） ----
     // 无条件 PATCH/DELETE 会命中整张表；少写一个 id 条件就是线上事故。
     // 这里直接拦下，让错误暴露在开发期，而不是等数据没了才发现。
+    // 这是**代码写错了**，不是用户输入问题，也不是网络问题 → 服务端错。
     if (method === 'PATCH' || method === 'DELETE') {
       const q = options.query || {};
       const hasFilter = Object.keys(q).some(k => String(q[k]).indexOf('eq.') === 0);
       if (!hasFilter) {
-        return reject(new Error('拒绝执行无过滤条件的 ' + method +
+        return reject(serverError('拒绝执行无过滤条件的 ' + method +
           '（必须至少给一个 eq. 条件，防止误改/误删整张表）'));
       }
     }
@@ -129,25 +159,33 @@ function pgRequest(method, table, opts) {
       resp.on('data', c => { raw += c; });
       resp.on('end', () => {
         if (resp.statusCode < 200 || resp.statusCode >= 300) {
+          // 内部原文：给运维看的，不会进响应体。
           const err = new Error('数据库返回 HTTP ' + resp.statusCode + '：' + raw.slice(0, 300));
           // 把原始状态码与响应体挂在错误上，供接口层判重（如 PG 23505 唯一键冲突）
           err.dbStatus = resp.statusCode;
           err.dbBody = raw;
+          // 责任归属（Day 23）：5xx 与 429 是上游自己出问题 → 网络错（503）；
+          // 4xx 是我们把请求写错了（列名拼错、约束没接住）→ 服务端错（500）。
+          if (resp.statusCode >= 500 || resp.statusCode === 429) markNetwork(err);
+          else err.kind = 'SERVER';
           return reject(err);
         }
         try {
           const rows = JSON.parse(raw);
           resolve(Array.isArray(rows) ? rows : []);
         } catch (e) {
-          reject(new Error('数据库返回的不是合法 JSON：' + raw.slice(0, 200)));
+          // 200 却给了非 JSON：说明我们对上游的假设已经不成立 → 服务端错。
+          reject(serverError('数据库返回的不是合法 JSON：' + raw.slice(0, 200)));
         }
       });
     });
 
+    // ---- 连接层面失败一律算「网络错」（Day 23） ----
+    // 超时、DNS 查不到、连接被重置、TLS 握手失败都走这里。
     req.on('timeout', () => {
-      req.destroy(new Error('数据库请求超时（' + Math.round(DB_TIMEOUT_MS / 1000) + ' 秒）'));
+      req.destroy(markNetwork(new Error('数据库请求超时（' + Math.round(DB_TIMEOUT_MS / 1000) + ' 秒）')));
     });
-    req.on('error', reject);
+    req.on('error', err => reject(markNetwork(err)));
     if (payload !== null) req.write(payload);
     req.end();
   });

@@ -166,17 +166,18 @@ const FUNC_ORIGIN = 'https://ross-d2gimwy406e0d6812-1499705719.ap-shanghai.app.t
 
 async function fetchFromAPI(path) {
   const res = await fetch(FUNC_ORIGIN + path, { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const body = await res.json();
-  if (!body || body.ok !== true) {
-    throw new Error((body && body.error && body.error.message) || '接口返回异常');
+  // Day 23：三类错误统一中文 —— 后端给的中文说明优先用它；
+  // 后端没给也不能把「HTTP 500」这种原文甩给用户（见 js/api-error.js）。
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.ok !== true) {
+    throw new Error(window.ApiError.fromResponse(res.status, body));
   }
   return body.data;
 }
 
 async function fetchNewsFromLocal() {
   const res = await fetch('data/news.json', { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
+  if (!res.ok) throw new Error('本地备用数据也读不到（HTTP ' + res.status + '）。');
   return res.json();
 }
 
@@ -282,7 +283,7 @@ async function submitFavorite() {
     const body = await res.json().catch(() => null);
 
     if (!res.ok || !body || body.ok !== true) {
-      const msg = (body && body.error && body.error.message) || ('提交失败（HTTP ' + res.status + '）');
+      const msg = window.ApiError.fromResponse(res.status, body);
       console.warn('[news-detail.js] 收藏失败:', msg);
       setFavMsg(msg, 'err');
       if (btn) { btn.disabled = false; btn.textContent = label; }
@@ -302,7 +303,7 @@ async function submitFavorite() {
     }
   } catch (err) {
     console.warn('[news-detail.js] 收藏请求异常:', err);
-    setFavMsg('网络异常，收藏没提交成功，稍后再试。', 'err');
+    setFavMsg(window.ApiError.fromError(err), 'err');
     if (btn) { btn.disabled = false; btn.textContent = label; }
   } finally {
     favBusy = false;

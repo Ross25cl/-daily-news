@@ -169,10 +169,10 @@ function apiUrl(path) {
 
 async function fetchHotFromAPI() {
   const res = await fetch(apiUrl('/api/hot'), { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const body = await res.json();
-  if (!body || body.ok !== true) {
-    throw new Error((body && body.error && body.error.message) || '接口返回异常');
+  // Day 23：三类错误统一中文（见 js/api-error.js）
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.ok !== true) {
+    throw new Error(window.ApiError.fromResponse(res.status, body));
   }
   const d = body.data || {};
   const meta = body.meta || {};
@@ -183,7 +183,7 @@ async function fetchHotFromAPI() {
 // 它不是实时数据，所以用上它时页面会同时亮出提示条。
 async function fetchHotFromSnapshot() {
   const res = await fetch('data/hot.json', { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
+  if (!res.ok) throw new Error('本地备用数据也读不到（HTTP ' + res.status + '）。');
   return res.json();
 }
 
@@ -210,7 +210,7 @@ async function loadHot() {
       const url = apiUrl('/api/hot');
       console.warn('[home.js] 接口 ' + url + ' 不可用，回落本地备用数据：', apiErr);
       setSourceNote('提示：接口暂时不可用，本页显示的是本地备用数据（非实时）。' +
-        (apiErr && apiErr.message ? '原因：' + apiErr.message : ''));
+        '原因：' + window.ApiError.fromError(apiErr));
       data = await fetchHotFromSnapshot();
     }
     renderPlatforms(data);

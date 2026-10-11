@@ -2,6 +2,11 @@
  * ============================================================
  * matches/index.js — 每日体坛速览 · 赛程比分写接口云函数（Day 22 建）
  * ------------------------------------------------------------
+ * 【Day 23 改动】错误提示统一 —— 对外只有三种说法（输入错 400 / 网络错 503 /
+ *   服务端错 500），全部由 shared/httpKit.js 给出；取 id 的逻辑收进
+ *   httpKit.readDeleteId（与 /api/news 同一份实现，畸形百分号转义报 400 而不是 500）。
+ *   路由、方法分支、字段白名单、状态码、响应包络一字未动。
+ *
  * 今日实现（第 4 周板块① ②）：
  *   PATCH  /api/matches  —— 改一条比赛记录（状态 / 比分 / 展示标题 / 备注）
  *   DELETE /api/matches  —— 删一条比赛记录（**软删除**：只打标记，数据留在库里）
@@ -191,10 +196,10 @@ function validatePatchInput(body, pre) {
 async function handlePatch(req, res) {
   const elapsed = kit.timer();
 
-  const parsed = await kit.parseBody(req);
+  const parsed = await kit.parseBody(req, { example: '{"id":"20260924-nba-01","status":"已结束","homeScore":112,"awayScore":108}' });
   if (parsed.error) {
     kit.log('matches.patch.reject', { reason: 'body 解析失败', detail: parsed.error, ms: elapsed() });
-    return kit.fail(res, 400, 'BAD_REQUEST', parsed.error);
+    return kit.inputError(res, parsed.error);
   }
   const body = parsed.body;
 
@@ -202,7 +207,7 @@ async function handlePatch(req, res) {
   const idCheck = kit.normalizeId(body.id);
   if (idCheck.error) {
     kit.log('matches.patch.reject', { reason: 'id 不合法', raw: body.id, ms: elapsed() });
-    return kit.fail(res, 400, 'BAD_REQUEST', idCheck.error);
+    return kit.inputError(res, idCheck.error);
   }
   const id = idCheck.id;
 
@@ -219,7 +224,7 @@ async function handlePatch(req, res) {
   const v = validatePatchInput(body, before);
   if (v.errors.length) {
     kit.log('matches.patch.reject', { id: id, reason: '校验未通过', errors: v.errors, ms: elapsed() });
-    return kit.fail(res, 400, 'BAD_REQUEST', v.errors.join(' '));
+    return kit.inputError(res, v.errors.join(' '));
   }
 
   // ---- ④ 落库：改完之后把最新整行取回来 ----
@@ -274,44 +279,23 @@ async function handlePatch(req, res) {
 async function handleDelete(req, res) {
   const elapsed = kit.timer();
 
-  // DELETE 的 id 两种来源都认：
-  //   ① 路径后缀（/api/matches/<id> → 网关剥前缀后 req.url = /<id>）
-  //   ② 请求体 {"id":"..."}（body 优先，方便前端与 curl 用同一种写法）
-  // 先试 body；body 为空则回落到路径后缀。
-  let rawId = '';
-  let from = '';
-
-  const raw = await kit.readBody(req).catch(() => '');
-  if (raw && raw.trim()) {
-    try {
-      const b = JSON.parse(raw);
-      if (b && typeof b === 'object' && !Array.isArray(b) && b.id !== undefined) {
-        rawId = b.id;
-        from = 'body';
-      }
-    } catch (e) {
-      kit.log('matches.delete.reject', { reason: 'body 不是合法 JSON', ms: elapsed() });
-      return kit.fail(res, 400, 'BAD_REQUEST',
-        '请求体不是合法 JSON，请检查格式（应为 {"id":"20260924-nba-01"}）。');
-    }
+  // DELETE 的 id 两种来源都认（Day 23 起收进 httpKit.readDeleteId，一处实现）：
+  //   ① 请求体 {"id":"..."}（优先，方便前端与 curl 用同一种写法）
+  //   ② 路径后缀（/api/matches/<id> → 网关剥前缀后 req.url = /<id>）
+  // 为什么收上去：matches 与 news 原本各写了一份一模一样的 25 行；
+  //   而且路径后缀那段的 decodeURIComponent 会把畸形地址（例如 /api/matches/%E4%B8）
+  //   抛成未捕获异常 → 一路冒到兜底，被当成 500「服务端开小差了」——责任说反了。
+  //   现在畸形转义就地报 400「输入有误」。
+  const got = await kit.readDeleteId(req, {
+    example: '{"id":"20260924-nba-01"}',
+    exclude: ['api', 'matches']
+  });
+  if (got.error) {
+    kit.log('matches.delete.reject', { reason: '取 id 失败', detail: got.error, from: got.from, ms: elapsed() });
+    return kit.inputError(res, got.error);
   }
-
-  if (!rawId) {
-    // 回落：路径后缀
-    const suffix = (req.url || '/').split('?')[0].replace(/^\/+/, '');
-    const seg = suffix.split('/').filter(Boolean).pop() || '';
-    if (seg && seg !== 'matches' && seg !== 'api') {
-      rawId = decodeURIComponent(seg);
-      from = 'path';
-    }
-  }
-
-  const idCheck = kit.normalizeId(rawId);
-  if (idCheck.error) {
-    kit.log('matches.delete.reject', { reason: 'id 不合法', raw: rawId, from: from, ms: elapsed() });
-    return kit.fail(res, 400, 'BAD_REQUEST', idCheck.error);
-  }
-  const id = idCheck.id;
+  const id = got.id;
+  const from = got.from;
 
   // ---- ① 存在性校验：不存在 → 404 + 中文说明（清单要求 3） ----
   const before = await repo.findById(id);
@@ -360,7 +344,7 @@ async function handleGet(res, params) {
     const idCheck = kit.normalizeId(rawId);
     if (idCheck.error) {
       kit.log('matches.get.reject', { reason: 'id 不合法', raw: rawId, ms: elapsed() });
-      return kit.fail(res, 400, 'BAD_REQUEST', idCheck.error);
+      return kit.inputError(res, idCheck.error);
     }
     const row = await repo.findById(idCheck.id);
     if (!row) {

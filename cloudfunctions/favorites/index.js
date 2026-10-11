@@ -6,6 +6,15 @@
  *   POST /api/favorites  —— 收藏一条体坛资讯（写入 news_items）
  *   GET  /api/favorites  —— 读回收藏列表（读 news_items）
  *
+ * 【Day 23 改动】错误提示统一 —— 本文件不再自带 sendJSON / ok / fail / log /
+ *   timer / readBody 与自己的 http 服务，全部改用
+ *   cloudfunctions/shared/httpKit.js（与 matches / news / api / health 同一份）。
+ *   两处对外的说法同时改掉：
+ *     ① 读 body 失败以前回 '无法读取请求体：' + e.message（Node 英文原文）
+ *        → 改成中文说明；
+ *     ② 500 兜底以前把 err.message 拼进响应体 → 现在只进日志。
+ *   校验规则、状态码、错误码、响应包络一字未动。
+ *
  * 【Day 19 分层重构】本文件现在只做三件事：**接请求、调函数、返响应**。
  *   news_items 怎么查/怎么写、「行 → 接口字段」怎么映射、主键怎么生成，
  *   全搬到数据访问层了：
@@ -44,8 +53,7 @@
 
 const newsRepo = require('../shared/newsItemsRepository');
 const pg = require('../shared/pg');
-
-const PORT = Number(process.env.PORT || 9000);
+const kit = require('../shared/httpKit');
 
 // ---------- 白名单（与 db/schema.sql 的 CHECK 约束一一对应） ----------
 // 这些约束「什么算合法输入」，属于接口层的校验职责；
@@ -55,43 +63,9 @@ const STATUSES = ['draft', 'published'];
 const TITLE_MAX = 30;
 const SUMMARY_MAX = 60;
 
-// ---------- 统一响应（契约 0.2） ----------
-
-function sendJSON(res, statusCode, body) {
-  const payload = JSON.stringify(body, null, 2);
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Length': Buffer.byteLength(payload),
-    'Cache-Control': 'no-store'
-  });
-  res.end(payload);
-}
-
-function ok(res, data, meta) {
-  sendJSON(res, 200, { ok: true, data: data, meta: meta || {} });
-}
-
-function fail(res, statusCode, code, message) {
-  sendJSON(res, statusCode, { ok: false, error: { code: code, message: message } });
-}
-
-// ---------- 服务端日志（Day 18 加练） ----------
-
-/**
- * 统一日志：一行 JSON，云函数控制台按「[api]」过滤即可回溯。
- * 记什么：事件名 + 关键标识（id/url/表名）+ 耗时 + 结果；**不记 API Key**。
- */
-function log(event, fields) {
-  console.log('[api] ' + JSON.stringify(Object.assign({
-    ts: new Date().toISOString(),
-    event: event
-  }, fields || {})));
-}
-
-function timer() {
-  const t0 = Date.now();
-  return () => Date.now() - t0;
-}
+// 报错文案里给的 JSON 示例（写全一点，用户可以直接照抄）
+const BODY_EXAMPLE = '{"title":"标题","summary":"摘要","section":"头条","league":"NBA",' +
+  '"sourceName":"来源","sourceUrl":"https://…","digestDate":"2026-10-06"}';
 
 // ---------- 入参校验（防错误输入） ----------
 
@@ -208,7 +182,7 @@ async function resolveExisting(row, sourceUrl) {
   if (row.is_deleted) {
     const revived = await newsRepo.restoreById(row.id);
     if (revived) return { row: revived, restored: true };
-    log('favorites.create.revive_miss', { sourceUrl: sourceUrl, id: row.id });
+    kit.log('favorites.create.revive_miss', { sourceUrl: sourceUrl, id: row.id });
   }
   return { row: row, restored: false };
 }
@@ -216,29 +190,22 @@ async function resolveExisting(row, sourceUrl) {
 // ---------- 业务：POST /api/favorites ----------
 
 async function handleCreateFavorite(req, res) {
-  const elapsed = timer();
+  const elapsed = kit.timer();
 
-  let raw = '';
-  try {
-    raw = await readBody(req);
-  } catch (e) {
-    log('favorites.create.reject', { reason: '读取请求体失败', detail: e.message, ms: elapsed() });
-    return fail(res, 400, 'BAD_REQUEST', '无法读取请求体：' + e.message);
+  // 空请求体当成 `{}` 交给字段校验 —— 这样用户一次就能看到「缺哪些字段」，
+  // 而不是先被一句「请求体是空的」挡回来。
+  const parsed = await kit.parseBody(req, { example: BODY_EXAMPLE, emptyAsObject: true });
+  if (parsed.error) {
+    kit.log('favorites.create.reject', { reason: 'body 解析失败', detail: parsed.error, ms: elapsed() });
+    return kit.inputError(res, parsed.error);
   }
-
-  let body;
-  try {
-    body = raw ? JSON.parse(raw) : {};
-  } catch (e) {
-    log('favorites.create.reject', { reason: 'JSON 解析失败', ms: elapsed() });
-    return fail(res, 400, 'BAD_REQUEST', '请求体不是合法 JSON，请检查格式（应为 {"title":"...", ...}）。');
-  }
+  const body = parsed.body;
 
   // ---- 校验（防错误输入） ----
   const v = validateFavoriteInput(body);
   if (v.errors.length) {
-    log('favorites.create.reject', { reason: '校验未通过', errors: v.errors, ms: elapsed() });
-    return fail(res, 400, 'BAD_REQUEST', v.errors.join(' '));
+    kit.log('favorites.create.reject', { reason: '校验未通过', errors: v.errors, ms: elapsed() });
+    return kit.inputError(res, v.errors.join(' '));
   }
   const input = v.value;
 
@@ -252,11 +219,11 @@ async function handleCreateFavorite(req, res) {
   if (existing) {
     // 命中的是软删除行 → 先复活（理由见 resolveExisting 的注释）
     const resolved = await resolveExisting(existing, input.sourceUrl);
-    log('favorites.create.duplicate', {
+    kit.log('favorites.create.duplicate', {
       sourceUrl: input.sourceUrl, existingId: resolved.row.id,
       restored: resolved.restored, ms: elapsed()
     });
-    return ok(res, newsRepo.toJSON(resolved.row), {
+    return kit.ok(res, newsRepo.toJSON(resolved.row), {
       created: false,
       restored: resolved.restored,
       message: resolved.restored
@@ -272,7 +239,7 @@ async function handleCreateFavorite(req, res) {
     sameDayCount = await newsRepo.countByDigestDate(input.digestDate);
   } catch (e) {
     // 统计失败不阻塞写入：序号从 1 起可能撞主键，但会由唯一约束挡下（不会写脏）
-    log('favorites.create.warn', { reason: '统计当天条数失败，序号从 1 起', detail: e.message });
+    kit.log('favorites.create.warn', { reason: '统计当天条数失败，序号从 1 起', detail: e.message });
   }
   const id = newsRepo.makeId(input.digestDate, sameDayCount);
 
@@ -282,15 +249,11 @@ async function handleCreateFavorite(req, res) {
 
   try {
     const written = await newsRepo.insert(row);
-    log('favorites.create.ok', {
+    kit.log('favorites.create.ok', {
       id: written.id, title: written.title, section: written.section,
       digestDate: written.digest_date, ms: elapsed()
     });
-    return sendJSON(res, 200, {
-      ok: true,
-      data: newsRepo.toJSON(written),
-      meta: { created: true, message: '收藏成功' }
-    });
+    return kit.ok(res, newsRepo.toJSON(written), { created: true, message: '收藏成功' });
   } catch (err) {
     // ---- 第二道防线：唯一索引挡住并发重复（PG 错误码 23505）----
     const isDup = err.dbStatus === 409 ||
@@ -299,12 +262,12 @@ async function handleCreateFavorite(req, res) {
 
     if (isDup) {
       const again = await newsRepo.findBySourceUrl(input.sourceUrl);
-      log('favorites.create.conflict', {
+      kit.log('favorites.create.conflict', {
         sourceUrl: input.sourceUrl, found: !!again, ms: elapsed()
       });
       if (again) {
         const resolved = await resolveExisting(again, input.sourceUrl);
-        return ok(res, newsRepo.toJSON(resolved.row), {
+        return kit.ok(res, newsRepo.toJSON(resolved.row), {
           created: false,
           restored: resolved.restored,
           message: resolved.restored
@@ -312,8 +275,10 @@ async function handleCreateFavorite(req, res) {
             : '这篇文章已在收藏中（并发重复提交）'
         });
       }
-      return fail(res, 409, 'CONFLICT', '该文章已存在或被同时提交，请刷新后查看收藏列表。');
+      return kit.fail(res, 409, 'CONFLICT', '该文章已存在或被同时提交，请刷新后查看收藏列表。');
     }
+    // 其余异常一律交给 httpKit 的兜底出口：网络错 → 503，其它 → 500，
+    // 对外只说中文，内部原文只进日志。
     throw err;
   }
 }
@@ -321,7 +286,7 @@ async function handleCreateFavorite(req, res) {
 // ---------- 业务：GET /api/favorites ----------
 
 async function handleListFavorites(res, params) {
-  const elapsed = timer();
+  const elapsed = kit.timer();
 
   let limit = parseInt(params.get('limit') || '20', 10);
   if (isNaN(limit) || limit < 1) limit = 20;
@@ -333,31 +298,10 @@ async function handleListFavorites(res, params) {
   // 「怎么按创建时间倒序翻页」由 repository 负责。
   const rows = await newsRepo.listRecent(limit, offset);
 
-  log('favorites.list.ok', { limit: limit, offset: offset, count: rows.length, ms: elapsed() });
+  kit.log('favorites.list.ok', { limit: limit, offset: offset, count: rows.length, ms: elapsed() });
 
-  ok(res, rows.map(newsRepo.toJSON), {
+  kit.ok(res, rows.map(newsRepo.toJSON), {
     count: rows.length, limit: limit, offset: offset, updatedAt: new Date().toISOString()
-  });
-}
-
-// ---------- 读请求体（带体积上限） ----------
-
-function readBody(req, maxBytes) {
-  const LIMIT = maxBytes || 64 * 1024;   // 64KB 足够，防大包打爆
-  return new Promise((resolve, reject) => {
-    let size = 0;
-    const chunks = [];
-    req.on('data', c => {
-      size += c.length;
-      if (size > LIMIT) {
-        reject(new Error('请求体超过 ' + Math.round(LIMIT / 1024) + 'KB 上限'));
-        req.destroy();
-        return;
-      }
-      chunks.push(c);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    req.on('error', reject);
   });
 }
 
@@ -365,48 +309,18 @@ function readBody(req, maxBytes) {
 //
 // 本函数只服务 /api/favorites 一个路由，网关剥前缀后 req.url 恒为 "/"，
 // 因此这里不需要（也无法）按路径判别，只看方法即可。
+// 方法白名单与 405 文案、500 兜底都在 kit.createServer 里 —— 5 个函数一套。
 
-const server = http_createServer();
+const server = kit.createServer(async (req, res, u) => {
+  if (req.method === 'POST') {
+    return await handleCreateFavorite(req, res);
+  }
+  // GET / HEAD
+  return await handleListFavorites(res, u.searchParams);
+}, { allowedMethods: ['GET', 'HEAD', 'POST'] });
 
-function http_createServer() {
-  const http = require('node:http');
-  return http.createServer(async (req, res) => {
-    const u = new URL(req.url || '/', 'http://localhost');
-    const path = u.pathname;
-    const started = Date.now();
-
-    try {
-      // ---- POST /api/favorites ----
-      if (req.method === 'POST') {
-        return await handleCreateFavorite(req, res);
-      }
-
-      // ---- GET /api/favorites ----
-      if (req.method === 'GET' || req.method === 'HEAD') {
-        return await handleListFavorites(res, u.searchParams);
-      }
-
-      // ---- 其它方法 ----
-      log('method_not_allowed', { method: req.method, path: path });
-      return fail(res, 405, 'METHOD_NOT_ALLOWED', '该接口支持 GET 与 POST（收到 ' + req.method + '）');
-    } catch (err) {
-      log('error', {
-        method: req.method, path: path, message: err && err.message,
-        dbStatus: err && err.dbStatus, ms: Date.now() - started
-      });
-      return fail(res, 500, 'INTERNAL_ERROR',
-        '服务端开小差了，请稍后重试。' + (err && err.message ? '（' + err.message + '）' : ''));
-    }
-  });
-}
-
-server.listen(PORT, () => {
-  const conn = pg.connectionInfo();
-  console.log('[每日体坛速览] favorites 云函数已启动，监听端口 ' + PORT +
-    '（env=' + conn.envId + '，API Key ' + (conn.apiKey === 'injected' ? '已注入' : '缺失！') + '）');
-  log('boot', { port: PORT, env: conn.envId, apiKey: conn.apiKey });
-});
+kit.start(server, 'favorites', pg.connectionInfo());
 
 process.on('uncaughtException', err => {
-  log('uncaught_exception', { message: err && err.message, stack: err && err.stack });
+  kit.log('uncaught_exception', { message: err && err.message, stack: err && err.stack });
 });

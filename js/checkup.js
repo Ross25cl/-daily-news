@@ -71,9 +71,10 @@ async function callAPI(path, options) {
   const text = await res.text();
   let body = null;
   try { body = JSON.parse(text); } catch (e) { /* 非 JSON 时下面统一报错 */ }
-  if (!body) throw new Error('HTTP ' + res.status + '，返回的不是 JSON：' + text.slice(0, 200));
+  // Day 23：只说中文；以前这里会把返回体原文 text.slice(0,200) 带出去
+  if (!body) throw new Error('接口返回的不是 JSON（HTTP ' + res.status + '），请稍后重试。');
   if (!res.ok || body.ok !== true) {
-    const msg = (body.error && body.error.message) || ('HTTP ' + res.status);
+    const msg = window.ApiError.fromResponse(res.status, body);
     const err = new Error(msg);
     err.body = body;
     throw err;
@@ -98,7 +99,7 @@ async function checkHealth() {
     else setBadge('health-badge', 'bad', '异常 ' + res.status);
   } catch (err) {
     $('health-ms').textContent = (Date.now() - t0) + ' ms';
-    $('health-body').textContent = '请求失败：' + err.message;
+    $('health-body').textContent = '请求失败：' + window.ApiError.fromError(err);
     setBadge('health-badge', 'bad', '失败');
   }
 }
@@ -139,7 +140,7 @@ async function loadHot() {
 
     setBadge('hot-badge', 'ok', '正常 · ' + rows.length + ' 条');
   } catch (err) {
-    $('hot-table').innerHTML = '<p class="empty-cell">读取失败：' + esc(err.message) + '</p>';
+    $('hot-table').innerHTML = '<p class="empty-cell">读取失败：' + esc(window.ApiError.fromError(err)) + '</p>';
     setBadge('hot-badge', 'bad', '失败');
   }
 }
@@ -170,7 +171,7 @@ async function loadNews() {
 
     setBadge('news-badge', 'ok', '正常 · ' + list.length + ' 条');
   } catch (err) {
-    $('news-table').innerHTML = '<p class="empty-cell">读取失败：' + esc(err.message) + '</p>';
+    $('news-table').innerHTML = '<p class="empty-cell">读取失败：' + esc(window.ApiError.fromError(err)) + '</p>';
     setBadge('news-badge', 'bad', '失败');
   }
 }
@@ -217,7 +218,7 @@ function initWriteForm() {
       setBadge('write-badge', 'ok', created ? '新写入 1 条' : '已存在，未重复写');
       await loadNews();     // 写完立刻读回来，眼见为实
     } catch (err) {
-      out.textContent = '写入失败：' + err.message + '\n\n' +
+      out.textContent = '写入失败：' + window.ApiError.fromError(err) + '\n\n' +
         JSON.stringify(err.body || {}, null, 2);
       setBadge('write-badge', 'bad', '失败');
     } finally {
@@ -423,7 +424,7 @@ function initMutatePanel() {
       patchBtn.disabled = true;
       deleteBtn.disabled = true;
       out.hidden = false;
-      out.textContent = '取不到这一条：' + err.message + '\n\n' +
+      out.textContent = '取不到这一条：' + window.ApiError.fromError(err) + '\n\n' +
         JSON.stringify(err.body || {}, null, 2);
       setMutateBadge('bad', err.body && err.body.error ? err.body.error.code : '失败');
     } finally {
@@ -462,7 +463,7 @@ function initMutatePanel() {
       if (mutateState.table === 'news') loadNews();
     } catch (err) {
       out.hidden = false;
-      out.textContent = '修改失败：' + err.message + '\n\n' + JSON.stringify(err.body || {}, null, 2);
+      out.textContent = '修改失败：' + window.ApiError.fromError(err) + '\n\n' + JSON.stringify(err.body || {}, null, 2);
       setMutateBadge('bad', err.body && err.body.error ? err.body.error.code : '失败');
     } finally {
       patchBtn.disabled = false;
@@ -507,8 +508,8 @@ function initMutatePanel() {
         await callAPI(schema.path + '?id=' + encodeURIComponent(mutateState.id));
         goneText = '⚠ 复查仍能 GET 到，删除可能没生效，请重试。';
       } catch (err) {
-        goneText = '复查 GET 该 id → HTTP ' +
-          ((err.body && err.body.error) ? (err.body.error.code + '：' + err.body.error.message) : err.message) +
+        goneText = '复查 GET 该 id → ' +
+          ((err.body && err.body.error) ? (err.body.error.code + '：' + err.body.error.message) : window.ApiError.fromError(err)) +
           '\n（这就是「删掉之后 GET 不再返回」的证据）';
       }
 
@@ -539,7 +540,7 @@ function initMutatePanel() {
       loadNews();
     } catch (err) {
       out.hidden = false;
-      out.textContent = '删除失败：' + err.message + '\n\n' + JSON.stringify(err.body || {}, null, 2);
+      out.textContent = '删除失败：' + window.ApiError.fromError(err) + '\n\n' + JSON.stringify(err.body || {}, null, 2);
       setMutateBadge('bad', err.body && err.body.error ? err.body.error.code : '失败');
       deleteBtn.disabled = false;
       patchBtn.disabled = false;

@@ -10,6 +10,15 @@
  *   - 不写任何业务逻辑（真实业务接口是后续几天）
  *   - 不处理跨域（接口还没接，前端暂不调它）
  *
+ * 【Day 23 改动】错误提示统一 —— 本文件不再自己起 http 服务、自己写
+ *   405/404 文案，改用 cloudfunctions/shared/httpKit.js：
+ *     · 405 文案与其余 4 个云函数同源（'该接口支持 GET / HEAD，收到的是 POST。'）
+ *     · 多了统一兜底：万一 handler 抛异常，回 500「服务端开小差了，请稍后重试。」
+ *       而不是让请求挂住（以前这里没有 try/catch）。
+ *     · OPTIONS 预检统一回 204。
+ *   成功响应一字未动：仍是 `{ ok: true, service: 'Daily Sports Express' }`
+ *   —— 它没有 data，是契约 §0.2 里唯一的例外，Day 15 起就如此，今天不动它。
+ *
  * 形态：HTTP 云函数
  *   用 Node 原生 http 模块起一个服务，监听 9000 端口。
  *   CloudBase 要求 HTTP 云函数必须带一个可执行的 scf_bootstrap 启动脚本，
@@ -22,47 +31,22 @@
  * ============================================================
  */
 
-const http = require('node:http');
-
-// CloudBase HTTP 云函数固定监听 9000 端口（不可改）
-const PORT = 9000;
+const kit = require('../shared/httpKit');
 
 // 服务基本信息。改动这里即可，无需动路由逻辑。
 const SERVICE_NAME = 'Daily Sports Express';   // 产品英文名
 const SERVICE_CN = '每日体坛速览';               // 产品中文名
 const VERSION = 'v0.1.0';                        // 云函数自身版本号
 
-/**
- * 构造统一的 JSON 响应。
- * 约定（与 api-contract.md 第 0 节一致）：成功 { ok: true, data }；
- * 出错 { ok: false, error: { code, message } }。
- */
-function sendJSON(res, statusCode, body) {
-  const payload = JSON.stringify(body, null, 2);
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Length': Buffer.byteLength(payload),
-    // 跨域今天不配，但先把常用的响应头写上，接入前端时不用回头改函数。
-    // 注：真正生效需要网关/安全域名配置，Day 15 不处理。
-    'Cache-Control': 'no-store'
-  });
-  res.end(payload);
-}
-
-const server = http.createServer((req, res) => {
-  // 只解析「路径」，忽略查询串（健康检查不带参数）
-  const path = (req.url || '/').split('?')[0];
+const server = kit.createServer((req, res, u) => {
+  const path = u.pathname;
 
   // ---- 路由 1：GET /api/health —— 今天唯一实现的接口 ----
+  // （方法白名单已由 kit.createServer 处理，走到这里一定是 GET / HEAD）
   if (path === '/api/health' || path === '/' || path === '/health') {
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      sendJSON(res, 405, {
-        ok: false,
-        error: { code: 'METHOD_NOT_ALLOWED', message: '仅支持 GET' }
-      });
-      return;
-    }
-    sendJSON(res, 200, {
+    // 注意这一条不是契约 §0.2 的 { ok, data, meta }：健康检查没有 data，
+    // 从 Day 15 起就是 { ok, service }，checkup.html 直接展示这段原文。
+    kit.sendJSON(res, 200, {
       ok: true,
       service: SERVICE_NAME
     });
@@ -71,18 +55,14 @@ const server = http.createServer((req, res) => {
 
   // ---- 兜底：其它路径一律 404 ----
   // 未来新增接口在路由区往上加，这里保持「不认识就 404」的明确语义。
-  sendJSON(res, 404, {
-    ok: false,
-    error: { code: 'NOT_FOUND', message: '接口不存在：' + path }
-  });
-});
+  kit.fail(res, 404, 'NOT_FOUND', '接口不存在：' + path);
+}, { allowedMethods: ['GET', 'HEAD'] });
 
-server.listen(PORT, () => {
-  // 启动日志会进 CloudBase 函数日志，排查部署问题时先看这里
-  console.log('[' + SERVICE_CN + '] health 云函数已启动，监听端口 ' + PORT + '（' + VERSION + '）');
-});
+kit.start(server, 'health');
 
 // 优雅处理进程异常：打印出来，方便在函数日志里定位
 process.on('uncaughtException', err => {
-  console.error('[health] 未捕获异常：', err);
+  console.error('[' + SERVICE_CN + '] 未捕获异常：', err);
 });
+
+console.log('[' + SERVICE_CN + '] health 版本 ' + VERSION);

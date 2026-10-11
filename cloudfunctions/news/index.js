@@ -2,6 +2,11 @@
  * ============================================================
  * news/index.js — 每日体坛速览 · 资讯写接口云函数（Day 22 建）
  * ------------------------------------------------------------
+ * 【Day 23 改动】错误提示统一 —— 对外只有三种说法（输入错 400 / 网络错 503 /
+ *   服务端错 500），全部由 shared/httpKit.js 给出；取 id 的逻辑收进
+ *   httpKit.readDeleteId（与 /api/matches 同一份实现，畸形百分号转义报 400 而不是 500）。
+ *   路由、方法分支、字段白名单、状态码、响应包络一字未动。
+ *
  * 今日实现（第 4 周板块① ②，覆盖任务清单点名的「新闻标题 / 内容摘要 / 备注」）：
  *   PATCH  /api/news  —— 改一条资讯（标题 / 摘要 / 备注 / 发布状态）
  *   DELETE /api/news  —— 删一条资讯（**软删除**：只打 is_deleted 标记，数据留在库里）
@@ -142,17 +147,17 @@ function validatePatchInput(body) {
 async function handlePatch(req, res) {
   const elapsed = kit.timer();
 
-  const parsed = await kit.parseBody(req);
+  const parsed = await kit.parseBody(req, { example: '{"id":"20260929-n01","title":"新标题"}' });
   if (parsed.error) {
     kit.log('news.patch.reject', { reason: 'body 解析失败', detail: parsed.error, ms: elapsed() });
-    return kit.fail(res, 400, 'BAD_REQUEST', parsed.error);
+    return kit.inputError(res, parsed.error);
   }
   const body = parsed.body;
 
   const idCheck = kit.normalizeId(body.id);
   if (idCheck.error) {
     kit.log('news.patch.reject', { reason: 'id 不合法', raw: body.id, ms: elapsed() });
-    return kit.fail(res, 400, 'BAD_REQUEST', idCheck.error);
+    return kit.inputError(res, idCheck.error);
   }
   const id = idCheck.id;
 
@@ -166,7 +171,7 @@ async function handlePatch(req, res) {
   const v = validatePatchInput(body);
   if (v.errors.length) {
     kit.log('news.patch.reject', { id: id, reason: '校验未通过', errors: v.errors, ms: elapsed() });
-    return kit.fail(res, 400, 'BAD_REQUEST', v.errors.join(' '));
+    return kit.inputError(res, v.errors.join(' '));
   }
 
   const patchRow = newsRepo.toPatchRow(v.value);
@@ -196,39 +201,20 @@ async function handlePatch(req, res) {
 async function handleDelete(req, res) {
   const elapsed = kit.timer();
 
-  let rawId = '';
-  let from = '';
-
-  const raw = await kit.readBody(req).catch(() => '');
-  if (raw && raw.trim()) {
-    try {
-      const b = JSON.parse(raw);
-      if (b && typeof b === 'object' && !Array.isArray(b) && b.id !== undefined) {
-        rawId = b.id;
-        from = 'body';
-      }
-    } catch (e) {
-      kit.log('news.delete.reject', { reason: 'body 不是合法 JSON', ms: elapsed() });
-      return kit.fail(res, 400, 'BAD_REQUEST',
-        '请求体不是合法 JSON，请检查格式（应为 {"id":"20260929-n01"}）。');
-    }
+  // 取 id 的方式与 /api/matches 完全一致（Day 23 收进 httpKit.readDeleteId）：
+  // 请求体 {"id":"..."} 优先，没有就回落到路径后缀 /api/news/<id>。
+  // 畸形百分号转义（/api/news/%E4%B8）就地报 400「输入有误」，
+  // 不再冒到兜底变成 500。
+  const got = await kit.readDeleteId(req, {
+    example: '{"id":"20260929-n01"}',
+    exclude: ['api', 'news']
+  });
+  if (got.error) {
+    kit.log('news.delete.reject', { reason: '取 id 失败', detail: got.error, from: got.from, ms: elapsed() });
+    return kit.inputError(res, got.error);
   }
-
-  if (!rawId) {
-    const suffix = (req.url || '/').split('?')[0].replace(/^\/+/, '');
-    const seg = suffix.split('/').filter(Boolean).pop() || '';
-    if (seg && seg !== 'news' && seg !== 'api') {
-      rawId = decodeURIComponent(seg);
-      from = 'path';
-    }
-  }
-
-  const idCheck = kit.normalizeId(rawId);
-  if (idCheck.error) {
-    kit.log('news.delete.reject', { reason: 'id 不合法', raw: rawId, from: from, ms: elapsed() });
-    return kit.fail(res, 400, 'BAD_REQUEST', idCheck.error);
-  }
-  const id = idCheck.id;
+  const id = got.id;
+  const from = got.from;
 
   // ---- ① 存在性校验 ----
   const before = await newsRepo.findById(id);
@@ -274,7 +260,7 @@ async function handleGet(res, params) {
     const idCheck = kit.normalizeId(rawId);
     if (idCheck.error) {
       kit.log('news.get.reject', { reason: 'id 不合法', raw: rawId, ms: elapsed() });
-      return kit.fail(res, 400, 'BAD_REQUEST', idCheck.error);
+      return kit.inputError(res, idCheck.error);
     }
     const row = await newsRepo.findById(idCheck.id);
     if (!row) {
