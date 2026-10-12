@@ -353,6 +353,13 @@
   display: flex; align-items: center; justify-content: center;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .55);
 }
+/* 有真实队徽时：容器内铺满 <img>，色块缩写退为兜底（图片加载失败才显示） */
+.bk-logo.has-img { position: relative; overflow: hidden; text-shadow: none; }
+.bk-logo.has-img .bk-logo-fb { display: none; font-style: normal; }
+.bk-logo.has-img img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; border-radius: 50%; background: #fff;
+}
 .bk-name {
   font-size: 13px; font-weight: 600; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;

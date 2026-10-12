@@ -274,6 +274,18 @@ function bkScoreOf(m, key) {
   return (v === null || v === undefined) ? '–' : String(v);
 }
 
+// 队徽：有真 logo URL 时用 <img>（加载失败自动回退为色块缩写），否则保持原色块
+function bkLogoHTML(t) {
+  const abbr = esc(t.abbr || (t.name || '').slice(0, 2));
+  if (t.logo) {
+    return '<span class="bk-logo has-img" style="background:' + esc(t.color) + '">' +
+      '<img src="' + esc(t.logo) + '" alt="" loading="lazy" ' +
+        'onerror="this.style.display=\'none\';this.parentNode.classList.remove(\'has-img\');">' +
+      '<i class="bk-logo-fb">' + abbr + '</i></span>';
+  }
+  return '<span class="bk-logo" style="background:' + esc(t.color) + '">' + abbr + '</span>';
+}
+
 // 一支队伍行：胜者高亮、败者灰度、进行中领先方橙色、未决出待定
 function bkTeamRow(side, match, key, matchMap) {
   const t = bkResolveSide(side, matchMap);
@@ -295,8 +307,7 @@ function bkTeamRow(side, match, key, matchMap) {
     '<div class="' + cls + '" data-team="' + esc(t.name) + '" role="button" tabindex="0" ' +
       'title="查看球队详情（规划中）">' +
       '<span class="bk-seed">' + (t.seed != null ? t.seed : '·') + '</span>' +
-      '<span class="bk-logo" style="background:' + esc(t.color) + '">' +
-        esc(t.abbr || t.name.slice(0, 2)) + '</span>' +
+      bkLogoHTML(t) +
       '<span class="bk-name">' + esc(t.name) + '</span>' +
       '<b class="bk-score">' + esc(bkScoreOf(match, key)) + '</b>' +
     '</div>'
@@ -345,13 +356,11 @@ function bkFinalHTML(f, matchMap) {
     return (
       '<div class="' + cls + '" data-team="' + esc(t.name) + '" role="button" tabindex="0" ' +
         'title="查看球队详情（规划中）">' +
-        '<span class="bk-logo" style="background:' + esc(t.color) + '">' +
-          esc(t.abbr || t.name.slice(0, 2)) + '</span>' +
+        bkLogoHTML(t) +
         '<span class="bk-fname">' + esc(t.name) + '</span>' +
       '</div>'
     );
-  };
-  const champDone = f.status === '已结束' && f.winner;
+  };  const champDone = f.status === '已结束' && f.winner;
   const champName = champDone ? bkResolveSide(f.winner === 'a' ? f.a : f.b, matchMap).name : null;
   return (
     '<div class="bk-final-zone">' +
@@ -541,8 +550,7 @@ function renderRace(race) {
       '<div class="race-teams">' + z.teams.map(t =>
         '<div class="race-team">' +
           '<span class="race-rank">' + esc(t.rank) + '</span>' +
-          '<span class="bk-logo" style="background:' + esc(t.color) + '">' +
-            esc(t.abbr || t.name.slice(0, 2)) + '</span>' +
+          bkLogoHTML(t) +
           '<div class="race-main">' +
             '<div class="race-line1"><b class="race-name" role="button" tabindex="0" ' +
               'data-team="' + esc(t.name) + '" title="查看球队详情（规划中）">' + esc(t.name) + '</b>' +
