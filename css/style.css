@@ -322,7 +322,11 @@ h1 { font-size: 26px; margin: 0 0 4px; }
   outline-offset: 2px;
   border-color: var(--sel-border);
 }
-.search-clear {
+/* Day 24 修复：清空按钮的显隐靠 hidden 属性（js/matches.js 里 clear.hidden = !input.value），
+   而作者样式会盖掉浏览器给 [hidden] 的 display:none —— 之前直接写 display:flex，
+   导致 hidden 失效：搜索框为空时 ✕ 也一直显示（点它没有任何作用）。
+   与 news.css 的 .news-list:not([hidden]) 同一套写法：只在未隐藏时才给布局。 */
+.search-clear:not([hidden]) {
   position: absolute;
   right: 6px;
   width: 22px;

@@ -171,7 +171,11 @@
 .back-btn:hover { border-color: var(--brand-bright); color: var(--text); }
 .back-btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
 
-.breadcrumb {
+/* Day 24 修复：同 .search-clear 一族的坑 —— 面包屑初始靠 hidden 属性隐藏
+   （js/news-detail.js 的 paint() 才把 hidden 置 false），作者样式直接写 display:flex
+   会盖掉 [hidden] 的 display:none，导致空态/错误态下面包屑仍占位。
+   与 .news-list:not([hidden]) 同一套写法。 */
+.breadcrumb:not([hidden]) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
