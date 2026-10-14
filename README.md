@@ -10,6 +10,7 @@
 - **赛程比分**（`matches.html`）：NBA、英超比赛列表，可切换昨天 / 今天 / 明天，点击卡片展开详情。
 - **资讯列表 / 详情**（`news.html` / `news-detail.html`）、**联赛板块**（`league.html`）：见各页说明。
 - **接口检查台**（`checkup.html`）：一个页面看接口健康状态、核心表真实数据、并做一次写入测试（Day 20 新增）。
+- **版本**：**v1.0**（2026-10-14，Day 26）首个正式发布 —— 版本标记、发布与回滚流程见下「[发布与回滚](#发布与回滚day-26)」。
 
 > **数据来源（Day 17 起）**：热搜数据由 `scripts_cloudbase/fetch-hot.ps1` 每日从三平台官网抓取、写入 CloudBase PostgreSQL，
 > 前端通过云函数接口读取。**页面不再依赖本地 `data/*.json`**（它现在只在接口不可用时作为备用数据）。
@@ -76,7 +77,8 @@ node serve.mjs 8001
 │   ├── fetch-leagues.py    # 【Day 21】英超/欧冠/CBA 真数据抓取 → db/league_data.sql
 │   ├── build-nba.py        # 【Day 22】NBA 真数据抓取 → data/nba.json
 │   ├── build-nba-news.py   # 【Day 22】NBA 真数据 → data/matches.json / data/news.json
-│   └── build-nba-db.py     # 【Day 22】NBA 真数据 → db/league_data_nba.sql（入库用）
+│   ├── build-nba-db.py     # 【Day 22】NBA 真数据 → db/league_data_nba.sql（入库用）
+│   └── release.mjs         # 【Day 26】发布 / 回退：快照 + sha256 清单 + 逐字节校验 + 部署
 ├── db/                 # 【Day 16】数据库脚本
 │   ├── schema.sql          #   建表（10 张表）
 │   ├── seed.sql            #   种子数据（⚠️ 会 TRUNCATE 四张 league_* 表，见 api-contract §3.8）
@@ -94,6 +96,9 @@ node serve.mjs 8001
 │   ├── cloudbase-deploy-day18.md  # 【Day 18】写接口部署
 │   ├── cloudbase-deploy-day20.md  # 【Day 20】切公网接口 + 跨域确认 + 检查台
 │   ├── cloudbase-deploy-day22.md  # 【Day 22】PATCH / DELETE 上线 + 四类操作闭环 + 软删除（§8）
+│   ├── release-checklist-v1.0.md  # 【Day 26】发布清单：版本标记 / 发布前验证 / 发布步骤 / 备份
+│   ├── rollback-runbook.md        # 【Day 26】回滚手册：触发条件判断表 / 静态托管与云函数回退 / 回滚后验证
+│   ├── day26-rollback-drill.md    # 【Day 26】回滚演练记录：每步耗时与结果
 │   ├── dataflow.svg / structure.svg / views.md / usability-test-day14.md
 ├── skills/
 │   ├── tiyu-daily/     # 【Day 12】内容抓取与排版规则手册
@@ -239,6 +244,45 @@ node skills/verify-project/check.mjs --json
 
 细则、25 项总表与「每项治哪个旧伤」见 [skills/verify-project/SKILL.md](skills/verify-project/SKILL.md)；
 本次实跑记录（含发现并修正的 2 个误报 + 1 个漏报）见 [docs/day25-verify-record.md](docs/day25-verify-record.md)。
+
+## 发布与回滚（Day 26）
+
+**v1.0 已发布**（2026-10-14）。这一版三样东西互相对齐：git 标签 `v1.0` · 产物快照 `.releases/v1.0/` · 线上静态托管。
+
+| 文档 | 用途 |
+| ---- | ---- |
+| [发布清单](docs/release-checklist-v1.0.md) | 版本标记 / 发布前验证项 / 发布步骤 / 发布后验证 / 代码与数据备份方式 |
+| [回滚手册](docs/rollback-runbook.md) | **什么情况必须回滚**（判断表）/ 静态托管与云函数各自的回退步骤 / 回滚后验证 |
+| [演练记录](docs/day26-rollback-drill.md) | 退回上一版 → 验证 → 恢复 v1.0 → 再验证，每步耗时与结果 |
+
+### 发布
+
+```bash
+node skills/verify-project/check.mjs              # 0) 门禁：不过就不发
+node scripts_cloudbase/release.mjs snapshot v1.0  # 1) 构建 + 落快照 + sha256 清单
+node scripts_cloudbase/release.mjs deploy   v1.0  # 2) 自检快照后部署（内部带 --safe --verify）
+node scripts_cloudbase/release.mjs verify   v1.0  # 3) 线上 vs 快照 逐字节比对
+git tag -a v1.0 -m "..." && git push origin main v1.0
+```
+
+### 回滚
+
+```bash
+node scripts_cloudbase/release.mjs list           # 看本地存了哪些版本
+node scripts_cloudbase/release.mjs deploy v0.9    # 退回上一版（约 12 秒）
+node scripts_cloudbase/release.mjs verify v0.9    # 确认线上真的变回去了
+```
+
+> 云函数回退与数据恢复本次**只写进手册、未实操**：5 个函数目前都只有 `$LATEST`，没有可切流量回去的已发布版本。
+
+### 三条实测结论（都是踩出来的，值得单看）
+
+1. **静态托管没有版本管理。** `tcb hosting deploy --help` 原文写着 *"file upload only, no build, no version management"* ——
+   「回退」在产品层面不存在，**上线前不存上一版产物，出事就没有东西可以退回去**。`release.mjs` 就是为这件事写的。
+2. **测试域名对浏览器的首次直接导航会拦一次。** 直接访问首页会拿到 **HTTP 404 + 「风险提醒」页**（需点「确定访问」，按钮有 3 秒倒计时）；
+   点完（同源二次导航）才 200 出真页面。**curl 不受影响**（所以 `verify` 逐字节比对是准的，别用它判断"浏览器能不能打开"）。
+3. **`--prune` 会误删系统文件。** 托管根目录里还有 `__auth/`、`cloud-admin/` 这类不在发布目录里的系统文件，
+   在根路径上跑 `--prune` 会把它们当"多余文件"删掉。日常发布**不加 `--prune`**，要清就 `tcb hosting delete` 点名清。
 
 ## 安全说明
 
