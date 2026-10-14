@@ -37,3 +37,8 @@ _day*_tmp/
 # 且含 data/nba.json 这类 540KB 大文件 —— 进仓库只会把历史撑大，故不入库。
 .releases/
 
+# ===== 数据导出（Day 27 起，不入库）=====
+# scripts_cloudbase/export-data.mjs 把 PG 整表导成 JSON 落在这里，用来在环境到期前留底。
+# 它是「某一刻的快照」，随导出时间变化（目录名带时间戳），一次约 1.4MB，不入库。
+db/exports/
+

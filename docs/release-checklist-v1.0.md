@@ -158,11 +158,12 @@ git push origin main && git push origin v1.0
 >
 > 这两条是 v1.0 的**已知缺口**，不假装已解决；对策写入[回滚手册](rollback-runbook.md) §触发条件。
 
-### 5.3 发布前必须完成的三件备份
+### 5.3 发布前必须完成的四件备份
 
 1. `git tag -a v1.0` 且已 push（代码侧）
 2. `.releases/v1.0/` 已生成、`release.mjs verify` 通过（产物侧）
 3. **上一版 `.releases/v0.9/` 已存**（回退侧 —— 最容易被漏的那件）
+4. **5 个云函数已 `tcb fn publish-version`**（接口层回退侧 —— Day 27 补做；**v1.1 起应纳入发布步骤**，见[回滚手册](rollback-runbook.md) §3.4）
 
 ---
 
@@ -183,7 +184,7 @@ git push origin main && git push origin v1.0
 
 | # | 事项 | 状态 |
 | - | ---- | ---- |
-| 1 | 云函数只有 `$LATEST`，从未 `publish-version` | **本次不动**；写出对策进回滚手册，等零拍板是否补 |
+| 1 | 云函数只有 `$LATEST`，从未 `publish-version` | ✅ **Day 27 已补做** —— 5 个函数各固化版本 `1`，具备秒级切回能力（见[回滚手册](rollback-runbook.md) §3.4）；`config-route` 切换动作仍未演练 |
 | 2 | 热搜只保留最新一天 `hot_sync.sql` | 已知缺口，未修 |
 | 3 | 接口地址仍散在 5 个 js 文件 | Day 25 已记录，等零定 |
 | 4 | `digest.html` 孤页仍在线上 | 等零拍板去留 |

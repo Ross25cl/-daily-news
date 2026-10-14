@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<!--
+  第三方试用记录表（Day 27）
+  · 第二部分的 12 步文案**复制自 docs/day27-third-party-trial.md §3**，收尾三问来自 §4.3。
+    两处若不一致，以那份 md 为准（它是脚本，这份只是界面）。
+  · 本页必须**在浏览器里直接打开**（file:// 或静态托管）才能填写；
+    在编辑器 / 预览窗口里点击只会「选中元素」，打不了字。
+-->
+<html lang="zh-CN" data-page-node-id="Nls5aXUHGqGkKW60A7FO3j">
+<head data-page-node-id="ICx4EAFbSRQXnftH1HDWTx">
+<meta charset="UTF-8" data-page-node-id="e7pcggYrvEoXhEKwpX9aTX">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="Pt8dYlyQOX4NMcTd2x741G">
+<title>第三方试用记录表 · 每日体坛速览（Day 27）</title>
+<style>
+  :root{
+    --ink:#111827; --ink-2:#374151; --ink-3:#6b7280;
+    --line:#d7dbe2; --line-2:#eef0f4;
+    --bg:#f4f5f7; --card:#ffffff;
+    --accent:#1d4ed8; --warn:#b45309; --warn-bg:#fffbeb;
+    --ok:#047857;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+    padding:28px 18px 64px;
+  }
+  .sheet{max-width:1180px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin:0 0 18px}
+  h1{font-size:22px;margin:0 0 6px;letter-spacing:.2px}
+  h2{font-size:16px;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line-2)}
+  .sub{color:var(--ink-3);font-size:13px;margin:0}
+  .note{background:var(--warn-bg);border:1px solid #f3d9a4;border-radius:8px;padding:10px 14px;color:#78350f;font-size:13.5px;margin:12px 0 0}
+  .note b{color:#7c2d12}
+  ol.how{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
+  ol.how li{margin:3px 0}
+  ol.how b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;text-align:left}
+  th{background:#f8fafc;font-weight:600;color:var(--ink-2);white-space:nowrap}
+  .steps td.no, .three td.no{width:34px;text-align:center;color:var(--ink-3)}
+  .steps td:nth-child(2){width:32%}
+  .steps .vague{color:var(--accent);font-weight:600}
+  .steps .ask{color:var(--ink-3);font-size:12.5px}
+  .fill{background:#fffdf5}
+  [contenteditable="true"]{outline:none;min-height:22px;display:block}
+  [contenteditable="true"]:focus{background:#eef4ff;box-shadow:inset 0 0 0 2px #bfd4ff}
+  [contenteditable="true"]:empty::before{content:attr(data-ph);color:#c4c9d2}
+
+  /* ---- 点选格：整格可点，不用键盘 ---- */
+  .pick{background:#f8fafc;cursor:pointer;user-select:none;min-height:22px;text-align:center;
+    color:#c4c9d2;transition:background .12s}
+  .pick:hover{background:#eef4ff}
+  .pick:focus{outline:none;box-shadow:inset 0 0 0 2px #bfd4ff}
+  .pick[data-k="ok"]  {background:#ecfdf5;color:#047857;font-weight:600}
+  .pick[data-k="warn"]{background:#fffbeb;color:#b45309;font-weight:600}
+  .pick[data-k="bad"] {background:#fef2f2;color:#b91c1c;font-weight:600}
+  .pick[data-k="dim"] {background:#f1f5f9;color:#334155}
+
+  .hdr{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 22px}
+  .hdr .row{display:flex;align-items:center;gap:10px;border-bottom:1px dashed var(--line);padding:5px 0}
+  .hdr .row b{flex:0 0 132px;font-weight:600;color:var(--ink-2);font-size:13.5px}
+  .hdr .row span{flex:1;min-height:22px;border-bottom:1px solid transparent}
+  .hdr .row span:focus{border-bottom-color:var(--accent)}
+  .toolbar{position:sticky;top:0;z-index:5;display:flex;gap:10px;justify-content:flex-end;
+    padding:10px 0;background:linear-gradient(var(--bg) 70%,rgba(244,245,247,0))}
+  button{font:inherit;font-size:13.5px;padding:7px 15px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);cursor:pointer}
+  button:hover{border-color:#b9c0cc}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin:10px 0 0}
+  .legend b{color:var(--ink)}
+  .hint{font-size:12.5px;color:var(--ink-3);margin:8px 0 0}
+  .saved{font-size:12.5px;color:var(--ok);align-self:center;margin-right:auto}
+  #dumpwrap{display:none;position:fixed;inset:0;z-index:50;background:rgba(17,24,39,.55);
+    padding:40px 18px;overflow:auto}
+  #dumpwrap.on{display:block}
+  #dumpwrap .box{max-width:900px;margin:0 auto;background:#fff;border-radius:12px;padding:18px 20px}
+  #dump{width:100%;height:52vh;font:12.5px/1.6 ui-monospace,Consolas,Menlo,monospace;
+    border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical}
+  @media print{
+    body{background:#fff;padding:0;font-size:12px}
+    .toolbar,#dumpwrap{display:none !important}
+    .card{border:none;border-radius:0;padding:0 0 10px;margin:0 0 10px;break-inside:avoid}
+    /* 空白格的灰色提示是给我看的，不该印到纸上/截图里 */
+    [contenteditable="true"]:empty::before,.pick:empty::before{content:none}
+    .pick,.fill{background:#fff}
+    .pick[data-k="ok"],.pick[data-k="warn"],.pick[data-k="bad"],.pick[data-k="dim"]{background:#fff;color:#111827}
+    @page{size:A4 landscape;margin:10mm}
+  }
+  @media (max-width:760px){
+    .hdr{grid-template-columns:1fr}
+    .steps td:nth-child(2){width:auto}
+    table{font-size:12.5px}
+  }
+</style>
+</head>
+<body data-page-node-id="yqfUR9xao23ebqVF3pTvao">
+<div class="sheet" data-page-node-id="jwTnLa4BgJGhTZNQIrxRjL">
+
+  <div class="toolbar" data-page-node-id="0YJWIGRLTh9OBU1gB9MmYN">
+    <span class="saved" id="saved" data-page-node-id="4wea6nIydGSQXdcCVlsn9a"></span>
+    <button type="button" id="btn-clear" data-page-node-id="zSl0GO3DJGDT4nPSPp3FVQ">清空</button>
+    <button type="button" id="btn-dump" data-page-node-id="1QtypdvxvOiBNjauv72TAQ">复制为文本</button>
+    <button type="button" class="primary" id="btn-print" data-page-node-id="wFz7h9w7V0kIsDAWH9pXzS">打印 / 存 PDF</button>
+  </div>
+
+  <div class="card" data-page-node-id="wAmyTCfDuOHBbAANHi4RU9">
+    <h1 data-page-node-id="rWmrdCuXGhTswDXDeCiv9S">第三方试用记录表</h1>
+    <p class="sub" data-page-node-id="jBH4Gk9rZ0bPbV09SETEW2">每日体坛速览 · Day 27（第 4 周）· 试用者：<b data-page-node-id="tezCQat5CEiLis4dRrdBIy">一位没参与过这个项目的人</b></p>
+    <div class="note" data-page-node-id="EvRIRw7iyriafNKGvAayQw">
+      <b data-page-node-id="oZyXsnZ72r4CN9KjmGD6y9">怎么填（先看这 3 条）</b>
+      <ol class="how" data-page-node-id="40ALKoVqB8rtEP8jBsuB84">
+        <li data-page-node-id="ETkxxD1OwLX0q4rrcWdS50">本页<b data-page-node-id="5NhEzaxSxp0LqLJQZULXbG">要在浏览器里直接打开这个文件</b>（双击 html 文件）才能打字。在编辑器/预览窗口里点，只会<b data-page-node-id="hfBcwMKBheHUqJe79XWfqW">选中元素</b>，打不了字。</li>
+        <li data-page-node-id="Yw7JDBZWb0QgQmImRVshwI">「顺 / 犹豫 / 卡住」和「用时」两列<b data-page-node-id="8JnypyFjnToAjmzB6fF92J">点一下就换一档</b>，不用键盘（顺 → 犹豫 → 卡住 → 空，点第 4 下清掉）。</li>
+        <li data-page-node-id="jfp7moBvUm6kDGaZdEOa2P">填完点右上角<b data-page-node-id="C850Lufk0WHu0N2IOOZgWI">「复制为文本」</b>，把复制到的内容整段发出去即可；要留图就点<b data-page-node-id="y2CmWfZDAQJHPzokQmhb5H">「打印 / 存 PDF」</b>。</li>
+      </ol>
+    </div>
+    <div class="note" style="background:#f8fafc;border-color:var(--line);color:var(--ink-2)" data-page-node-id="S01SOujtqmFMo81EG7Xb4U">
+      填写原则：<b data-page-node-id="TL2IXGQTpJQOPIiqLsGmLR">只记他说的和做的原话，不写你的解释</b>。<br data-page-node-id="HnGP4kjlrwBaRu4Nig5L9r">
+      「顺 / 犹豫 / 卡住」三档要统一 —— <b data-page-node-id="RUsG10GAldupmPl4uB2G72">顺</b>=没停顿直接点对；<b data-page-node-id="E2zovvId1wq04ZwUidOeXO">犹豫</b>=停下来超过 3 秒、先看别处、问了句「这里？」；<b data-page-node-id="7naJjTHzpbjFFLsDBvxADn">卡住</b>=点错按钮或填错内容，或超过 60 秒没动。<br data-page-node-id="S4MkSHR5cQUnVprwX1MeQf">
+      卡住时<b data-page-node-id="4rJCRLwoghyVCjuEkgzY4p">不要提示他</b>，记下时间点，让他跳过。
+    </div>
+  </div>
+
+  <div class="card" data-page-node-id="zh5WhjaiBMq8v58SBbAGaL">
+    <h2 data-page-node-id="pCWvWIRGLdv060CTynfDF3">一、被试者与设备（一次性）</h2>
+    <div class="hdr" id="hdr" data-page-node-id="D01ZozZoVFwbkBwOhUcqMa">
+      <div class="row" data-page-node-id="gvWMSFYBrCNKhV7JvrUNCA"><b data-page-node-id="su08T9EMxxHTuA0DrtHMU7">与我的关系</b><span data-cell="text" contenteditable="true" data-ph="如：大学同学 / 弟弟 / 同事（不要写全名）" data-page-node-id="xO3IfAjDWH8VhHjNiCpJ94"></span></div>
+      <div class="row" data-page-node-id="gE3InZMZZolVBcJiu8wXWB"><b data-page-node-id="FzCgUTGdf5cu1gSdLllbhc">设备与系统</b><span data-cell="text" contenteditable="true" data-ph="如：iQOO 13 / Android 15" data-page-node-id="5S5UlkmCrpsHJuUYNcl7ID"></span></div>
+      <div class="row" data-page-node-id="liOtuveHGlBGmpOi0hceLk"><b data-page-node-id="k8i6jI1uzS2ue6hOATGZMG">浏览器</b><span data-cell="text" contenteditable="true" data-ph="如：Chrome 129 / 手机自带浏览器" data-page-node-id="VBFAvRQ3EyKI6Vl9y8dNU8"></span></div>
+      <div class="row" data-page-node-id="Pfgcu31YxkQLiQuOJNHHAW"><b data-page-node-id="d2mDroipfareEFtHbpYovt">网络</b><span data-cell="text" contenteditable="true" data-ph="Wi-Fi / 4G / 5G" data-page-node-id="L3ZJj6MKXvelhHlTHDXArP"></span></div>
+      <div class="row" data-page-node-id="FSAVGtJzFzuNcBN2uuxHqm"><b data-page-node-id="CCLSqQxXMoCeNcqIETIxfI">开始时间</b><span data-cell="text" contenteditable="true" data-ph="时:分" data-page-node-id="ZRauxu6BBCFDYGYjsS6ecM"></span></div>
+      <div class="row" data-page-node-id="QIUmcWlsQQpp5eUm67LA69"><b data-page-node-id="mSoeEQDnXeyHcE0DUFDONy">结束时间</b><span data-cell="text" contenteditable="true" data-ph="时:分" data-page-node-id="AUZlgYZifjzAxWCyiRmwRw"></span></div>
+      <div class="row" data-page-node-id="iqyor08iOxOby7dQmA9jO0"><b data-page-node-id="GBzJeUx368Rmz0qJVewXJ4">全程有没有问我</b><span data-cell="text" contenteditable="true" data-ph="有 / 无；问了什么" data-page-node-id="TSG1CvmcBWbNolX44Lapil"></span></div>
+      <div class="row" data-page-node-id="vrRxcDG0cLyrkE9y8ghkAL"><b data-page-node-id="chu0nKx2t4GPpkvTW4jm4f">我在场方式</b><span data-cell="text" contenteditable="true" data-ph="旁边看着 / 微信远程 / 只发了链接走开" data-page-node-id="SAE5qK9OMloDsDqiyxVq6K"></span></div>
+    </div>
+  </div>
+
+  <div class="card" data-page-node-id="m7EqsIHq6S1cr91EAQJ82H">
+    <h2 data-page-node-id="RrkDqCZnwKo7Te2K6PkAUd">二、逐步骤记录（12 步，一行一步）</h2>
+    <table class="steps" data-page-node-id="bqTczMs82xeUR7s9fE45bP">
+      <thead data-page-node-id="AoBePbABAOvPfB7GeF3HRF">
+        <tr data-page-node-id="atit0PfgTRBaR9C7Uj69dH">
+          <th data-page-node-id="VMLEKXNOLVQMTfRiN05QCB">#</th><th data-page-node-id="zjzTslMvUgLPW2xjKjk3LR">让他做的事（照念，别解释）</th>
+          <th data-page-node-id="xQcrWKAU8OvcTxjJyFLOPH">他点了什么</th><th data-page-node-id="sijkItNKnNXTRzYknCoqpY">他看到的（原话）</th>
+          <th data-page-node-id="tE9Z6OEyzUcBeYl3lhHezb">顺 / 犹豫 / 卡住</th><th data-page-node-id="VuYHyjVgMK2HkDTRoP6hVJ">用时</th><th data-page-node-id="25J2cFDH4O8BgVgO80AMp9">当时他说了什么</th>
+        </tr>
+      </thead>
+      <tbody id="rows" data-page-node-id="uvIgrBJB4oKED09sk9ulDr">
+        <tr data-page-node-id="IO4nBIMhYdJxxMOgoxUcz7">
+          <td class="no" data-page-node-id="F52CRe15P9Q71sa0D2mlGF">1</td>
+          <td data-page-node-id="53d4jI2HTrbCix9JbBG2ei">打开上面那个链接。<br data-page-node-id="6BGs8AGbH9l2LyEfmaWXNl"><span class="ask" data-page-node-id="AJO40Z1gqGr4DDbTVJteae">记：页面<b data-page-node-id="9MybjgAStZyBqrolPdmwak">第一眼</b>你看到什么？（照抄第一行字）</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="HNTRbZdHdQAnOBmGfJ7Htc"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="IFEaWwfAHumoVGlbEUddGP"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="RPUH0yLp0o1MLWrHtga2mZ"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="4csIExc9gJUKHYDXo3ZXBj"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="5Y2OrqP9nwF6DIMR9NX9Js"></td>
+        </tr>
+        <tr data-page-node-id="vdOPBVtAnAFgKVb3oL3V7u">
+          <td class="no" data-page-node-id="ERh0GWDaDdBgNDzz9U47no">2</td>
+          <td data-page-node-id="HOmUE4YTUK1IAL0GTRTOt6">如果中间跳出一个提示页，按页面上的提示继续。<br data-page-node-id="FnYJM0nUSirqHc75gJCLcA"><span class="ask" data-page-node-id="mxpEpPq1oi7ayzQItgsciH">记：<b data-page-node-id="cXT3rKhLKDBkTBhqDuHYD6">你有没有犹豫？</b>上面写了什么？（照抄）</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="eaYbHQIZFY5yjrvcBMMcnN"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="40PiEU9IYnlZwuGoaSp8Iv"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="vrd6ExF6Wwz24CfiJ81SB6"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="RqZOXOmHdfD7LVeGIQPM3U"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="t9NrTKNNx2pD41ixB6aOW2"></td>
+        </tr>
+        <tr data-page-node-id="JrIIoLenF4e6s7EO1EJdZ1">
+          <td class="no" data-page-node-id="QwahAq0mDZzfgUHBOMOHPK">3</td>
+          <td data-page-node-id="btD8VSDf749GQh3zI1Gk6H">在页面<b data-page-node-id="2kaiYFp6U1kv77gAlSQtXL">顶部那一排入口</b>里，点一个能看「今天大家在聊什么」的。<span class="vague" data-page-node-id="FRaSSOk286Dpj6GFahohQH">★</span><br data-page-node-id="soweuWWrdDDlxHI2napkeg"><span class="ask" data-page-node-id="cjzPDoKLP0U8EbGZeXGc9N">记：你点了哪个？为什么点它？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="R6dfEomeGsi7IcPkecww1G"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="maqEbAMgsQj0gnuEXzXuzZ"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="6ROTkadaGDb8SrmxKdQ9b6"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="jHGs43pK5oXq9oaf4CvZUd"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="lSWPyL9ky4UiCU2yWNEAbI"></td>
+        </tr>
+        <tr data-page-node-id="nDrw3uFdEJKxrhMNEatRBX">
+          <td class="no" data-page-node-id="xxoq1EfSj51tKV9Ho8jhKg">4</td>
+          <td data-page-node-id="3HZxWA2IOYGFwGWElr8wrX">再回到顶部那一排，点开那个<b data-page-node-id="hyJ3JJufqLmNGY9D1N9yYp">看起来最不像给读者看的</b>那一页。<span class="vague" data-page-node-id="Q9kr7OS2RkgP6pF3JymfkQ">★</span><br data-page-node-id="TJ2SPKHEbOkkJE77IXzA7f"><span class="ask" data-page-node-id="JG3lw2baufnaMUjorllIQE">记：一眼看出来它是干嘛的吗？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="8zGjjReG1Axu5wLeVYve1e"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="UiYNMQSCtQd79usKGH4TsB"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="85MxMHyU4PORiHyWEilIzi"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="CqAJ7ItasXIstwme0a4VXj"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="wGY6op1pbjArasmCPJA8v7"></td>
+        </tr>
+        <tr data-page-node-id="Q1fEc7ZUYm7DOX7y2xKnbS">
+          <td class="no" data-page-node-id="n6XgtVHTFR2wT22kDhCcqf">5</td>
+          <td data-page-node-id="aSTG3PdFgWZp0fDGo6BEMJ">往下滚，找到写着<b data-page-node-id="ZRLo2GxaODkpwKVgJJyvgr">「写入测试」</b>的那一块，点里面最显眼的那个按钮。<br data-page-node-id="BImbcHPIZThGLFVIlMBfwr"><span class="ask" data-page-node-id="RHCWz2qRPJ9M1zsqO5MW5n">记：点了之后，页面给你什么回应？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="kQtSnehTTLeT048Fcywwg1"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="mRy7WryLCjdeQnmESMmaUl"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="9BjzHgs4nl7JCQyoHp8Xs5"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="QXQwnEfH5foyyGaLtjjW8j"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="G3h6RkKQyvvH3iclBpwuUa"></td>
+        </tr>
+        <tr data-page-node-id="AwBDBqJpaNMGJkK8ezDce5">
+          <td class="no" data-page-node-id="A4SKKn08FOBKeYOPbMz8og">6</td>
+          <td data-page-node-id="e4rhH7q3pSBxJLcEnBwvZG">看<b data-page-node-id="TGVAHpyAtVEZsU9huJ4YfI">「核心表真实数据 · news_items」</b>底下那张表，最上面一行是你刚写的那条吗？<br data-page-node-id="cG4NGTjyDQ03xECtsIzqsx"><span class="ask" data-page-node-id="yv8j6SZHlWjgWTRgzbkYVk">记：是/不是；把这一行的 <b data-page-node-id="mMk9DAxYPWMVDPotky39zg">id</b>（第一列那串编号）抄下来</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="qFaBei3pZkof1E5OS6vJtH"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="ozZDPku5E2pxegMoVUEFDt"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="rm1SpUAoKHcL3VCZ7f5alj"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="Pj2tJ00YNXs318BB8qkFmw"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="6rMU0zeHeWCMhlWekGq3zZ"></td>
+        </tr>
+        <tr data-page-node-id="g5M2C8JiMQXoAlYCARmCAk">
+          <td class="no" data-page-node-id="POhwW1M4b7WwSgzIamjbPT">7</td>
+          <td data-page-node-id="qI5Ej1SmpkbKx5zQ4f74xd">刷新一下页面（电脑按 F5 / 手机下拉刷新），再看那张表。<br data-page-node-id="SE7AfpWzWiPMWFZQGGXnrF"><span class="ask" data-page-node-id="gUFle0U0fEMiFnKLhYuHkT">记：最上面那行还在吗？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="Z3r30w05OvsOGHV7fsjAzq"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="uosRZPEn5saz3Mq8929KTB"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="VPdSOmXZVmRg1cFqe9dU6F"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="NpvRoO8JY8E9q5AGlvWmhf"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="uuWB3l2oHUeamt15xAfjAA"></td>
+        </tr>
+        <tr data-page-node-id="O4IE07QfmUu29aGKpeUw1H">
+          <td class="no" data-page-node-id="r4rqXP3yAbezoyKGEi3DAp">8</td>
+          <td data-page-node-id="FF0GqASujkiFij0ACdPVtf">再往下，找到<b data-page-node-id="3IJQGpaG86d25bTAZJLRWG">「修改与删除」</b>那一块。把上一步抄下来的编号填进「记录 id」里，点「① 取出该条」。<span class="vague" data-page-node-id="bu7KGJlPb95NnR95WkzAi4">★</span><br data-page-node-id="6gakVBpSLj8wC889x6dPwb"><span class="ask" data-page-node-id="VH1Xr9BOMCu3Z43qAMrRNE">记：取出来了吗？没取出来时页面说了什么？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="mtBaKF9bfEGA6myTcumLCV"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="cH1RfuBehfFg9UxrMKQcux"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="By4YTUCOBBRG6rzh4iRh9F"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="Ripm0VFjdbMxwKu1o9JwbS"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="HAPVCgANyivbWE0AIjkhPp"></td>
+        </tr>
+        <tr data-page-node-id="xgwkopxC5SCyDGQZMBFbix">
+          <td class="no" data-page-node-id="5zHbWgRqIQcUBAWpRv5hg5">9</td>
+          <td data-page-node-id="QAq1rv0vaM1QYtSGRyuGYR">如果能取出来：把<b data-page-node-id="8QrOcsAPlBEvC0EDo8ULuN">「内容摘要」</b>那一行右格里的字改几个，点「② 提交修改」。<br data-page-node-id="asRzXaJ46fdPZAG3CBf4Cq"><span class="ask" data-page-node-id="SSZ0Jlr8JK8pA0qbta77PN">记：改完之后页面出现什么？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="Ti5or2h9UqwFLYVw6zw26z"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="er5quXzhfNPuX79d5LgwLM"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="MDGxyKAYbLFcNC1BY56sWn"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="kW50CxlIOibHt1SlbRurw9"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="njFUDVLV02rXWMC304D6s0"></td>
+        </tr>
+        <tr data-page-node-id="SCSA65Q6Tko2ch1wsY6oDD">
+          <td class="no" data-page-node-id="DZ5kGQHvu8pJr93JXGwBjt">10</td>
+          <td data-page-node-id="qA5wi8QxOsEGuiU2SM8S7s">点「③ 删除这条」。会弹出一个小窗口——<b data-page-node-id="ZLKAX8NXdCkZ5LHFiSZCfU">先点「取消」</b>。<br data-page-node-id="uGFQrKLp8pTOB5S4hFlPzV"><span class="ask" data-page-node-id="l2CByx3TXjOyGS8hCERcUk">记：弹窗上写的什么？你怎么想？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="LpvnDeVWtEd0jIMdLLLbf3"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="CjIRabnecRZvMHMdXmQ19p"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="HqfLzALtZqkXuMVh5gOpI2"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="7brpEmbC8zmwBmWnEco7ua"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="C6YdfsWX1a1UPeIZVJ7XEZ"></td>
+        </tr>
+        <tr data-page-node-id="wMYMKJU6X9zdrfgpeWSZmx">
+          <td class="no" data-page-node-id="4GlmTYONVvIqJreoS6DJCW">11</td>
+          <td data-page-node-id="wfQEfyFU4KwkGNXlEWGzUU">再点一次「③ 删除这条」，这次点<b data-page-node-id="MqzJJbLukKoEWSug3SjqcF">「确定删除」</b>。<br data-page-node-id="GxDOExqKRiD15mHTJE9222"><span class="ask" data-page-node-id="cp9AQo3awpw2NwyihyhLBL">记：删掉之后，上面那张表里还有它吗？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="hL2jWpwIShDzjiQ28KqgFx"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="EZac03NLVePYhF6DGEWtCY"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="lGjBqrIOCXZBBMVEUArEEX"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="r4FWcmPMue7fkPdF9DRh7k"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="UgIxkJ48ye2SHRu4pg4pzT"></td>
+        </tr>
+        <tr data-page-node-id="wW9CMly59uElxeyDDX71Gz">
+          <td class="no" data-page-node-id="oITAWNCGMY7olzIf7YI4Dk">12</td>
+          <td data-page-node-id="8bCTU0OK2pDvpbDsTbrlBA">再刷新一次页面，看那张表。<br data-page-node-id="ravfIEu5kM8yZcHidznCge"><span class="ask" data-page-node-id="vk3vmSy5CQr9akp5ywoPXO">记：现在还有吗？</span></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="他点了…" data-page-node-id="6nGf4JjcrhJqKwvFtkhpxH"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="acWatmF7BEPfjzFmyDPorj"></td>
+          <td class="pick" data-cell="pick" data-opts="顺|犹豫|卡住|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：顺 → 犹豫 → 卡住 → 清空" data-page-node-id="7THlxaXV5IGweaPLVYdWHo"></td>
+          <td class="pick" data-cell="pick" data-opts="3 秒内|3–10 秒|10–60 秒|超过 60 秒|" data-ph="点一下"
+              tabindex="0" role="button" title="点一下换一档：3 秒内 → 3–10 秒 → 10–60 秒 → 超过 60 秒 → 清空" data-page-node-id="ypUC5Xw5d4r8GIVsaP3PKD"></td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话…" data-page-node-id="eMFPjh2CLofrENIN5LpKTb"></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="hint" data-page-node-id="dUoED6DmLwY2GWqCzvMaQ8">★ 共 3 处是故意写得含糊的（第 3、4、8 步），另有第 6 步的「编号」也不说清是哪一列。<b data-page-node-id="rHxscXcgDyeNHY3agT5Anc">照念即可，他问了也别解释。</b></p>
+  </div>
+
+  <div class="card" data-page-node-id="16g6fn2Vr4rvKN6qbVgysU">
+    <h2 data-page-node-id="iyilpgYMR5hnndOHpShKqC">三、收尾三问</h2>
+    <table class="three" data-page-node-id="3ho7kgZbduklpjeHgy2ysi">
+      <tbody data-page-node-id="oAAhFsjy3EBZImmonDdojO">
+        <tr data-page-node-id="DqN5Q9MugGWUkWcrdux2jd">
+          <td class="no" data-page-node-id="Poiy7igATqgrdnhVgJQCxN">A</td>
+          <td data-page-node-id="FZkuOq1Swo0YEe30CClBI3">这个站是干嘛的？（一句话，用他自己的话）</td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话" data-page-node-id="8iPNFttU919QTodF40Gf03"></td>
+        </tr>
+        <tr data-page-node-id="9tjsXIAeqLXRgQQpJSCbMj">
+          <td class="no" data-page-node-id="mefkwPrc1NQFsVij0aJneu">B</td>
+          <td data-page-node-id="QwCdBiBX6hdhA4pvg99wcv">你觉得刚才那串操作<b data-page-node-id="x72uTY6PTCY3Q1HscSnkPx">真的改动</b>了什么东西吗？</td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话" data-page-node-id="5fCVLM8OAH0A2loBlzr9OA"></td>
+        </tr>
+        <tr data-page-node-id="liUtKGIoxBixJBmuPxDv2j">
+          <td class="no" data-page-node-id="ZBBkfvPyxnzi8HRudnDYC7">C</td>
+          <td data-page-node-id="knOOrWh51k9x578jg4ogMt">只能改一处，你最想改哪里？</td>
+          <td class="fill" data-cell="text" contenteditable="true" data-ph="原话" data-page-node-id="1INBeS3paQQKt6rBDYUodl"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="legend" data-page-node-id="x8eXDudCIr8VKP4ZZc630p">
+      <span data-page-node-id="yWx4FW8DQG8CrsiJAYO1yH"><b data-page-node-id="slnaONeboeyFnns1D7p6za">他有没有用搜索 / 问别人：</b><span data-cell="text" contenteditable="true" style="display:inline-block;min-width:180px;border-bottom:1px solid var(--line)" data-ph="填这里" data-page-node-id="TyXO0h4fLDWOIxkuPBdbaP"></span></span>
+      <span data-page-node-id="4edSLBl6eDKa6sLyesBD8J"><b data-page-node-id="pSOD1HoOnFLsy6B0SzDVBv">他有没有中途放弃：</b><span data-cell="text" contenteditable="true" style="display:inline-block;min-width:120px;border-bottom:1px solid var(--line)" data-ph="有 / 无" data-page-node-id="23kGtFoLZnJqbbLuBh7rHg"></span></span>
+    </div>
+  </div>
+
+</div>
+
+<div id="dumpwrap" data-page-node-id="IXL4slb6ksLFGnOgKK7699">
+  <div class="box" data-page-node-id="oyOB9y9mK3sTDV9u9HHKmA">
+    <h2 style="margin-top:0" data-page-node-id="G8X6Y4lbPRrpNh3Tyblm2A">复制这段发出去就行</h2>
+    <p class="hint" style="margin-top:0" data-page-node-id="yYIntyotfHu6FPfK1CFuwP">已经尝试自动复制到剪贴板；如果不成功，就在下面框里全选（Ctrl/Cmd + A）再复制。</p>
+    <textarea id="dump" readonly></textarea>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px" data-page-node-id="VFz8dwiMNPpAcSxdO6DbFD">
+      <button type="button" id="btn-copy2" data-page-node-id="rk2i6H4vkrj5okWlLQsEJE">再复制一次</button>
+      <button type="button" class="primary" id="btn-close" data-page-node-id="E2z240Zd3P3IdgCSACXX0u">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = 'day27-trial-sheet-v2';
+  var savedEl = document.getElementById('saved');
+
+  // 档位 → 颜色档（CSS 里按 data-k 上色）
+  var KIND = {'顺':'ok','犹豫':'warn','卡住':'bad',
+              '3 秒内':'dim','3–10 秒':'dim','10–60 秒':'dim','超过 60 秒':'dim'};
+
+  function cells() { return Array.prototype.slice.call(document.querySelectorAll('[data-cell]')); }
+
+  function paint(el) {
+    if (el.dataset.cell !== 'pick') return;
+    var v = el.dataset.val || '';
+    el.textContent = v || (el.dataset.ph || '');
+    el.classList.toggle('empty', !v);
+    if (v) el.setAttribute('data-k', KIND[v] || 'dim');
+    else el.removeAttribute('data-k');
+  }
+
+  function readCell(el) {
+    return el.dataset.cell === 'pick' ? (el.dataset.val || '') : el.innerHTML;
+  }
+
+  function writeCell(el, v) {
+    v = v || '';
+    if (el.dataset.cell === 'pick') { el.dataset.val = v; paint(el); }
+    else el.innerHTML = v;
+  }
+
+  function cycle(el) {
+    var opts = (el.dataset.opts || '').split('|');   // 末位留空 = 「再点一下清掉」
+    var cur = el.dataset.val || '';
+    var i = opts.indexOf(cur);
+    writeCell(el, opts[(i + 1) % opts.length] || '');
+    save();
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(cells().map(readCell))); }
+    catch (e) { return; }
+    savedEl.textContent = '已自动保存 ' + new Date().toTimeString().slice(0, 5);
+  }
+
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch (e) { return; }
+    if (!raw) return;
+    var arr;
+    try { arr = JSON.parse(raw); } catch (e) { return; }
+    if (!Array.isArray(arr)) return;
+    cells().forEach(function (el, i) { if (typeof arr[i] === 'string') writeCell(el, arr[i]); });
+    savedEl.textContent = '已载入上次填写的内容';
+  }
+
+  // ---- 点选格 ----
+  Array.prototype.slice.call(document.querySelectorAll('[data-cell="pick"]')).forEach(function (el) {
+    paint(el);
+    el.addEventListener('click', function () { cycle(el); });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); cycle(el); }
+    });
+  });
+
+  // ---- 文本格 ----
+  Array.prototype.slice.call(document.querySelectorAll('[data-cell="text"]')).forEach(function (el) {
+    el.addEventListener('input', save);
+    el.addEventListener('blur', save);
+    el.addEventListener('paste', function (e) {   // 纯文本粘贴，别把外部样式带进来
+      e.preventDefault();
+      var t = (e.clipboardData || window.clipboardData).getData('text/plain');
+      try { document.execCommand('insertText', false, t); } catch (err) { el.textContent += t; }
+    });
+  });
+
+  // ---- 导出成「能直接发出去」的纯文本 ----
+  function dumpText() {
+    var L = [];
+    L.push('第三方试用记录表 · 每日体坛速览 Day 27');
+    L.push('');
+    L.push('## 一、被试者与设备');
+    Array.prototype.slice.call(document.querySelectorAll('#hdr .row')).forEach(function (row) {
+      var b = row.querySelector('b'), s = row.querySelector('[data-cell]');
+      L.push('- ' + (b ? b.textContent.trim() : '') + '：' + textOf(s));
+    });
+    L.push('');
+    L.push('## 二、逐步骤（点了他什么 / 他看到的 / 档位 / 用时 / 原话）');
+    L.push('| # | 他点了什么 | 他看到的 | 顺·犹豫·卡住 | 用时 | 当时他说了什么 |');
+    L.push('| - | - | - | - | - | - |');
+    Array.prototype.slice.call(document.querySelectorAll('#rows tr')).forEach(function (tr) {
+      var td = tr.querySelectorAll('td');
+      L.push('| ' + td[0].textContent.trim() + ' | ' + textOf(td[2]) + ' | ' + textOf(td[3]) +
+             ' | ' + (td[4].dataset.val || '') + ' | ' + (td[5].dataset.val || '') + ' | ' + textOf(td[6]) + ' |');
+    });
+    L.push('');
+    L.push('## 三、收尾三问');
+    Array.prototype.slice.call(document.querySelectorAll('.three tbody tr')).forEach(function (tr) {
+      var td = tr.querySelectorAll('td');
+      L.push('- ' + td[0].textContent.trim() + '（' + textOf(td[1]) + '）：' + textOf(td[2]));
+    });
+    var lg = document.querySelectorAll('.legend [data-cell]');
+    L.push('');
+    L.push('- 有没有用搜索 / 问别人：' + textOf(lg[0]));
+    L.push('- 有没有中途放弃：' + textOf(lg[1]));
+    return L.join('\n');
+  }
+
+  function strip(html) {
+    var d = document.createElement('div');
+    d.innerHTML = html || '';
+    return (d.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function textOf(el) { return el ? strip(el.innerHTML) : ''; }
+
+  function copyText(t) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      var ta = document.getElementById('dump');
+      ta.value = t; ta.select();
+      return document.execCommand('copy');
+    } catch (e) { return false; }
+  }
+
+  var wrap = document.getElementById('dumpwrap');
+  var dumpEl = document.getElementById('dump');
+
+  document.getElementById('btn-dump').addEventListener('click', function () {
+    var t;
+    try { t = dumpText(); }
+    catch (e) {
+      // 失败也要让人看得见 —— 静默什么都不发生是最坏的结果
+      t = '导出时出错：' + (e && e.message ? e.message : e) + '\n\n（把这行发给 L）';
+    }
+    dumpEl.value = t;
+    var ok = false;
+    try { ok = copyText(t); } catch (e) {}
+    wrap.classList.add('on');
+    if (!ok) { try { dumpEl.focus(); dumpEl.select(); } catch (e) {} }
+  });
+  document.getElementById('btn-copy2').addEventListener('click', function () { copyText(dumpEl.value); });
+  document.getElementById('btn-close').addEventListener('click', function () { wrap.classList.remove('on'); });
+  document.getElementById('btn-print').addEventListener('click', function () { window.print(); });
+  document.getElementById('btn-clear').addEventListener('click', function () {
+    if (!window.confirm('清空这张表上填的所有内容？（不可恢复）')) return;
+    cells().forEach(function (el) { writeCell(el, ''); });
+    save();
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

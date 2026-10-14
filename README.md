@@ -273,7 +273,34 @@ node scripts_cloudbase/release.mjs deploy v0.9    # 退回上一版（约 12 秒
 node scripts_cloudbase/release.mjs verify v0.9    # 确认线上真的变回去了
 ```
 
-> 云函数回退与数据恢复本次**只写进手册、未实操**：5 个函数目前都只有 `$LATEST`，没有可切流量回去的已发布版本。
+> 云函数回退与数据恢复**未实操**，只写进手册：数据恢复至今没有一键备份（体验版 PG 无备份能力）。
+> 云函数侧已在 **Day 27 补上后路** —— 5 个函数各固化了版本 `1`（`tcb fn publish-version`），
+> 具备"秒级切流量回旧版"的能力；**但 `config-route` 切换动作本身未演练**（别当成"云函数回退已演练"）。
+> 详见[回滚手册](docs/rollback-runbook.md) §3。
+
+### 上传范围（Day 27 修订）
+
+`deploy` 上传的东西 = **快照清单里列出的站点文件**（`css/` `js/` `data/` + 根目录 `*.html`），一个不多一个不少。
+`release.json` 与 `manifest.sha256` 属于**发布账本**，只留在 `.releases/<版本>/` 本机，**不进站点根目录**。
+
+```bash
+node scripts_cloudbase/release.mjs deploy v1.0 --dry-run   # 只摆上传目录并列出会上传的文件，不连 CloudBase、不改线上
+```
+
+> 起因：v1.0 上线后实测发现 `https://<域名>/release.json` 和 `/manifest.sha256` **可被公网直接读取**
+> （内容只有版本号 / 提交短 SHA / 文件数，**不含任何密钥**，但没必要公开）。
+> 旧版 `deploy` 上传的是**整个快照目录**，而这两份文件正写在里面。
+> 改法：上传前按清单重新摆一份**只含站点文件**的目录再传（`release.mjs` 的 `stageForDeploy()`）——
+> 结构上排除，不靠人记得删。
+>
+> ⚠️ 线上已经存在的那两份老文件**不会自己消失**（脚本不再传它们 ≠ 线上自动清掉）。
+> 要清掉只能**点名删**，每次一条路径（`tcb hosting delete` 只接一个路径，可加 `--dry-run` 先预览）：
+> ```bash
+> tcb hosting delete release.json      -e <envId> --dry-run
+> tcb hosting delete manifest.sha256   -e <envId>
+> ```
+> **不要用 `--prune` 来清**：它的语义是*"删掉线上不属于本次发布的所有文件"*，
+> 会把托管根目录里的 `__auth/`、`cloud-admin/` 等**系统文件一起删掉**（理由见下面第 3 条）。
 
 ### 三条实测结论（都是踩出来的，值得单看）
 
