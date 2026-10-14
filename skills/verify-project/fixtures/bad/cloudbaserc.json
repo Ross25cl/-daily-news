@@ -1,0 +1,26 @@
+{
+  "version": "2.1",
+  "envId": "{{env.TCB_ENV_ID}}",
+  "region": "ap-shanghai",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    { "name": "health", "type": "HTTP", "runtime": "Nodejs18.15", "handler": "index.main" },
+    {
+      "name": "api",
+      "type": "HTTP",
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "environmentVariables": {
+        "CB_ENV_ID": "{{env.TCB_ENV_ID}}"
+      }
+    },
+    { "name": "news", "type": "HTTP", "runtime": "Nodejs18.15", "handler": "index.main" }
+  ],
+  "gateway": {
+    "routes": [
+      { "path": "/api/health", "target": "function:health", "enableAuth": false },
+      { "path": "/api/hot", "target": "function:api", "enableAuth": false },
+      { "path": "/api/ghost", "target": "function:ghost", "enableAuth": false }
+    ]
+  }
+}

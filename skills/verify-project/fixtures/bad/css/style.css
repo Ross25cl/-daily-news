@@ -1,0 +1,8 @@
+/* 坏样本：给带 hidden 属性的 .search-clear 写了 display，却没写 :not([hidden]) */
+.search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}

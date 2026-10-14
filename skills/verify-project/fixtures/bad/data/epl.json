@@ -1,0 +1,7 @@
+{
+  "league": "epl",
+  "tabs": ["schedule"],
+  "teams": [
+    { "teamName": "样本队", "logo": "https://sports3.gtimg.com/teamLogo/42.png" }
+  ]
+}

@@ -95,7 +95,9 @@ node serve.mjs 8001
 │   ├── cloudbase-deploy-day20.md  # 【Day 20】切公网接口 + 跨域确认 + 检查台
 │   ├── cloudbase-deploy-day22.md  # 【Day 22】PATCH / DELETE 上线 + 四类操作闭环 + 软删除（§8）
 │   ├── dataflow.svg / structure.svg / views.md / usability-test-day14.md
-├── skills/tiyu-daily/  # 录入用 Skill
+├── skills/
+│   ├── tiyu-daily/     # 【Day 12】内容抓取与排版规则手册
+│   └── verify-project/ # 【Day 25】发布前检查：25 项逐条 PASS/FAIL + 证据（含自检用坏样本）
 ├── research.md / PRD.md / TECH_DESIGN.md / AGENTS.md  # 项目文档
 └── .env                # 本地调试密钥（已 gitignore，永不提交）
 ```
@@ -206,6 +208,37 @@ tcb db execute -e ross-d2gimwy406e0d6812 --sql $sql
 
 **验证数据是不是真的从库里来的**：打开[接口检查台](https://ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com/checkup.html)，
 看三块绿标 + 做一次写入测试；或按 [day20 手册 §4](docs/cloudbase-deploy-day20.md) 的清单逐项核对。
+
+## 发布前自检（verify-project，Day 25）
+
+上线或推送前**手动跑一次**的检查门禁：把 Day 1–24 真实踩过的坑固化成 **25 条检查项**
+（跨域与域名 / 重复写入与一致性 / 数据库执行 / 接口错误与安全 / 页面与渲染纪律 / 环境变量与部署 / 公网可用性），
+逐项输出 `PASS / FAIL / SKIP` + 证据。
+
+```bash
+# 全量检查（默认对当前项目）——退出码 0 无 FAIL、1 有 FAIL、2 自检失败
+node skills/verify-project/check.mjs
+
+# 自检：拿「故意做坏的样本项目」跑一遍，证明它不会虚报通过（20/20 必须全红）
+node skills/verify-project/check.mjs --self-test
+
+# 机器可读（给后续脚本用）
+node skills/verify-project/check.mjs --json
+```
+
+三条纪律（都是踩出来的）：
+
+1. **SKIP 不等于 PASS** —— 环境不具备（拿不到凭据 / 公网不可达 / CLI 未登录）一律显式报 SKIP，不允许静默算通过。
+2. **静态检查先剥注释再匹配** —— 注释里写着「不要用相对路径」是正常的，拿注释判 FAIL 就是误报。
+3. **判据看「有效对象」** —— CSS 里 `.related .news-card p{display:none}` 的主体是 `p`，不是 `.related`。
+
+**检查器自己也要被检查**：`skills/verify-project/fixtures/bad/` 是一个故意做坏的样本项目
+（裸相对 `fetch('/api/…')`、`envVariables` 写成 `environmentVariables`、CSS 漏 `:not([hidden])`、
+`seed.sql` 有 `TRUNCATE` 而无警示、收藏只有一层防重……）。
+`--self-test` 要求这 20 项静态检查**全部报 FAIL**，只要有一项仍报 PASS 就退出码 2、结论作废。
+
+细则、25 项总表与「每项治哪个旧伤」见 [skills/verify-project/SKILL.md](skills/verify-project/SKILL.md)；
+本次实跑记录（含发现并修正的 2 个误报 + 1 个漏报）见 [docs/day25-verify-record.md](docs/day25-verify-record.md)。
 
 ## 安全说明
 
