@@ -76,12 +76,13 @@
 | 服务状态 | **Online** |
 | 索引文档 | `index.html` |
 | 域名 | `ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com` |
-| 文件对象 | **37 个**（业务 31 个 ≈ 1.49 MB，系统 6 个 ≈ 7.3 KB） |
+| 文件对象 | **35 个**（业务 29 个 ≈ 1.52 MB，系统 6 个 ≈ 7.3 KB）<br>（2026-10-14 23:12 前为 37 / 31 —— 已删掉 `release.json` + `manifest.sha256`，见第 8 节遗留 ①） |
 | 系统文件 | `__auth/*`（5 个）、`cloud-admin/index.html` —— **平台自带，别删**（Day 26 踩过） |
 | 最大的文件 | `data/nba.json` 540.6 KB、`data/cba.json` 312.9 KB、`data/epl.json` 265.8 KB |
 
-> 业务文件 31 = 7 个 html + 10 个 js + 5 个 css + 7 个 data + **`release.json` + `manifest.sha256`**。
-> 后两个是 Day 26 发布时随快照一起传上去的（第 8 节遗留 ①）。
+> 业务文件 **29** = 7 个 html + 10 个 js + 5 个 css + 7 个 data。
+> （23:12 之前是 31 —— 多的两个是 Day 26 发布时随快照一起传上去的账本
+> `release.json` + `manifest.sha256`，**已点名删除并验证 404**，见第 8 节遗留 ①。）
 
 ### 3.2 数据库
 
@@ -216,7 +217,7 @@ node scripts_cloudbase/scan-secrets.mjs
 
 | # | 事项 | 状态 |
 | - | ---- | ---- |
-| 1 | **`release.json` 与 `manifest.sha256` 曾可从公网直接读取**（`https://<域名>/release.json`）。内容只有版本号、提交短 SHA、构建时间、文件数、目录名，**没有密钥**；但它把「用的是哪个提交」公开了 | ✅ **已修（Day 27）**：`release.mjs` 的 `deploy` 改为「按清单摆一份只含站点文件的上传目录」再传（`stageForDeploy()`），结构上排除这两份账本。**线上那两份老文件仍在（实测 HTTP 200）**，脚本不再上传≠线上自动消失 —— 要清只能点名删（`tcb hosting delete` 每次只接一个路径，可加 `--dry-run` 预览）：<br>`tcb hosting delete release.json -e ross-d2gimwy406e0d6812`<br>`tcb hosting delete manifest.sha256 -e ross-d2gimwy406e0d6812`<br>（**不要用 `--prune`**，它会连 `__auth/`、`cloud-admin/` 一起删，见 README 实测结论第 3 条） |
+| 1 | **`release.json` 与 `manifest.sha256` 曾可从公网直接读取**（`https://<域名>/release.json`）。内容只有版本号、提交短 SHA、构建时间、文件数、目录名，**没有密钥**；但它把「用的是哪个提交」公开了 | ✅ **已修（Day 27）**：`release.mjs` 的 `deploy` 改为「按清单摆一份只含站点文件的上传目录」再传（`stageForDeploy()`），结构上排除这两份账本。✅ **彻底完成（2026-10-14 23:12）**：线上那两份老文件已**点名删除并验证 404** —— `tcb hosting delete release.json --yes` / `manifest.sha256 --yes`，两次各只删 1 个对象、无连带。删后复核站点未受影响（首页 / 检查台仍 200，`release.mjs verify v1.0` 报 29/29 逐字节一致，内置 `probePublicMeta()` 同步报两个 404）。命令留档（将来若再有）：先 `tcb hosting delete <文件> -e <envId> --dry-run` 预览，确认只列目标文件后再加 `--yes` 执行。<br>**不要用 `--prune`**，它会连 `__auth/`、`cloud-admin/` 一起删（见 README 实测结论第 3 条） |
 | 2 | 热搜数据停在 **10-08**（`hot_items` 48 行、`updatedAt` 10-08 21:38），同步脚本没有定时任务 | 等零定要不要重跑一次抓取 |
 | 3 | `news_items` 17 行里含历史测试行（Day 21/22/23 各次验证写入） | 零此前拍板「不用删」；本次也保留，并在试用说明里如实告知 |
 | 4 | 云函数 5 个**都只有 `$LATEST`**，从未 `publish-version` | ✅ **已处理（Day 27，非本条线所做）**：独立复核 `tcb fn list-function-versions`，5 个函数均已固化版本 `1`（描述「v1.0 固化 Day 27」，2026-10-14 19:33–19:35）。**但 `config-route` 切流量的动作本身仍未演练** —— 别当成「云函数回退已演练」 |

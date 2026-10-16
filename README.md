@@ -293,11 +293,13 @@ node scripts_cloudbase/release.mjs deploy v1.0 --dry-run   # 只摆上传目录�
 > 改法：上传前按清单重新摆一份**只含站点文件**的目录再传（`release.mjs` 的 `stageForDeploy()`）——
 > 结构上排除，不靠人记得删。
 >
-> ⚠️ 线上已经存在的那两份老文件**不会自己消失**（脚本不再传它们 ≠ 线上自动清掉）。
-> 要清掉只能**点名删**，每次一条路径（`tcb hosting delete` 只接一个路径，可加 `--dry-run` 先预览）：
+> ✅ **线上那两份老文件已于 2026-10-14 23:12 点名删除并验证 404**。删后复核：站点文件没受影响
+> （`index.html` / `checkup.html` 仍 200，`release.mjs verify v1.0` 仍报 29/29 逐字节一致，内置探测同步报 404）。
+> 删法是每次一条路径（`tcb hosting delete` 只接一个路径，可加 `--dry-run` 先预览；非交互要 `--yes`）：
 > ```bash
 > tcb hosting delete release.json      -e <envId> --dry-run
-> tcb hosting delete manifest.sha256   -e <envId>
+> tcb hosting delete release.json      -e <envId> --yes
+> tcb hosting delete manifest.sha256   -e <envId> --yes
 > ```
 > **不要用 `--prune` 来清**：它的语义是*"删掉线上不属于本次发布的所有文件"*，
 > 会把托管根目录里的 `__auth/`、`cloud-admin/` 等**系统文件一起删掉**（理由见下面第 3 条）。
