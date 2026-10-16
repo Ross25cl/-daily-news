@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 28 最终验收清单 · 逐项打勾</title>
+<style>
+  :root{
+    --page-max:880px; --pad:20px;
+    --bg:#f5f6f8; --card:#ffffff; --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb;
+    --accent:#2563eb; --accent-weak:#dbeafe;
+    --ok:#059669; --ok-weak:#d1fae5; --warn:#b45309; --warn-weak:#fef3c7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif}
+  .wrap{max-width:var(--page-max);margin:0 auto;padding:28px var(--pad) 60px}
+  header{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin-bottom:18px}
+  h1{font-size:20px;margin:0 0 6px}
+  .meta{color:var(--sub);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 18px}
+  .meta b{color:var(--ink)}
+  .url{font-size:12px;word-break:break-all;color:var(--sub);margin-top:8px}
+  .progress{position:sticky;top:0;z-index:5;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .bar{flex:1;min-width:160px;height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+  #count{font-weight:600;font-variant-numeric:tabular-nums}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 0 10px;margin-bottom:18px}
+  section > h2{font-size:15px;margin:14px 22px 4px;color:var(--sub);font-weight:600}
+  .item{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:0}
+  .item input{width:20px;height:20px;margin:3px 0 0;accent-color:var(--ok);cursor:pointer}
+  .item .t{font-weight:600}
+  .item .ev{color:var(--sub);font-size:13px;margin-top:4px}
+  .tag{display:inline-block;font-size:12px;font-weight:600;border-radius:6px;padding:1px 8px;margin-left:8px;vertical-align:1px}
+  .tag.pass{color:var(--ok);background:var(--ok-weak)}
+  .tag.todo{color:var(--warn);background:var(--warn-weak)}
+  .item.done .t{text-decoration:line-through;color:var(--sub)}
+  footer{color:var(--sub);font-size:12.5px;text-align:center}
+  @media print{
+    body{background:#fff}
+    .progress{position:static}
+    .btn{display:none}
+    .wrap{padding:0}
+  }
+  @media (max-width:520px){
+    .item{grid-template-columns:auto 1fr;padding:12px 14px}
+    section > h2{margin:12px 14px 4px}
+    header{padding:16px 14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>《每日体坛速览》v1.0 · 最终验收清单</h1>
+    <div class="meta">
+      <span><b>Day 28</b> · 结营 · 2026-10-16</span>
+      <span>状态只允许 <b>PASS / FAIL / 未执行</b></span>
+      <span>逐项打勾后截图（勾选状态自动存本机）</span>
+    </div>
+    <div class="url">公网：https://ross-d2gimwy406e0d6812-1499705719.tcloudbaseapp.com/index.html ｜ 接口：…ap-shanghai.app.tcloudbase.com/api/health</div>
+  </header>
+
+  <div class="progress">
+    <span id="count">0 / 11</span>
+    <div class="bar"><i id="fill"></i></div>
+    <button class="btn" id="checkAll" type="button">全部打勾</button>
+    <button class="btn" id="reset" type="button">清空</button>
+  </div>
+
+  <section>
+    <h2>附录 J · 验收清单（9 项，全部当场实测）</h2>
+    <label class="item"><input type="checkbox" data-k="j1"><span>
+      <span class="t">至少 3 页独立视图或页面<span class="tag pass">PASS</span></span>
+      <div class="ev">7 个页面全部 200：首页 / 资讯列表 / 资讯详情 / 赛程比分 / 联赛板块（?lg=nba·cba·ucl·epl）/ 接口检查台 / 今日速览</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="j2"><span>
+      <span class="t">至少一条明确的反馈交互<span class="tag pass">PASS</span></span>
+      <div class="ev">① 详情页「收藏这条」真实写库 ② 标签筛选（渐变高亮+防连点）③ 搜索框+联赛筛选 ④ 清空按钮（Day 24 修复）</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="j3"><span>
+      <span class="t">至少 1 类数据真实写入并读取数据库<span class="tag pass">PASS</span></span>
+      <div class="ev">11:25 POST /api/favorites → id 20261016-n01 created:true → 立刻 GET 读回第 1 行命中；10-08 旧行仍在（持久化）</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="j4"><span>
+      <span class="t">前端、云函数和数据库完整链路<span class="tag pass">PASS</span></span>
+      <div class="ev">浏览器 → CloudBase 网关 → HTTP 云函数（5 个）→ PostgreSQL；/api/hot·news·matches·health 今天全 200，hot 首条为虎扑真实帖</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="j5"><span>
+      <span class="t">合法数据来源<span class="tag pass">PASS</span></span>
+      <div class="ev">虎扑/腾讯体育/央视体育公开热榜，只取标题+链接+热度，不登录不绕过；抓取规则契约 skills/tiyu-daily/SKILL.md + call-log.md 留痕</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="j6"><span>
+      <span class="t">公网首页、健康接口和线上持久化<span class="tag pass">PASS</span></span>
+      <div class="ev">首页 200（0.98s）；/api/health 200 {"ok":true}；8 天前写入的行今天仍可读出；release.json/manifest.sha256 已 404</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="j7"><span>
+      <span class="t">CloudBase 资源和到期风险已记录<span class="tag pass">PASS</span></span>
+      <div class="ev">docs/cloudbase-resource-day27.md：tcb CLI 实读（托管 35 对象 ≈1.52MB、函数 5 个、10 张表），到期风险与 8 条遗留如实记录，命令可复跑</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="j8"><span>
+      <span class="t">回滚手册和数据导出方式已交付<span class="tag pass">PASS</span></span>
+      <div class="ev">docs/rollback-runbook.md（L1 已真实演练 13min57s；L2/L3 未演练如实标注）+ scripts_cloudbase/export-data.mjs（行数不符即退出码 1）</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="j9"><span>
+      <span class="t">密钥、.env 和私人信息没有进入 Git<span class="tag pass">PASS</span></span>
+      <div class="ev">今天复跑 scan-secrets.mjs：9/9 规则自检 · 工作区 0 条 · 48 提交历史 0 行；.env 被 .gitignore 拦截、历史无提交</div>
+    </span></label>
+  </section>
+
+  <section>
+    <h2>PATCH / DELETE 专项（降级条款核对，2 项）</h2>
+    <label class="item"><input type="checkbox" data-k="p1"><span>
+      <span class="t">PATCH /api/news<span class="tag pass">PASS</span></span>
+      <div class="ev">Day 22 上线；今天当场实测：改 note → 200，before/after 对照，changed:["note"]</div>
+    </span></label>
+    <label class="item"><input type="checkbox" data-k="p2"><span>
+      <span class="t">DELETE /api/news（软删除）<span class="tag pass">PASS</span></span>
+      <div class="ev">Day 22 上线；今天当场实测：删除 → 200 verifiedGone:true, mode:"soft" → 再 GET 已查不到该行</div>
+    </span></label>
+  </section>
+
+  <section>
+    <h2>如实声明（演示时被问到要能答，不算 FAIL）</h2>
+    <div class="item"><span></span><span style="color:var(--sub);font-size:13px">
+      ① /api/leagues/:id 仍 404，联赛页按设计走静态 JSON 降级（nba/cba 真数据，ucl/epl 示例）——第 4 周优先级给了验收链路，未排期，列入后续优化；<br>
+      ② 热搜停在 10-08（同步为手动三步，无定时任务）；③ L2 切流量 / L3 数据恢复未演练（手册如实标注）；④ day27 试用记录 §4.1 有 5 格待零补；⑤ digest.html 孤页与 375px 表格溢出为已知遗留。
+    </span></div>
+  </section>
+
+  <footer>逐项打勾后截图 · 证据明细见 docs/acceptance-final-day28.md · Day 28 · 2026-10-16</footer>
+</div>
+<script>
+(function(){
+  var KEY='day28-acceptance-checks';
+  var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox]'));
+  var count=document.getElementById('count'),fill=document.getElementById('fill');
+  function load(){
+    try{var s=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){var s={}}
+    boxes.forEach(function(b){b.checked=!!s[b.dataset.k]});
+  }
+  function save(){
+    var s={};boxes.forEach(function(b){s[b.dataset.k]=b.checked});
+    try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}
+  }
+  function render(){
+    var n=boxes.filter(function(b){return b.checked}).length;
+    count.textContent=n+' / '+boxes.length;
+    fill.style.width=(n/boxes.length*100)+'%';
+    boxes.forEach(function(b){b.closest('.item').classList.toggle('done',b.checked)});
+  }
+  boxes.forEach(function(b){b.addEventListener('change',function(){save();render()})});
+  document.getElementById('checkAll').addEventListener('click',function(){
+    boxes.forEach(function(b){b.checked=true});save();render();
+  });
+  document.getElementById('reset').addEventListener('click',function(){
+    boxes.forEach(function(b){b.checked=false});save();render();
+  });
+  load();render();
+})();
+</script>
+</body>
+</html>
